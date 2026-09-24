@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>TaskPop – Your to-do list, there when you open your Mac</title>
+  <meta name="description" content="TaskPop is a small Mac app that slides your to-do list in from the side of the screen every time you open your MacBook. Reminders, daily routines and a keyboard shortcut. Your tasks stay on your Mac.">
+  <meta name="theme-color" content="#F4F7F5">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="TaskPop – Your to-do list, there when you open your Mac">
+  <meta property="og:description" content="A small Mac app that shows your tasks every time you open the lid. Reminders, daily routines, and a shortcut from anywhere.">
+  <meta property="og:image" content="assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TaskPop – Your to-do list, there when you open your Mac">
+  <meta name="twitter:description" content="A small Mac app that shows your tasks every time you open the lid.">
+  <meta name="twitter:image" content="assets/og-image.png">
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/InstrumentSans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <noscript>
+    <style>
+      .device.closed .lid { transform: none; }
+      .device.closed .screen-off { opacity: 0; }
+      .tp-panel { display: none !important; }
+      .demo-controls { display: none; }
+    </style>
+  </noscript>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <nav class="nav wrap" aria-label="Main">
+      <a class="brand" href="#top" aria-label="TaskPop home">
+        <img src="assets/taskpop-icon.png" alt="" width="30" height="30">
+        <span>TaskPop</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#install">Install</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+      <a class="btn btn-primary btn-small" href="#download">Download</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- ================= Hero ================= -->
+    <section class="hero wrap" id="top">
+      <div class="hero-copy">
+        <h1>Your to-do list, there when you open your Mac.</h1>
+        <p class="lede">TaskPop slides in from the side of your screen every time you open your MacBook’s lid. Tick things off, set a reminder, and get back to work.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#download">Download for Mac</a>
+          <a class="btn btn-quiet" href="#features">See what it does</a>
+        </div>
+        <p class="fineprint">For macOS 13 Ventura or later, on Apple Silicon and Intel Macs.</p>
+      </div>
+
+      <div class="hero-demo">
+        <div class="device-stage" id="deviceStage">
+          <div class="device closed" id="device">
+            <div class="lid" id="lid">
+              <div class="bezel">
+                <span class="camera" aria-hidden="true"></span>
+                <div class="screen" id="screen">
+                  <div class="wallpaper" aria-hidden="true"></div>
+                  <div class="menubar" aria-hidden="true">
+                    <span class="mb-left"><i class="mb-logo"></i><b>Finder</b><span>File</span><span>Edit</span><span>View</span><span>Window</span></span>
+                    <span class="mb-right">
+                      <span class="mb-tray"><svg viewBox="0 0 18 18"><rect x="2.5" y="2.5" width="13" height="13" rx="3.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.8 9.3l2.2 2.2 4.3-4.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="trayCount">3</span></span>
+                      <span class="mb-clock" id="clock">Thu 9:41 AM</span>
+                    </span>
+                  </div>
+                  <div class="app-window" aria-hidden="true">
+                    <div class="aw-bar"><i></i><i></i><i></i></div>
+                    <div class="aw-lines"><span></span><span></span><span></span><span></span><span></span></div>
+                  </div>
+                  <div class="screen-off" aria-hidden="true"></div>
+                  <div class="tp-panel in-device" id="devicePanel" aria-label="TaskPop demo"></div>
+                </div>
+              </div>
+            </div>
+            <div class="base" aria-hidden="true"><span class="thumb"></span></div>
+          </div>
+        </div>
+
+        <!-- On small screens the panel is shown on its own -->
+        <div class="tp-panel standalone" id="mobilePanel" aria-label="TaskPop demo"></div>
+
+        <div class="demo-controls">
+          <button class="btn btn-quiet btn-small" id="replayBtn" type="button">Close and reopen the lid</button>
+          <p class="demo-hint">This is a working demo. Tick a task or add your own<span class="hint-keys">, or press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd></span>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Features ================= -->
+    <section class="features" id="features" aria-labelledby="features-title">
+      <div class="wrap features-grid">
+        <div class="features-intro">
+          <h2 id="features-title">A quick list that shows up on its own.</h2>
+          <p>No app to remember to open. TaskPop lives in your menu bar and appears the moment you start using your Mac.</p>
+        </div>
+
+        <ul class="spec">
+          <li class="spec-row">
+            <div class="spec-text">
+              <h3>Pops up when you open the lid</h3>
+              <p>Wake your MacBook and your tasks slide in from the side. It can also appear when you unlock the screen, or stay quiet until you call it.</p>
+            </div>
+            <div class="spec-visual">
+              <div class="frag-setting">
+                <span>When I open the lid</span><i class="switch on" aria-hidden="true"></i>
+              </div>
+              <div class="frag-setting">
+                <span>When I unlock the screen</span><i class="switch on" aria-hidden="true"></i>
+              </div>
+            </div>
+          </li>
+
+          <li class="spec-row">
+            <div class="spec-text">
+              <h3>One shortcut, from anywhere</h3>
+              <p>Press Control, Option and T in any app to open or close your list. Pick a different shortcut in Settings if you like.</p>
+            </div>
+            <div class="spec-visual keys" aria-label="Control Option T">
+              <kbd class="key">⌃<small>control</small></kbd><kbd class="key">⌥<small>option</small></kbd><kbd class="key">T</kbd>
+            </div>
+          </li>
+
+          <li class="spec-row">
+            <div class="spec-text">
+              <h3>Important tasks stay on top</h3>
+              <p>Star a task, or start it with an exclamation mark, and it sits above everything else until it’s done.</p>
+            </div>
+            <div class="spec-visual">
+              <div class="frag-row">
+                <span class="frag-check"></span><span class="frag-title">Pay the electricity bill</span>
+                <svg class="frag-star" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg>
+              </div>
+              <div class="frag-typed"><span class="caret-text">!Call the bank before 5</span></div>
+            </div>
+          </li>
+
+          <li class="spec-row">
+            <div class="spec-text">
+              <h3>Reminders that reach you</h3>
+              <p>Right-click a task to be reminded in an hour, this evening, tomorrow morning, or at any time you choose. Mark it done or snooze it straight from the notification.</p>
+            </div>
+            <div class="spec-visual">
+              <div class="notif">
+                <img src="assets/taskpop-icon.png" alt="" width="30" height="30">
+                <div class="notif-body">
+                  <span class="notif-app">TaskPop reminder</span>
+                  <strong>Send the weekly report</strong>
+                  <div class="notif-actions"><span>Mark as done</span><span>Snooze 15 min</span></div>
+                </div>
+                <span class="notif-time">now</span>
+              </div>
+            </div>
+          </li>
+
+          <li class="spec-row">
+            <div class="spec-text">
+              <h3>Routines that reset every morning</h3>
+              <p>Set a task to repeat every day and it un-ticks itself overnight, ready for tomorrow. Its reminder comes back too.</p>
+            </div>
+            <div class="spec-visual">
+              <div class="frag-row">
+                <span class="frag-check done"></span><span class="frag-title struck">Morning workout</span>
+              </div>
+              <div class="frag-chips">
+                <span class="chip"><svg viewBox="0 0 12 12"><path d="M2 5.5V5a2 2 0 0 1 2-2h5.5M8 1.5L9.5 3 8 4.5M10 6.5V7a2 2 0 0 1-2 2H2.5M4 10.5L2.5 9 4 7.5"/></svg>Every day</span>
+                <span class="chip"><svg viewBox="0 0 12 12"><path d="M3 8.5V5.5a3 3 0 0 1 6 0v3l1 1H2zM5 10.5a1 1 0 0 0 2 0"/></svg>Today 7:00 AM</span>
+              </div>
+            </div>
+          </li>
+
+          <li class="spec-row">
+            <div class="spec-text">
+              <h3>A summary to start the day</h3>
+              <p>Turn on the morning summary and get one notification at the time you pick, listing what’s left to do.</p>
+            </div>
+            <div class="spec-visual">
+              <div class="notif">
+                <img src="assets/taskpop-icon.png" alt="" width="30" height="30">
+                <div class="notif-body">
+                  <span class="notif-app">TaskPop</span>
+                  <strong>You have 4 tasks today</strong>
+                  <span class="notif-text">Send the weekly report, Book dentist, Pay the electricity bill and 1 more</span>
+                </div>
+                <span class="notif-time">9:00 AM</span>
+              </div>
+            </div>
+          </li>
+
+          <li class="spec-row">
+            <div class="spec-text">
+              <h3>Fast with the keyboard</h3>
+              <p>Move with the arrow keys, tick with Space, edit with Return, delete with Backspace, and undo with Command-Z. Drag tasks to reorder them.</p>
+            </div>
+            <div class="spec-visual keys small">
+              <kbd class="key">↑</kbd><kbd class="key">↓</kbd><kbd class="key wide">Space</kbd><kbd class="key wide">Return</kbd><kbd class="key">⌘Z</kbd>
+            </div>
+          </li>
+
+          <li class="spec-row">
+            <div class="spec-text">
+              <h3>Fits the way you work</h3>
+              <p>Put the panel on the left or right, make it wider, choose light or dark, and decide whether it hides when you click away.</p>
+            </div>
+            <div class="spec-visual">
+              <div class="segmented" aria-hidden="true"><span>Left</span><span class="active">Right</span></div>
+              <div class="segmented" aria-hidden="true"><span>System</span><span class="active">Light</span><span>Dark</span></div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= Privacy ================= -->
+    <section class="privacy wrap" aria-labelledby="privacy-title">
+      <div class="privacy-card">
+        <div class="privacy-copy">
+          <h2 id="privacy-title">Your tasks stay on your Mac.</h2>
+          <p>There’s no account to create and nothing is sent to a server. TaskPop saves every change on your Mac, keeps a backup of the previous save, and lets you export your list to a file whenever you want.</p>
+        </div>
+        <ul class="privacy-list">
+          <li>No sign-up</li>
+          <li>No cloud</li>
+          <li>No tracking</li>
+          <li>Automatic backup</li>
+          <li>Export and import</li>
+        </ul>
+        <p class="path">Saved in <code>~/Library/Application Support/TaskPop</code></p>
+      </div>
+    </section>
+
+    <!-- ================= Install ================= -->
+    <section class="install wrap" id="install" aria-labelledby="install-title">
+      <h2 id="install-title">Installed in about a minute.</h2>
+      <ol class="steps">
+        <li>
+          <h3>Download the installer</h3>
+          <p>Choose the version for your Mac below and open the downloaded disk image.</p>
+        </li>
+        <li>
+          <h3>Open “Install TaskPop”</h3>
+          <p>Double-click the installer. Because TaskPop isn’t from the App Store, macOS asks you to confirm it the first time.</p>
+        </li>
+        <li>
+          <h3>Confirm once in System Settings</h3>
+          <p>Go to Privacy &amp; Security, scroll down and click <strong>Open Anyway</strong>. Then follow the installer.</p>
+        </li>
+        <li>
+          <h3>Look up at your menu bar</h3>
+          <p>TaskPop opens as soon as it’s installed and starts with your Mac from then on. Press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> any time.</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ================= Download ================= -->
+    <section class="download" id="download" aria-labelledby="download-title">
+      <div class="wrap download-inner">
+        <img class="download-icon" src="assets/taskpop-icon.png" alt="TaskPop app icon" width="112" height="112">
+        <h2 id="download-title">Download TaskPop</h2>
+        <p class="download-sub">Version 1.2.0. Requires macOS 13 Ventura or later.</p>
+
+        <div class="builds">
+          <a class="build" href="#download" data-build="appleSilicon" id="build-appleSilicon">
+            <span class="build-badge" hidden>Recommended for this Mac</span>
+            <span class="build-name">Apple Silicon</span>
+            <span class="build-desc">Macs with an M1 chip or newer</span>
+            <span class="build-cta">Download .dmg</span>
+          </a>
+          <a class="build" href="#download" data-build="intel" id="build-intel">
+            <span class="build-badge" hidden>Recommended for this Mac</span>
+            <span class="build-name">Intel</span>
+            <span class="build-desc">Macs with an Intel processor</span>
+            <span class="build-cta">Download .dmg</span>
+          </a>
+        </div>
+        <p class="download-note" id="downloadNote" role="status" aria-live="polite"></p>
+
+        <details class="which-mac">
+          <summary>Not sure which Mac you have?</summary>
+          <p>Click the Apple menu in the top-left corner and choose <strong>About This Mac</strong>. If it says <strong>Chip: Apple M1</strong> (or M2, M3, M4…), download Apple Silicon. If it says <strong>Processor: Intel</strong>, download Intel.</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- ================= FAQ ================= -->
+    <section class="faq wrap" id="faq" aria-labelledby="faq-title">
+      <h2 id="faq-title">Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Why does macOS ask me to confirm the installer?</summary>
+          <p>TaskPop isn’t distributed through the Mac App Store, so macOS asks you to confirm it the first time. Open System Settings, go to Privacy &amp; Security, scroll down and click Open Anyway. You only need to do this once.</p>
+        </details>
+        <details>
+          <summary>Which Macs does TaskPop work on?</summary>
+          <p>Any Mac running macOS 13 Ventura or later. There are separate downloads for Apple Silicon (M1 and newer) and Intel Macs.</p>
+        </details>
+        <details>
+          <summary>Where are my tasks saved?</summary>
+          <p>Only on your Mac, in the TaskPop folder inside Application Support. Every change is saved straight away with a backup of the previous version. You can export your tasks to a file from Settings.</p>
+        </details>
+        <details>
+          <summary>Can I change the keyboard shortcut?</summary>
+          <p>Yes. Open Settings from the menu bar icon, click the shortcut and press the keys you want to use.</p>
+        </details>
+        <details>
+          <summary>Will it pop up every time I unlock my Mac?</summary>
+          <p>By default it appears when you open the lid and when you unlock the screen. You can turn either of these off in Settings.</p>
+        </details>
+        <details>
+          <summary>Does it sync between Macs?</summary>
+          <p>No, your tasks stay on the Mac you use. To move them to another Mac, export them from Settings and import the file there.</p>
+        </details>
+        <details>
+          <summary>How do I update TaskPop?</summary>
+          <p>Download the newest version and run the installer. It replaces the old version and keeps your tasks and settings.</p>
+        </details>
+        <details>
+          <summary>How do I uninstall it?</summary>
+          <p>Click the TaskPop icon in the menu bar, turn off Open at Login and choose Quit. Then drag TaskPop from Applications to the Trash. To remove your tasks too, delete the TaskPop folder in ~/Library/Application Support.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div class="footer-brand">
+        <img src="assets/taskpop-icon.png" alt="" width="26" height="26">
+        <span>TaskPop</span>
+      </div>
+      <p>Developed by <a href="https://asmlab.agency" rel="noopener">asmlab</a>. © <span id="year">2026</span> TaskPop.</p>
+    </div>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
