@@ -3,8 +3,8 @@
    (for example GitHub Release asset links). Leave empty until ready.
    ============================================================ */
 const DOWNLOADS = {
-  appleSilicon: '',
-  intel: '',
+  appleSilicon: 'https://github.com/asmrayat/Task-pop/releases/download/v1.2.0/TaskPop-1.2.0-AppleSilicon.dmg',
+  intel: 'https://github.com/asmrayat/Task-pop/releases/download/v1.2.0/TaskPop-1.2.0-Intel.dmg',
 };
 
 (() => {
