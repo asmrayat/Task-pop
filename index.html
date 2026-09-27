@@ -54,10 +54,11 @@
         <h1>Your to-do list, there when you open your Mac.</h1>
         <p class="lede">TaskPop slides in from the side of your screen every time you open your MacBook’s lid. Tick things off, set a reminder, and get back to work.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#download">Download for Mac</a>
+          <a class="btn btn-primary mac-download" href="https://github.com/asmrayat/Task-pop/releases/download/v1.4.0/TaskPop-1.4.0.dmg">Download for Mac</a>
+          <a class="btn btn-quiet win-download" href="https://github.com/asmrayat/Task-pop/releases/download/v1.4.0/TaskPop-Setup-1.4.0.exe">Download for Windows</a>
           <a class="btn btn-quiet" href="#features">See what it does</a>
         </div>
-        <p class="fineprint">For macOS 13 Ventura or later, on Apple Silicon and Intel Macs.</p>
+        <p class="fineprint">macOS 13 Ventura or later, Apple Silicon and Intel. Also on Windows 10 and 11.</p>
       </div>
 
       <div class="hero-demo">
@@ -246,19 +247,19 @@
       <ol class="steps">
         <li>
           <h3>Download the installer</h3>
-          <p>Choose the version for your Mac below and open the downloaded disk image.</p>
+          <p>Choose macOS or Windows below. The Mac file is one installer for Apple Silicon and Intel.</p>
         </li>
         <li>
-          <h3>Open “Install TaskPop”</h3>
-          <p>Double-click the installer. Because TaskPop isn’t from the App Store, macOS asks you to confirm it the first time.</p>
+          <h3>Open the installer</h3>
+          <p>On a Mac, open the disk image and double-click <strong>Install TaskPop</strong>. On Windows, run the <strong>.exe</strong> and follow the steps.</p>
         </li>
         <li>
-          <h3>Confirm once in System Settings</h3>
-          <p>Go to Privacy &amp; Security, scroll down and click <strong>Open Anyway</strong>. Then follow the installer.</p>
+          <h3>Allow it once on a Mac</h3>
+          <p>macOS blocks apps that aren’t from the App Store. Open <strong>System Settings → Privacy &amp; Security</strong>, scroll down, click <strong>Open Anyway</strong>, then confirm.</p>
         </li>
         <li>
-          <h3>Look up at your menu bar</h3>
-          <p>TaskPop opens as soon as it’s installed and starts with your Mac from then on. Press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> any time.</p>
+          <h3>Start using it</h3>
+          <p>On a Mac, TaskPop appears in the menu bar. Press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> any time. On Windows it opens after setup finishes.</p>
         </li>
       </ol>
     </section>
@@ -268,28 +269,23 @@
       <div class="wrap download-inner">
         <img class="download-icon" src="assets/taskpop-icon.png" alt="TaskPop app icon" width="112" height="112">
         <h2 id="download-title">Download TaskPop</h2>
-        <p class="download-sub">Version 1.2.0. Requires macOS 13 Ventura or later.</p>
+        <p class="download-sub">Version 1.4.0. One Mac installer for Apple Silicon and Intel, plus a Windows installer.</p>
 
         <div class="builds">
-          <a class="build" href="#download" data-build="appleSilicon" id="build-appleSilicon">
-            <span class="build-badge" hidden>Recommended for this Mac</span>
-            <span class="build-name">Apple Silicon</span>
-            <span class="build-desc">Macs with an M1 chip or newer</span>
+          <a class="build mac-download" href="https://github.com/asmrayat/Task-pop/releases/download/v1.4.0/TaskPop-1.4.0.dmg" data-build="macos" id="build-macos">
+            <span class="build-badge" hidden>Recommended for this computer</span>
+            <span class="build-name">macOS</span>
+            <span class="build-desc">Apple Silicon and Intel. macOS 13 or later.</span>
             <span class="build-cta">Download .dmg</span>
           </a>
-          <a class="build" href="#download" data-build="intel" id="build-intel">
-            <span class="build-badge" hidden>Recommended for this Mac</span>
-            <span class="build-name">Intel</span>
-            <span class="build-desc">Macs with an Intel processor</span>
-            <span class="build-cta">Download .dmg</span>
+          <a class="build win-download" href="https://github.com/asmrayat/Task-pop/releases/download/v1.4.0/TaskPop-Setup-1.4.0.exe" data-build="windows" id="build-windows">
+            <span class="build-badge" hidden>Recommended for this computer</span>
+            <span class="build-name">Windows</span>
+            <span class="build-desc">Windows 10 and 11.</span>
+            <span class="build-cta">Download .exe</span>
           </a>
         </div>
         <p class="download-note" id="downloadNote" role="status" aria-live="polite"></p>
-
-        <details class="which-mac">
-          <summary>Not sure which Mac you have?</summary>
-          <p>Click the Apple menu in the top-left corner and choose <strong>About This Mac</strong>. If it says <strong>Chip: Apple M1</strong> (or M2, M3, M4…), download Apple Silicon. If it says <strong>Processor: Intel</strong>, download Intel.</p>
-        </details>
       </div>
     </section>
 
@@ -299,11 +295,11 @@
       <div class="faq-list">
         <details>
           <summary>Why does macOS ask me to confirm the installer?</summary>
-          <p>TaskPop isn’t distributed through the Mac App Store, so macOS asks you to confirm it the first time. Open System Settings, go to Privacy &amp; Security, scroll down and click Open Anyway. You only need to do this once.</p>
+          <p>TaskPop isn’t distributed through the Mac App Store, so macOS treats it as an app from an unidentified developer. After you open the installer, go to System Settings → Privacy &amp; Security, scroll down and click Open Anyway. Confirm the prompt. You only need to do this once.</p>
         </details>
         <details>
-          <summary>Which Macs does TaskPop work on?</summary>
-          <p>Any Mac running macOS 13 Ventura or later. There are separate downloads for Apple Silicon (M1 and newer) and Intel Macs.</p>
+          <summary>Which computers does TaskPop work on?</summary>
+          <p>Any Mac running macOS 13 Ventura or later — Apple Silicon and Intel use the same download — and PCs running Windows 10 or 11.</p>
         </details>
         <details>
           <summary>Where are my tasks saved?</summary>
@@ -320,6 +316,10 @@
         <details>
           <summary>Does it sync between Macs?</summary>
           <p>No, your tasks stay on the Mac you use. To move them to another Mac, export them from Settings and import the file there.</p>
+        </details>
+        <details>
+          <summary>Does it work on Windows?</summary>
+          <p>Yes. Download the Windows installer, run the .exe, and follow the setup steps. If Windows shows a SmartScreen warning, choose More info and then Run anyway.</p>
         </details>
         <details>
           <summary>How do I update TaskPop?</summary>
@@ -342,6 +342,40 @@
       <p>Developed by <a href="https://asmlab.agency" rel="noopener">asmlab</a>. © <span id="year">2026</span> TaskPop.</p>
     </div>
   </footer>
+
+  <dialog class="setup-dialog" id="macSetup" aria-labelledby="macSetupTitle">
+    <form method="dialog" class="setup-card">
+      <button class="setup-close" type="submit" aria-label="Close setup guide">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+      </button>
+      <p class="setup-kicker">Your Mac download has started</p>
+      <h2 id="macSetupTitle">How to install TaskPop on macOS</h2>
+      <p class="setup-lead">macOS will show a security warning because TaskPop is not from the App Store. Follow these steps once.</p>
+      <ol class="setup-steps">
+        <li>
+          <strong>Open the downloaded file</strong>
+          Find <span>TaskPop-1.4.0.dmg</span> in Downloads and double-click it. Then double-click <strong>Install TaskPop</strong>.
+        </li>
+        <li>
+          <strong>If you see “Apple cannot check it for malicious software”</strong>
+          Click <strong>OK</strong> or <strong>Done</strong> on that warning. This is normal for apps that are not in the Mac App Store.
+        </li>
+        <li>
+          <strong>Open Privacy &amp; Security</strong>
+          Go to the Apple menu → <strong>System Settings</strong> → <strong>Privacy &amp; Security</strong>. Scroll to the Security section at the bottom.
+        </li>
+        <li>
+          <strong>Click Open Anyway</strong>
+          You should see a note that TaskPop was blocked. Click <strong>Open Anyway</strong>, enter your password or use Touch ID, then click <strong>Open</strong>.
+        </li>
+        <li>
+          <strong>Finish the installer</strong>
+          Follow the remaining installer screens. TaskPop opens in the menu bar when it is done. Press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> any time.
+        </li>
+      </ol>
+      <button class="btn btn-primary setup-done" type="submit">Got it</button>
+    </form>
+  </dialog>
 
   <script src="script.js" defer></script>
 </body>

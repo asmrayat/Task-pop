@@ -1,10 +1,10 @@
 /* ============================================================
-   Download links – paste the .dmg URLs for each build here
+   Download links – paste the installer URLs for each platform
    (for example GitHub Release asset links). Leave empty until ready.
    ============================================================ */
 const DOWNLOADS = {
-  appleSilicon: 'https://github.com/asmrayat/Task-pop/releases/download/v1.2.0/TaskPop-1.2.0-AppleSilicon.dmg',
-  intel: 'https://github.com/asmrayat/Task-pop/releases/download/v1.2.0/TaskPop-1.2.0-Intel.dmg',
+  macos: 'https://github.com/asmrayat/Task-pop/releases/download/v1.4.0/TaskPop-1.4.0.dmg',
+  windows: 'https://github.com/asmrayat/Task-pop/releases/download/v1.4.0/TaskPop-Setup-1.4.0.exe',
 };
 
 (() => {
@@ -258,11 +258,24 @@ const DOWNLOADS = {
 
   /* ---------- Downloads ---------- */
   const note = document.getElementById('downloadNote');
-  document.querySelectorAll('.build').forEach((link) => {
-    const url = DOWNLOADS[link.dataset.build];
+  const macSetup = document.getElementById('macSetup');
+  const setDownloadUrl = (link, url) => {
+    if (!url) return;
+    link.href = url;
+    link.setAttribute('download', '');
+  };
+
+  const openMacSetup = () => {
+    if (!macSetup || typeof macSetup.showModal !== 'function') return;
+    if (macSetup.open) return;
+    macSetup.showModal();
+  };
+
+  document.querySelectorAll('[data-build], .mac-download, .win-download').forEach((link) => {
+    const build = link.dataset.build || (link.classList.contains('mac-download') ? 'macos' : 'windows');
+    const url = DOWNLOADS[build];
     if (url) {
-      link.href = url;
-      link.setAttribute('download', '');
+      setDownloadUrl(link, url);
     } else {
       link.addEventListener('click', (e) => {
         e.preventDefault();
@@ -271,29 +284,26 @@ const DOWNLOADS = {
     }
   });
 
-  // Best-effort guess of the visitor's chip (Chromium browsers report it; Safari doesn't).
-  const recommend = (build) => {
-    const link = document.getElementById(`build-${build}`);
-    if (!link) return;
-    link.classList.add('recommended');
-    link.querySelector('.build-badge').hidden = false;
-  };
-  const isMac = /Macintosh|Mac OS X/.test(navigator.userAgent);
-  if (isMac && navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
-    navigator.userAgentData.getHighEntropyValues(['architecture'])
-      .then((v) => {
-        if (v.architecture === 'arm') recommend('appleSilicon');
-        else if (v.architecture === 'x86') recommend('intel');
-      })
-      .catch(() => {});
-  } else if (isMac) {
-    try {
-      const gl = document.createElement('canvas').getContext('webgl');
-      const info = gl && gl.getExtension('WEBGL_debug_renderer_info');
-      const renderer = info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : '';
-      if (/Apple M\d/i.test(renderer)) recommend('appleSilicon');
-    } catch (_) {
-      // No hint available – both options stay equal.
-    }
+  document.querySelectorAll('.mac-download').forEach((link) => {
+    link.addEventListener('click', () => {
+      window.setTimeout(openMacSetup, 80);
+    });
+  });
+
+  if (macSetup) {
+    macSetup.addEventListener('click', (e) => {
+      if (e.target === macSetup) macSetup.close();
+    });
   }
+
+  const recommend = (build) => {
+    const card = document.getElementById(`build-${build}`);
+    if (!card) return;
+    card.classList.add('recommended');
+    const badge = card.querySelector('.build-badge');
+    if (badge) badge.hidden = false;
+  };
+  const ua = navigator.userAgent;
+  if (/Windows/i.test(ua)) recommend('windows');
+  else if (/Macintosh|Mac OS X/i.test(ua)) recommend('macos');
 })();
