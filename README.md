@@ -10,23 +10,13 @@ assets/         app icon, favicon, social share image, font (Instrument Sans, OF
 vercel.json     caching + security headers
 ```
 
-## Add the download links
+## Downloads
 
-Open `script.js` and paste the `.dmg` URLs at the top:
+The download buttons point at the latest GitHub release:
 
-```js
-const DOWNLOADS = {
-  appleSilicon: 'https://…/TaskPop-1.2.0-AppleSilicon.dmg',
-  intel: 'https://…/TaskPop-1.2.0-Intel.dmg',
-};
-```
+https://github.com/asmrayat/Task-pop/releases/latest
 
-Until they're filled in, the download buttons show "The download will be available here very soon."
-
-The DMGs are about 130 MB each, so host them on GitHub Releases (like TapLaunch)
-rather than inside this site, and paste the release asset links above.
-
-When you release a new version, also update the "Version 1.2.0" line in `index.html`.
+The page also asks GitHub which file is the Mac installer and which is the Windows installer, then starts that download. Publish a newer release and the site offers it without another edit. Pre-releases are left out. If GitHub can’t be reached, the buttons still open the latest release page.
 
 ## Deploy to Vercel
 

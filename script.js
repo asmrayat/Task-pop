@@ -1,11 +1,8 @@
-/* ============================================================
-   Download links – paste the installer URLs for each platform
-   (for example GitHub Release asset links). Leave empty until ready.
-   ============================================================ */
-const DOWNLOADS = {
-  macos: 'https://github.com/asmrayat/Task-pop/releases/download/v1.4.0/TaskPop-1.4.0.dmg',
-  windows: 'https://github.com/asmrayat/Task-pop/releases/download/v1.4.0/TaskPop-Setup-1.4.0.exe',
-};
+/* Latest GitHub release. The page asks GitHub which file is the
+   Mac installer and which is the Windows installer, so a new
+   release is offered without editing this site. */
+const RELEASES_LATEST = 'https://github.com/asmrayat/Task-pop/releases/latest';
+const RELEASES_API = 'https://api.github.com/repos/asmrayat/Task-pop/releases/latest';
 
 (() => {
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -259,10 +256,15 @@ const DOWNLOADS = {
   /* ---------- Downloads ---------- */
   const note = document.getElementById('downloadNote');
   const macSetup = document.getElementById('macSetup');
+  const downloadSub = document.getElementById('downloadSub');
+  const macDmgName = document.getElementById('macDmgName');
+
+  const isInstaller = (url) => /\.(dmg|exe)(\?|$)/i.test(url);
+
   const setDownloadUrl = (link, url) => {
     if (!url) return;
     link.href = url;
-    link.setAttribute('download', '');
+    if (isInstaller(url)) link.setAttribute('download', '');
   };
 
   const openMacSetup = () => {
@@ -272,23 +274,49 @@ const DOWNLOADS = {
   };
 
   document.querySelectorAll('[data-build], .mac-download, .win-download').forEach((link) => {
-    const build = link.dataset.build || (link.classList.contains('mac-download') ? 'macos' : 'windows');
-    const url = DOWNLOADS[build];
-    if (url) {
-      setDownloadUrl(link, url);
-    } else {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        note.textContent = 'The download will be available here very soon.';
-      });
-    }
+    if (!link.getAttribute('href')) link.href = RELEASES_LATEST;
   });
 
   document.querySelectorAll('.mac-download').forEach((link) => {
     link.addEventListener('click', () => {
+      if (!/\.dmg(\?|$)/i.test(link.href)) return;
       window.setTimeout(openMacSetup, 80);
     });
   });
+
+  const installerAsset = (assets, extension) => (assets || []).find((asset) => (
+    asset
+    && asset.state !== 'starter'
+    && typeof asset.name === 'string'
+    && asset.name.toLowerCase().endsWith(extension)
+    && typeof asset.browser_download_url === 'string'
+  ));
+
+  const applyLatestRelease = (release) => {
+    if (!release || release.draft || release.prerelease) return;
+    const dmg = installerAsset(release.assets, '.dmg');
+    const exe = installerAsset(release.assets, '.exe');
+    document.querySelectorAll('.mac-download').forEach((link) => {
+      if (dmg) setDownloadUrl(link, dmg.browser_download_url);
+    });
+    document.querySelectorAll('.win-download').forEach((link) => {
+      if (exe) setDownloadUrl(link, exe.browser_download_url);
+    });
+    const version = String(release.tag_name || release.name || '').replace(/^v/i, '');
+    if (version && downloadSub) {
+      downloadSub.textContent = `Version ${version}. One Mac installer for Apple Silicon and Intel, plus a Windows installer.`;
+    }
+    if (dmg && macDmgName) macDmgName.textContent = dmg.name;
+  };
+
+  fetch(RELEASES_API, { headers: { Accept: 'application/vnd.github+json' } })
+    .then((response) => (response.ok ? response.json() : null))
+    .then(applyLatestRelease)
+    .catch(() => {
+      if (note && !note.textContent) {
+        note.textContent = 'Couldn’t check GitHub just now. The buttons still open the latest release.';
+      }
+    });
 
   if (macSetup) {
     macSetup.addEventListener('click', (e) => {

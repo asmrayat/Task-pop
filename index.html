@@ -54,8 +54,8 @@
         <h1>Your to-do list, there when you start your computer.</h1>
         <p class="lede">TaskPop slides in from the side of your screen when you start your computer. Tick things off, set a reminder, and get back to work.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary mac-download" href="https://github.com/asmrayat/Task-pop/releases/download/v1.4.0/TaskPop-1.4.0.dmg">Download for Mac</a>
-          <a class="btn btn-quiet win-download" href="https://github.com/asmrayat/Task-pop/releases/download/v1.4.0/TaskPop-Setup-1.4.0.exe">Download for Windows</a>
+          <a class="btn btn-primary mac-download" href="https://github.com/asmrayat/Task-pop/releases/latest">Download for Mac</a>
+          <a class="btn btn-quiet win-download" href="https://github.com/asmrayat/Task-pop/releases/latest">Download for Windows</a>
           <a class="btn btn-quiet" href="#features">See what it does</a>
         </div>
         <p class="fineprint">For macOS 13 Ventura or later, and Windows 10 and 11.</p>
@@ -269,16 +269,16 @@
       <div class="wrap download-inner">
         <img class="download-icon" src="assets/taskpop-icon.png" alt="TaskPop app icon" width="112" height="112">
         <h2 id="download-title">Download TaskPop</h2>
-        <p class="download-sub">Version 1.4.0. One Mac installer for Apple Silicon and Intel, plus a Windows installer.</p>
+        <p class="download-sub" id="downloadSub">One Mac installer for Apple Silicon and Intel, plus a Windows installer.</p>
 
         <div class="builds">
-          <a class="build mac-download" href="https://github.com/asmrayat/Task-pop/releases/download/v1.4.0/TaskPop-1.4.0.dmg" data-build="macos" id="build-macos">
+          <a class="build mac-download" href="https://github.com/asmrayat/Task-pop/releases/latest" data-build="macos" id="build-macos">
             <span class="build-badge" hidden>Recommended for this computer</span>
             <span class="build-name">macOS</span>
             <span class="build-desc">Apple Silicon and Intel. macOS 13 or later.</span>
             <span class="build-cta">Download .dmg</span>
           </a>
-          <a class="build win-download" href="https://github.com/asmrayat/Task-pop/releases/download/v1.4.0/TaskPop-Setup-1.4.0.exe" data-build="windows" id="build-windows">
+          <a class="build win-download" href="https://github.com/asmrayat/Task-pop/releases/latest" data-build="windows" id="build-windows">
             <span class="build-badge" hidden>Recommended for this computer</span>
             <span class="build-name">Windows</span>
             <span class="build-desc">Windows 10 and 11.</span>
@@ -323,7 +323,7 @@
         </details>
         <details>
           <summary>How do I update TaskPop?</summary>
-          <p>Download the newest version and run the installer. It replaces the old version and keeps your tasks and settings.</p>
+          <p>TaskPop checks for a new version on its own, shortly after you open it and again every few hours. You’ll see a notification, an Update button at the top of the task panel, and an Update item in the menu bar or tray menu. On a Mac you enter your password once, then TaskPop installs and reopens. On Windows it closes, updates, and reopens with no extra prompts. Your tasks and settings stay. If your copy is older and has no updater, download the newest installer from this page once.</p>
         </details>
         <details>
           <summary>How do I uninstall it?</summary>
@@ -354,7 +354,7 @@
       <ol class="setup-steps">
         <li>
           <strong>Open the downloaded file</strong>
-          Find <span>TaskPop-1.4.0.dmg</span> in Downloads and double-click it. Then double-click <strong>Install TaskPop</strong>.
+          Find <span id="macDmgName">the TaskPop disk image</span> in Downloads and double-click it. Then double-click <strong>Install TaskPop</strong>.
         </li>
         <li>
           <strong>If you see “Apple cannot check it for malicious software”</strong>
