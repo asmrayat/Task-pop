@@ -3,6 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script>
+    (function () {
+      var ua = navigator.userAgent || '';
+      var apple = /iPhone|iPad|iPod|Macintosh|Mac OS X/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      var os = /Windows/i.test(ua) ? 'windows' : (apple ? 'macos' : '');
+      if (os) document.documentElement.setAttribute('data-os', os);
+    })();
+  </script>
   <title>TaskPop – Your to-do list, there when you start your computer</title>
   <meta name="description" content="TaskPop slides your to-do list in from the side of the screen when you start your computer. Reminders, daily routines, Google Calendar, and a keyboard shortcut. Your tasks stay on your device.">
   <meta name="theme-color" content="#F4F7F5">
@@ -294,13 +302,13 @@
 
         <div class="builds">
           <a class="build mac-download" href="https://github.com/asmrayat/Task-pop/releases/latest" data-build="macos" id="build-macos">
-            <span class="build-badge" hidden>Recommended for this computer</span>
+            <span class="build-badge">Recommended for this computer</span>
             <span class="build-name">macOS</span>
             <span class="build-desc">Apple Silicon and Intel. macOS 13 or later.</span>
             <span class="build-cta">Download .dmg</span>
           </a>
           <a class="build win-download" href="https://github.com/asmrayat/Task-pop/releases/latest" data-build="windows" id="build-windows">
-            <span class="build-badge" hidden>Recommended for this computer</span>
+            <span class="build-badge">Recommended for this computer</span>
             <span class="build-name">Windows</span>
             <span class="build-desc">Windows 10 and 11.</span>
             <span class="build-cta">Download .exe</span>

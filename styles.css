@@ -182,6 +182,22 @@ kbd {
   max-width: 28ch;
 }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+html[data-os="windows"] .hero-actions .win-download { order: -1; }
+html[data-os="windows"] .hero-actions .mac-download {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink);
+}
+html[data-os="windows"] .hero-actions .mac-download:hover {
+  border-color: var(--ink);
+  background: transparent;
+}
+html[data-os="windows"] .hero-actions .win-download {
+  background: var(--blue);
+  border-color: transparent;
+  color: #fff;
+}
+html[data-os="windows"] .hero-actions .win-download:hover { background: var(--blue-press); }
 .fineprint { margin-top: 18px; font-size: 0.9rem; color: var(--muted); }
 
 .hero-demo { display: flex; flex-direction: column; align-items: center; gap: 18px; }
@@ -736,8 +752,12 @@ kbd {
   transition: border-color 0.15s;
 }
 .build:hover { border-color: #86868b; }
-.build.recommended { border-color: var(--blue); background: var(--surface); }
+.build.recommended,
+html[data-os="macos"] #build-macos,
+html[data-os="windows"] #build-windows { border-color: var(--blue); background: var(--surface); }
+html[data-os="windows"] #build-windows { order: -1; }
 .build-badge {
+  display: none;
   position: absolute;
   top: -12px;
   left: 20px;
@@ -748,6 +768,8 @@ kbd {
   padding: 3px 10px;
   border-radius: 999px;
 }
+html[data-os="macos"] #build-macos .build-badge,
+html[data-os="windows"] #build-windows .build-badge { display: inline-block; }
 .build-name { font-size: 1.35rem; font-weight: 640; font-stretch: 88%; letter-spacing: -0.01em; }
 .build-desc { color: var(--muted); font-size: 0.92rem; }
 .build-cta {
@@ -764,7 +786,9 @@ kbd {
 }
 .build-desc { margin-bottom: 16px; }
 .build-cta { margin-top: auto; }
-.build.recommended .build-cta { background: var(--blue); }
+.build.recommended .build-cta,
+html[data-os="macos"] #build-macos .build-cta,
+html[data-os="windows"] #build-windows .build-cta { background: var(--blue); }
 .download-note { min-height: 1.5em; margin-top: 16px; font-size: 0.92rem; color: var(--muted); }
 
 .setup-dialog[open] {

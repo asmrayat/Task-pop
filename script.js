@@ -324,14 +324,24 @@ const RELEASES_API = 'https://api.github.com/repos/asmrayat/Task-pop/releases/la
     });
   }
 
-  const recommend = (build) => {
-    const card = document.getElementById(`build-${build}`);
-    if (!card) return;
-    card.classList.add('recommended');
-    const badge = card.querySelector('.build-badge');
-    if (badge) badge.hidden = false;
-  };
-  const ua = navigator.userAgent;
-  if (/Windows/i.test(ua)) recommend('windows');
-  else if (/Macintosh|Mac OS X/i.test(ua)) recommend('macos');
+  const os = document.documentElement.dataset.os;
+  if (os === 'windows' || os === 'macos') {
+    const hero = document.querySelector('.hero-actions');
+    const primaryBtn = hero.querySelector(os === 'windows' ? '.win-download' : '.mac-download');
+    const secondaryBtn = hero.querySelector(os === 'windows' ? '.mac-download' : '.win-download');
+    primaryBtn.classList.add('btn-primary');
+    primaryBtn.classList.remove('btn-quiet');
+    secondaryBtn.classList.add('btn-quiet');
+    secondaryBtn.classList.remove('btn-primary');
+    hero.insertBefore(primaryBtn, hero.firstElementChild);
+    primaryBtn.after(secondaryBtn);
+
+    const builds = document.querySelector('.builds');
+    const primaryCard = document.getElementById(os === 'windows' ? 'build-windows' : 'build-macos');
+    const secondaryCard = document.getElementById(os === 'windows' ? 'build-macos' : 'build-windows');
+    primaryCard.classList.add('recommended');
+    secondaryCard.classList.remove('recommended');
+    builds.insertBefore(primaryCard, builds.firstElementChild);
+    primaryCard.after(secondaryCard);
+  }
 })();
