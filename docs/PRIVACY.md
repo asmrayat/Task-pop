@@ -7,7 +7,7 @@ TaskPop is a to-do list that keeps your tasks on your computer. It has no accoun
 - It never sends your tasks, notes or settings anywhere.
 - It never records what you type. The double-tap only reads whether the modifier keys (Control, Option or Alt, Command or the Windows key, Shift) are held down, plus a running count of other key presses and mouse clicks so that shortcuts like ⌘C don't count as taps. Which keys you pressed is never read or kept.
 - It never signs in to Google or any other service.
-- It has no crash reporting, usage statistics or "phone home" of any kind.
+- It has no crash reporting, usage statistics or "phone home" of any kind. The double-tap report in **Settings → Help** is only made when you click **Copy report**, and only goes to your clipboard.
 
 ## When it goes online
 

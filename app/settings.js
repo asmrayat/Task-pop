@@ -220,6 +220,13 @@ function renderDoubleTap() {
       allow.hidden = false;
       restart.hidden = false;
     }
+  } else if (d.status === 'limited') {
+    // v1.6.8: the keys can be read, but macOS doesn't recognise TaskPop under Input Monitoring
+    dot = 'amber';
+    title = 'Allow TaskPop again to hear every double-tap';
+    detail = 'After an update, macOS may stop recognising TaskPop under Input Monitoring, and then a double-tap can be missed while another app is busy. Click Allow, switch TaskPop off and on in that list, then restart TaskPop.';
+    allow.hidden = false;
+    restart.hidden = false;
   } else if (d.status === 'unavailable') {
     dot = 'red';
     title = 'Double-tap isn’t available on this Mac';
@@ -452,6 +459,12 @@ document.getElementById('calendarDuration').addEventListener('change', (e) => up
 })();
 document.getElementById('doubleTapAllow').addEventListener('click', () => api.allowKeys());
 document.getElementById('tourBtn').addEventListener('click', () => api.showTour());
+document.getElementById('reportBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('reportBtn');
+  const text = await api.copyDoubleTapReport();
+  btn.textContent = text ? 'Copied' : 'Couldn’t copy';
+  setTimeout(() => { btn.textContent = 'Copy report'; }, 2000);
+});
 document.getElementById('doubleTapRestart').addEventListener('click', () => api.restart());
 
 // Pressing keys in this window lets TaskPop confirm that macOS shows it the key state.

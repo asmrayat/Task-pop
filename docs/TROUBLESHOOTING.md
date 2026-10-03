@@ -11,7 +11,10 @@ The common problems and their fixes. If yours isn't here, see [SUPPORT.md](../SU
 - **Mac: check the status line under the setting.**
   - **macOS is blocking the double-tap** means TaskPop isn't allowed under **System Settings → Privacy & Security → Input Monitoring**. Click **Allow**, turn on **TaskPop** in the list, then click **Restart TaskPop**.
   - If TaskPop is switched on in that list and it still says it's blocked, select TaskPop there, remove it with **−**, then click **Allow** in TaskPop again and switch it back on. This clears a stale entry left by an older copy.
+  - **Allow TaskPop again to hear every double-tap** (an orange dot) means macOS no longer recognises TaskPop under Input Monitoring, which can happen after an update. The double-tap still works most of the time, but can be missed while another app is busy. Click **Allow**, switch **TaskPop** off and on in that list, then click **Restart TaskPop**.
   - **Double-tap isn't available on this Mac** means macOS didn't let TaskPop read the keys at all. Use the keyboard shortcut instead.
+- **It only fails while another app is open (a video player, for example):** update to TaskPop 1.6.8 or newer, which hears the keys as macOS reports them instead of only checking them, so a busy or background TaskPop doesn't miss a quick double-tap.
+- **Still not working?** Open **Settings → Help → Double-tap report**, click **Copy report**, and paste it into a [bug report](https://github.com/asmrayat/Task-pop/issues/new?template=bug_report.yml). It has only counts and timings, never what you typed.
 - **The keyboard shortcut and the menu bar or tray icon always work**, even when the double-tap doesn't.
 
 ## The keyboard shortcut does nothing

@@ -8,9 +8,11 @@ TaskPop asks for as little as it can. Here is everything it may ask for, why, an
 
 **Where:** System Settings → Privacy & Security → Input Monitoring
 
-**Why:** to notice a quick double-tap of Control, Option, Command or Shift while you're in another app, macOS has to let TaskPop see whether those keys are held down. TaskPop reads exactly two things: which of those modifier keys are down right now, and a running count of other key presses (so that ⌘C or ⌃A isn't mistaken for a tap). It never reads which other keys you press, and nothing is recorded or sent anywhere. The [code that does this](../app/doubletap.js) is short and commented.
+**Why:** to notice a quick double-tap of Control, Option, Command or Shift while you're in another app, macOS has to let TaskPop see whether those keys are held down. TaskPop reads exactly two things: which of those modifier keys are down, and a running count of other key presses and clicks (so that ⌘C or ⌃A isn't mistaken for a tap). macOS tells TaskPop each time a modifier key changes, through a listen-only event tap that can't change or block anything, and TaskPop also checks the keys every few milliseconds in case those events stop. It never reads which other keys you press, and nothing is recorded or sent anywhere. The [code that does this](../app/doubletap.js) is short and commented.
 
 **When it asks:** the welcome tour asks when you choose a double-tap key, and opens the right page in System Settings. Turn on **TaskPop** there. If macOS asks you to quit and reopen TaskPop, choose **Quit & Reopen**.
+
+**After an update:** TaskPop isn't signed with an Apple Developer ID yet, so each version looks new to macOS, and macOS may stop recognising the earlier OK. TaskPop notices, tells you once, and **Settings → General** shows an orange dot with an **Allow** button: switch TaskPop off and on in the Input Monitoring list, then restart it.
 
 **If you say no:** everything else works. Open TaskPop with the keyboard shortcut (⌃⌥T unless you changed it) or the menu bar icon instead, or set **Settings → General → Double-tap to open** to **Off**.
 

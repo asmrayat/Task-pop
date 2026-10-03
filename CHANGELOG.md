@@ -4,7 +4,19 @@ All notable changes to TaskPop are listed here. The format follows [Keep a Chang
 
 Installers for every version are on the [releases page](https://github.com/asmrayat/Task-pop/releases).
 
-## [1.6.7] - 2026-10-03
+## [1.6.8] - 2026-10-03
+
+### Fixed
+
+- Mac: double-tapping the key sometimes did nothing while another app such as VLC was open, even though it worked once TaskPop was in front. TaskPop used to check the keys every few milliseconds, and in the background those checks could run too late to see a quick double-tap. Now macOS tells TaskPop about every change of the modifier keys as it happens (through the same Input Monitoring permission), and TaskPop only falls back to checking if those events ever stop arriving.
+- Mac: App Nap is now also turned off through the Info.plist key macOS actually reads, so TaskPop's timers keep running on time in the background.
+
+### Added
+
+- Mac: if macOS stops recognising TaskPop under Input Monitoring (which can happen after an update, since TaskPop isn't signed with an Apple Developer ID yet), TaskPop says so once, and **Settings → General** shows how to allow it again. As soon as it's allowed, TaskPop starts listening for key events without a restart.
+- **Settings → Help → Double-tap report**: copies a short report of what the double-tap sees (counts and timings only, never which keys were pressed) to paste into a bug report.
+
+## 1.6.7 - 2026-10-03
 
 ### Fixed
 
@@ -104,7 +116,7 @@ The first public release.
 - Export and import your tasks, and delete completed ones automatically after a day or a week.
 - Tasks saved locally the moment they change, with a backup of the previous save.
 
-[1.6.7]: https://github.com/asmrayat/Task-pop/releases/tag/v1.6.7
+[1.6.8]: https://github.com/asmrayat/Task-pop/releases/tag/v1.6.8
 [1.6.6]: https://github.com/asmrayat/Task-pop/releases/tag/v1.6.6
 [1.6.5]: https://github.com/asmrayat/Task-pop/releases/tag/v1.6.5
 [1.6.4]: https://github.com/asmrayat/Task-pop/releases/tag/v1.6.4

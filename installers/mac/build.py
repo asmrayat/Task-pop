@@ -59,7 +59,8 @@ p.update({
     "LSApplicationCategoryType": "public.app-category.productivity", "LSUIElement": True,
     "NSHumanReadableCopyright": "© 2026 asmlab. Developed by asmlab.",
     # Keep TaskPop's timers (double-tap, reminders) running on time while it sits in the background.
-    "NSAppSleepDisabled": True,
+    # LSAppNapIsDisabled is the Info.plist key macOS reads; NSAppSleepDisabled is its older defaults name.
+    "LSAppNapIsDisabled": True, "NSAppSleepDisabled": True,
 })
 # TaskPop uses no camera, microphone or Bluetooth; don't carry the runtime's default permission texts.
 for key in ("ElectronAsarIntegrity", "NSCameraUsageDescription", "NSMicrophoneUsageDescription", "NSAudioCaptureUsageDescription",

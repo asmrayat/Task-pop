@@ -109,6 +109,7 @@ let doubleTapCheck = { flags: null, activity: null, flagMisses: 0 }; // is macOS
 let doubleTapWorked = false;
 let readyAt = 0;
 let lastBlurHideAt = 0;
+let launchedAfterUpdate = false; // this launch is the first one of a newer version
 let winFocus = null; // Windows: helper that gives the panel keyboard focus
 let updater = null;
 const UPDATE_EVERY_MS = 4 * 3600 * 1000; // background check for a new version at most this often
@@ -947,6 +948,15 @@ function startDoubleTap() {
   // Mac checks are nearly free, so look more often there: even a very quick tap is never missed.
   doubleTap = new DoubleTapWatcher(keySource, onDoubleTap, isMac ? 15 : 25);
   applyDoubleTapKey();
+  if (keySource && keySource.listen) setInterval(retryKeyEvents, 5000);
+}
+
+/** Mac: once Input Monitoring is allowed (in the tour or Settings), start listening for key events. */
+function retryKeyEvents() {
+  if (!doubleTap || !doubleTap.timer || doubleTap.endEvents || doubleTap.events.fallbacks > 0) return;
+  if (macAccess() !== true) return;
+  doubleTap.startEvents();
+  if (doubleTap.endEvents) send(settingsWin, 'settings:changed', settingsSnapshot());
 }
 
 function applyDoubleTapKey() {
@@ -961,6 +971,10 @@ function onDoubleTap() {
     doubleTapWorked = true;
     doubleTapCheck.flags = true;
     send(settingsWin, 'settings:changed', settingsSnapshot());
+  }
+  if (!meta.doubleTapUsed) {
+    meta.doubleTapUsed = true; // remembered, so a lost Input Monitoring OK can be pointed out later
+    saveMeta();
   }
   togglePanel();
   send(tourWin, 'tour:double-tap', { shown: isShown });
@@ -1019,8 +1033,37 @@ function doubleTapStatus() {
     }
     return { key, status: 'blocked', allowed };
   }
+  // Mac (v1.6.8): the keys can be read, but macOS doesn't recognise TaskPop under Input Monitoring
+  // (an update gives it a new signature, and macOS may forget the earlier OK). Then it can't
+  // listen for key events and has to fall back on checking, which can miss double-taps.
+  if (isMac && keySource.listen && macAccess() === false) return { key, status: 'limited', allowed: false };
   if (doubleTapWorked || (doubleTapCheck.flags && doubleTapCheck.activity)) return { key, status: 'working' };
   return { key, status: 'ready' };
+}
+
+function macAccess() {
+  try {
+    return keySource ? keySource.hasAccess() : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * Mac: if you've used the double-tap before and macOS no longer recognises TaskPop under Input
+ * Monitoring (typically right after an update), say so once for this version, with the way back.
+ */
+function maybeAskForKeysAgain() {
+  if (!isMac || !(meta.doubleTapUsed || launchedAfterUpdate) || settings.doubleTapKey === 'off') return;
+  if (doubleTapStatus().status !== 'limited' || meta.keysNoticeFor === app.getVersion()) return;
+  if (alive(tourWin) && tourWin.isVisible()) return;
+  meta.keysNoticeFor = app.getVersion();
+  saveMeta();
+  notify({
+    title: 'Allow TaskPop again for the double-tap',
+    body: 'After the update, macOS needs your OK under Input Monitoring again. Click to see how.',
+    onClick: () => openSettings('general'),
+  });
 }
 
 // Settings sends a probe when you press keys there, to confirm macOS lets TaskPop see them.
@@ -1037,6 +1080,47 @@ ipcMain.on('doubletap:probe', (event, kind) => {
   } catch (_) {
     // ignore
   }
+});
+
+/** A short report for bug reports: what the double-tap watcher sees. Counts and timings only. */
+function doubleTapReport() {
+  const w = doubleTap;
+  const status = doubleTapStatus();
+  const stats = w ? w.detector.stats : {};
+  const ev = w ? w.events : {};
+  const ago = (t) => (t ? `${Math.max(0, Math.round((Date.now() - t) / 1000))} s ago` : 'never');
+  let access = 'unknown';
+  try {
+    const allowed = keySource ? keySource.hasAccess() : null;
+    if (allowed === true) access = 'yes';
+    else if (allowed === false) access = 'no';
+  } catch (_) {
+    // unknown
+  }
+  const system = isMac ? `macOS ${process.getSystemVersion()}` : isWin ? `Windows ${os.release()}` : `${process.platform} ${os.release()}`;
+  return [
+    `TaskPop ${app.getVersion()} double-tap report`,
+    `${system} (${process.arch})`,
+    `Key: ${settings.doubleTapKey} · status: ${status.status} · listening by: ${w ? w.mode : 'off'}`,
+    isMac ? `Input Monitoring allowed: ${access}` : null,
+    isMac ? `Key events: ${ev.received || 0} received, last ${ago(ev.lastAt)}, paused ${ev.pauses || 0} times, back to checks ${ev.fallbacks || 0} times` : null,
+    `Checks: every ${w ? w.intervalMs : 0} ms, slowest gap in the last minute ${w ? w.slowest.gap : 0} ms`,
+    `Taps: ${stats.taps || 0} seen, ${stats.doubleTaps || 0} double-taps, ${stats.withOtherKeys || 0} with another key or click, ${stats.heldTooLong || 0} held too long, ${stats.single || 0} with no second tap in time`,
+    `App Nap opt-out: ${w && w.endAwake ? 'on' : 'off'} · screen locked: ${screenLocked ? 'yes' : 'no'}`,
+    'Only counts and timings, never which keys were pressed.',
+  ].filter(Boolean).join('\n');
+}
+
+ipcMain.handle('doubletap:report', async (event) => {
+  if (!(alive(settingsWin) && event.sender === settingsWin.webContents)) return null;
+  const text = doubleTapReport();
+  try {
+    await clipboard.writeText(text); // a promise in Electron 44
+  } catch (err) {
+    console.error('TaskPop: could not copy the report', err);
+    return null;
+  }
+  return text;
 });
 
 ipcMain.handle('doubletap:allow', (event) => {
@@ -1082,7 +1166,10 @@ function startUpdater() {
 
   // First launch after an update: the panel says so. (1.4 didn't record its version.)
   const previous = meta.lastVersion || (meta.firstRunDone ? '1.4.0' : null);
-  if (previous && compareVersions(current, previous) > 0) updater.justUpdated = current;
+  if (previous && compareVersions(current, previous) > 0) {
+    updater.justUpdated = current;
+    launchedAfterUpdate = true;
+  }
   if (meta.lastVersion !== current) {
     meta.lastVersion = current;
     saveMeta();
@@ -1743,6 +1830,7 @@ if (!app.requestSingleInstanceLock()) {
     }
     startDoubleTap();
     startUpdater();
+    setTimeout(maybeAskForKeysAgain, 6000);
 
     powerMonitor.on('suspend', () => {
       screenLocked = true;

@@ -2,9 +2,10 @@
 # Runs TaskPop's tests.
 #
 #   tests/run.sh               unit + app (what CI runs)
-#   tests/run.sh unit          plain Node tests: date parsing, the double-tap detector, App Nap
+#   tests/run.sh unit          plain Node tests: date parsing, the double-tap detector, App Nap,
+#                              the Mac key-event tap
 #   tests/run.sh app           the real app on Linux, made to act as macOS and as Windows, driven
-#                              with real mouse and keyboard input (needs xvfb-run and xdotool)
+#                              with real mouse and keyboard input (needs xvfb-run, xdotool and cc)
 #   tests/run.sh release       the update flows end to end: needs built installers
 #                              (installers/*/out) and root, because stand-ins for macOS's
 #                              hdiutil, osascript and installer are put at their real paths
@@ -59,7 +60,7 @@ app_test() { # name file platform [VAR=value ...]
 for group in $GROUPS_TO_RUN; do
   case $group in
     unit)
-      for t in when-test doubletap-test win-source-test appnap-test; do node_test "$t"; done ;;
+      for t in when-test doubletap-test win-source-test appnap-test eventtap-test; do node_test "$t"; done ;;
     app)
       need_electron
       future=$(python3 tests/app/seed.py regress "$TMP/userdata/regress")
@@ -80,7 +81,15 @@ for group in $GROUPS_TO_RUN; do
       app_test tour-store tour-app win32 TP_MODE=store
       app_test double-tap doubletap-app darwin
       app_test double-tap-blocked doubletap-app darwin TP_MODE=blocked
-      app_test store store-app win32 ;;
+      app_test double-tap-events doubletap-app darwin TP_MODE=events
+      app_test double-tap-stale doubletap-app darwin TP_MODE=stale
+      app_test store store-app win32
+      # the Mac key-event tap through the real koffi, with a stand-in for macOS (needs a C compiler)
+      if cc -shared -fPIC -o "$TMP/libfakemac.so" tests/stubs/fakemac.c -ldl 2>"$LOG/fakemac-build.log"; then
+        app_test event-tap eventtap-app darwin TP_FAKEMAC="$TMP/libfakemac.so"
+      else
+        failed=$((failed + 1)); ran=$((ran + 1)); echo "FAIL  event-tap  could not build tests/stubs/fakemac.c (log: $LOG/fakemac-build.log)"
+      fi ;;
     release)
       [ "$(id -u)" = 0 ] || { echo "the release tests need root (they put stand-ins at /usr/bin/hdiutil etc.)" >&2; exit 2; }
       need_electron

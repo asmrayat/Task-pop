@@ -120,7 +120,10 @@ check('stop() on sleep / lock ends it, start() on wake takes it again', counts.b
 w.start();
 fail = true;
 setTimeout(() => {
-  check('if reading keys fails, watching stops and the opt-out ends too', w.timer === null && counts.begin === 3 && counts.end === 3);
+  check('a few failed reads in a row don\'t stop the watching (v1.6.8)', w.timer !== null && counts.end === 2);
+}, 60);
+setTimeout(() => {
+  check('if reading keys keeps failing, watching stops and the opt-out ends too', w.timer === null && counts.begin === 3 && counts.end === 3);
   const w2 = new DoubleTapWatcher({ ...source, flags: () => 0, keepAwake: () => { throw new Error('no objc'); } }, () => {}, 15);
   w2.setKey('shift');
   check('if macOS refuses, double-tap still runs', w2.timer !== null);
@@ -132,4 +135,4 @@ setTimeout(() => {
   console.error = origError;
   console.log(`${pass}/${total} checks passed`);
   process.exit(pass === total ? 0 : 1);
-}, 60);
+}, 900);

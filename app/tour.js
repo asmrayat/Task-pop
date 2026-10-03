@@ -108,7 +108,8 @@ function renderTryText() {
   const ki = keyInfo(currentKey());
   const d = info.doubleTap || {};
   const text = $('tryText');
-  const blocked = d.status === 'blocked';
+  // 'limited' (v1.6.8): TaskPop can read the keys but macOS hasn't allowed it to listen for them
+  const blocked = d.status === 'blocked' || d.status === 'limited';
   $('permission').hidden = !(blocked && mac());
   $('keycap').closest('.stage').classList.toggle('asking', blocked && mac());
   $('restartBtn').hidden = !(blocked && d.allowed);
@@ -116,7 +117,8 @@ function renderTryText() {
   if (d.status === 'unavailable') {
     text.textContent = 'Double-tap isn’t available on this computer. Use the shortcut instead.';
   } else if (blocked) {
-    text.textContent = d.allowed ? 'Allowed. Restart TaskPop to finish.' : 'TaskPop can’t see the key yet.';
+    text.textContent = d.allowed ? 'Allowed. Restart TaskPop to finish.'
+      : d.status === 'limited' ? 'Allow TaskPop so it hears every double-tap.' : 'TaskPop can’t see the key yet.';
   } else if (worked) {
     text.replaceChildren(Object.assign(document.createElement('b'), { textContent: 'That’s it. ' }),
       document.createTextNode(`TaskPop opened in the corner. Double-tap ${ki.name} again to put it away.`));

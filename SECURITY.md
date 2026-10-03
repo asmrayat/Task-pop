@@ -30,7 +30,7 @@ TaskPop is small, and these are the parts where security matters most:
 
 - **The updater** ([`app/updater.js`](app/updater.js)): finds the latest release, downloads its installer and checks it against the SHA-256 digest GitHub publishes before installing it. On a Mac the install runs with administrator rights.
 - **The installers** ([`installers/`](installers)): they download the Electron runtime from GitHub and check it against checksums built into the installer.
-- **The double-tap** ([`app/doubletap.js`](app/doubletap.js)): reads the state of the modifier keys through the operating system's own functions.
+- **The double-tap** ([`app/doubletap.js`](app/doubletap.js)): reads the state of the modifier keys through the operating system's own functions and, on a Mac, a listen-only event tap that can't change or block events.
 - **The windows' bridges** (`app/preload*.js`): what each window's page is allowed to ask the app to do. Every window runs sandboxed, with context isolation and without Node.js.
 - **Imported files and saved data**: tasks are cleaned and checked before they're used, whether they come from disk or from **Import…**.
 

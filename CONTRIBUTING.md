@@ -56,7 +56,7 @@ tests/run.sh          # unit and app tests, as CI runs them
 tests/run.sh unit     # just the quick ones
 ```
 
-The app tests start the real app on Linux (under `xvfb`), make it act as macOS and as Windows, and drive it with real mouse and keyboard input. On Ubuntu they need `sudo apt install xvfb xdotool`. A bug fix should come with a check that fails without the fix. [Building TaskPop](docs/BUILDING.md#tests) lists the suites.
+The app tests start the real app on Linux (under `xvfb`), make it act as macOS and as Windows, and drive it with real mouse and keyboard input. On Ubuntu they need `sudo apt install xvfb xdotool build-essential`. A bug fix should come with a check that fails without the fix. [Building TaskPop](docs/BUILDING.md#tests) lists the suites.
 
 Behaviour that only a real computer can show (permissions, notifications, several screens, full-screen apps) can't be fully tested here. Say in your pull request what you tried, on which Mac or PC and system version, and what you couldn't test.
 

@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('settingsApi', {
   allowKeys: () => ipcRenderer.invoke('doubletap:allow'),
   restart: () => ipcRenderer.send('app:restart'),
   showTour: () => ipcRenderer.send('settings:show-tour'),
+  copyDoubleTapReport: () => ipcRenderer.invoke('doubletap:report'),
   exportTasks: () => ipcRenderer.invoke('data:export'),
   importTasks: () => ipcRenderer.invoke('data:import'),
   clearCompleted: () => ipcRenderer.invoke('data:clear-completed'),

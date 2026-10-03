@@ -108,7 +108,7 @@ Then run every test group, including the release group, before publishing.
 ## Tests
 
 ```sh
-sudo apt install xvfb xdotool
+sudo apt install xvfb xdotool build-essential
 cd app && npm install && cd ..
 tests/run.sh             # unit + app, what CI runs
 tests/run.sh unit
@@ -124,10 +124,12 @@ The **app tests** start the real TaskPop on Linux under a virtual screen (`xvfb`
 | | `doubletap-test` | the double-tap detector against simulated keyboards: taps, holds, shortcuts, key repeat |
 | | `win-source-test` | the Windows key-state reader under the detector |
 | | `appnap-test` | the Mac App Nap opt-out the double-tap relies on |
+| | `eventtap-test` | the Mac key-event tap: the macOS calls it makes, detecting from events alone, falling back to checks when events stop |
 | app | `regress` | the app as macOS: quick-add and stars, reminders and their notifications, daily tasks and the morning summary, the keyboard, undo, saving and import |
 | | `win-app` | the app as Windows: tray, panel placement and style, focus, Ctrl and Alt double-tap, Windows wording |
 | | `calendar-*` | **Add to Google Calendar**: the dialog, the date reading, the links it opens |
-| | `toggle-*`, `double-tap*` | the double-tap and the shortcut always open and close the panel; what happens when macOS blocks it |
+| | `toggle-*`, `double-tap*` | the double-tap and the shortcut always open and close the panel; what happens when macOS blocks it; the key-event path; the double-tap report |
+| | `event-tap` | the key-event tap through the real koffi inside Electron, with a stand-in for macOS built from `tests/stubs/fakemac.c` |
 | | `double-tap-watch-*` | the Mac key watcher stays awake only while it's needed |
 | | `reorder-*` | drag to reorder with real mouse input, including flicks, drops outside the panel and 60 random drags checked against a model |
 | | `tour-*` | the welcome tour, including when macOS blocks the double-tap and for Store copies |
