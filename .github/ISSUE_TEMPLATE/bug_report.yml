@@ -1,0 +1,120 @@
+name: "🐛 Bug report"
+description: Something in TaskPop doesn't work as it should
+labels:
+  - bug
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Fill in what you can: a partial report is still useful.
+
+        **One problem per issue**, please. A second problem added to an existing report tends to get lost.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before you file
+      description: The [troubleshooting guide](https://github.com/asmrayat/Task-pop/blob/main/docs/TROUBLESHOOTING.md) covers the usual fixes.
+      options:
+        - label: It still happens on the latest version (Settings → Updates → Check now).
+          required: true
+        - label: I searched the existing issues and didn't find this one.
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What you expected, and what happened instead.
+      placeholder: I double-tapped Control and nothing happened…
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open TaskPop
+        2. Right-click a task and choose…
+        3. See…
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Opening TaskPop (double-tap, shortcut, icon, lid open)
+        - The list (adding, editing, reordering, deleting)
+        - Reminders and notifications
+        - Daily tasks and the morning summary
+        - Google Calendar
+        - Moving the panel and its position
+        - Welcome tour
+        - Updates
+        - Installing or uninstalling
+        - Settings
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or a recording
+      description: Drag images or a short video here if they help show the problem.
+
+  - type: input
+    id: version
+    attributes:
+      label: TaskPop version
+      description: Shown at the top of Settings → Updates.
+      placeholder: "1.6.7"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS 27
+        - macOS 26 (Tahoe)
+        - macOS 15 (Sequoia)
+        - macOS 14 (Sonoma)
+        - macOS 13 (Ventura)
+        - Windows 11
+        - Windows 10
+    validations:
+      required: true
+
+  - type: dropdown
+    id: hardware
+    attributes:
+      label: Computer
+      options:
+        - Mac with Apple silicon (M1 or later)
+        - Mac with Intel
+        - Windows PC (Intel or AMD)
+        - Windows PC (ARM, such as Snapdragon)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: source
+    attributes:
+      label: Installed from
+      options:
+        - The website or GitHub releases
+        - Microsoft Store
+        - Built from source
+
+  - type: input
+    id: screens
+    attributes:
+      label: Screens
+      description: Only if the problem is about where the panel appears or how it moves.
+      placeholder: "Built-in screen + one external, panel on the external"

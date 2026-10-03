@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  test:
+    name: Checks and tests (as macOS and as Windows)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install the virtual screen and input tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q xvfb xdotool
+
+      - name: Install Electron and koffi
+        working-directory: app
+        run: npm ci
+
+      - name: JavaScript syntax
+        run: |
+          for f in app/*.js tests/*.js tests/unit/*.js tests/app/*.js; do
+            node --check "$f" || exit 1
+          done
+
+      - name: Installer checks
+        run: |
+          # macOS runs the installer scripts with bash 3.2
+          python3 installers/mac/lint_bash32.py installers/mac/scripts/preinstall installers/mac/scripts/postinstall
+          for f in installers/windows/build-win.sh tools/fetch-build-deps.sh tests/run.sh; do bash -n "$f" || exit 1; done
+          # macOS Installer shows these pages as Latin-1: they must stay plain ASCII
+          python3 -c "import sys; [open(f, 'rb').read().decode('ascii') for f in sys.argv[1:]]" installers/mac/welcome.html installers/mac/conclusion.html
+          python3 -m py_compile installers/assemble_app.py installers/mac/build.py installers/mac/xarpkg.py installers/store/build_msix.py installers/store/verify_msix.py
+
+      - name: Tests
+        env:
+          TP_TMP: ${{ runner.temp }}/taskpop-tests
+        run: bash tests/run.sh unit app
+
+      - name: Keep the logs
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: test-logs
+          path: ${{ runner.temp }}/taskpop-tests/logs
+          if-no-files-found: ignore

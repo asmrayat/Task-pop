@@ -1,0 +1,79 @@
+#!/bin/bash
+# TaskPop installer, step 2 of 2: assemble TaskPop.app, sign it, and swap it into Applications.
+# The previous version is only replaced once the new one is complete and verified.
+
+STAGE="/Library/Application Support/TaskPop Installer Stage"
+OVERLAY="/Library/Application Support/TaskPop Installer"
+DEST="/Applications/TaskPop.app"
+
+tell_user() {
+  local user uid
+  user=$(stat -f%Su /dev/console 2>/dev/null)
+  [ -n "$user" ] && [ "$user" != "root" ] || return 0
+  uid=$(id -u "$user" 2>/dev/null) || return 0
+  launchctl asuser "$uid" sudo -u "$user" osascript \
+    -e "display dialog \"$1\" with title \"TaskPop\" buttons {\"OK\"} default button \"OK\" with icon caution giving up after 300" \
+    >/dev/null 2>&1 &
+}
+
+cleanup() {
+  rm -rf "$STAGE" "$OVERLAY"
+}
+
+fail() {
+  echo "TaskPop installer: $1" >&2
+  tell_user "$1"
+  cleanup
+  exit 1
+}
+
+[ -d "$STAGE/Electron.app" ] && [ -d "$OVERLAY/app" ] || fail "The installation files are missing. Please run the installer again."
+
+NEW="$STAGE/TaskPop.app"
+C="$NEW/Contents"
+mv "$STAGE/Electron.app" "$NEW" || fail "Could not prepare TaskPop."
+mv "$C/MacOS/Electron" "$C/MacOS/TaskPop" || fail "Could not prepare TaskPop."
+rm -f "$C/Resources/default_app.asar" "$C/Resources/electron.icns"
+cp "$OVERLAY/Info.plist" "$C/Info.plist" || fail "Could not prepare TaskPop."
+cp "$OVERLAY/TaskPop.icns" "$C/Resources/TaskPop.icns" || fail "Could not prepare TaskPop."
+cp -R "$OVERLAY/app" "$C/Resources/app" || fail "Could not prepare TaskPop."
+
+chown -R root:wheel "$NEW"
+chmod -R u+rwX,go+rX,go-w "$NEW"
+xattr -cr "$NEW" 2>/dev/null
+# The small native library that reads modifier-key state (for the double-tap): keep only the
+# copy for this Mac's chip, and sign it before the app itself.
+if [ "$(cat "$STAGE/arch" 2>/dev/null)" = "arm64" ]; then
+  rm -rf "$C/Resources/app/node_modules/@koromix/koffi-darwin-x64"
+else
+  rm -rf "$C/Resources/app/node_modules/@koromix/koffi-darwin-arm64"
+fi
+find "$C/Resources/app/node_modules" -name '*.node' -type f > "$STAGE/native.txt"
+while IFS= read -r lib; do
+  codesign --force --sign - "$lib" >/dev/null 2>&1 || fail "TaskPop could not be signed on this Mac."
+done < "$STAGE/native.txt"
+rm -f "$STAGE/native.txt"
+codesign --force --deep --sign - "$NEW" >/dev/null 2>&1 || fail "TaskPop could not be signed on this Mac."
+codesign --verify --deep --strict "$NEW" >/dev/null 2>&1 || fail "TaskPop's signature could not be verified."
+
+# Swap in the new version. Close the running TaskPop first and wait until it has really quit,
+# so the new one can start cleanly afterwards.
+pkill -x TaskPop 2>/dev/null
+for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+  pgrep -x TaskPop >/dev/null 2>&1 || break
+  sleep 0.5
+done
+pkill -9 -x TaskPop 2>/dev/null
+sleep 0.5
+rm -rf "$DEST"
+mv "$NEW" "$DEST" || fail "Could not move TaskPop into Applications."
+xattr -dr com.apple.quarantine "$DEST" 2>/dev/null
+cleanup
+
+# Open TaskPop for the person who ran the installer (the installer itself runs as root).
+CONSOLE_USER=$(stat -f%Su /dev/console 2>/dev/null)
+if [ -n "$CONSOLE_USER" ] && [ "$CONSOLE_USER" != "root" ]; then
+  CONSOLE_UID=$(id -u "$CONSOLE_USER")
+  launchctl asuser "$CONSOLE_UID" sudo -u "$CONSOLE_USER" open "$DEST" --args --show || true
+fi
+exit 0

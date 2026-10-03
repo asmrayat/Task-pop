@@ -1,3 +1,16 @@
 .DS_Store
 *.dmg
 *.exe
+*.msix
+
+# app dependencies (cd app && npm install)
+node_modules/
+
+# build tools (tools/fetch-build-deps.sh) and build output
+.build-tools/
+installers/mac/out/
+installers/windows/out/
+installers/windows/stage/
+installers/windows/test/*.exe
+__pycache__/
+identity.json

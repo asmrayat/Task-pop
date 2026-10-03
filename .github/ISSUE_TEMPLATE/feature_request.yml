@@ -1,0 +1,54 @@
+name: "✨ Feature request"
+description: Suggest something new, or a way to make TaskPop better
+labels:
+  - enhancement
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Someone may have asked already.** [Search the open requests](https://github.com/asmrayat/Task-pop/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement) first: a 👍 and a comment on an existing one counts for more than a second issue.
+
+        TaskPop stays small on purpose: a quick list that keeps your tasks on your computer. Ideas that keep it that way have the best chance.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The problem or the moment where TaskPop gets in your way.
+      placeholder: When I…, I have to…
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would help?
+      description: How you picture it working.
+      placeholder: It would be great if TaskPop could…
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Where would you use it?
+      options:
+        - Mac and Windows
+        - Mac
+        - Windows
+    validations:
+      required: true
+
+  - type: input
+    id: other_apps
+    attributes:
+      label: Does another app already do this?
+      description: A name or a screenshot of how it works there helps a lot.
+      placeholder: "Reminders, Things, Todoist…"
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Sketches or references
+      description: Attach a sketch, a screenshot or anything else that shows the idea.

@@ -1,0 +1,25 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('settingsApi', {
+  get: () => ipcRenderer.invoke('settings:get'),
+  update: (key, value) => ipcRenderer.invoke('settings:update', key, value),
+  setShortcut: (accelerator) => ipcRenderer.invoke('settings:set-shortcut', accelerator),
+  pauseShortcut: () => ipcRenderer.send('settings:shortcut-pause'),
+  resumeShortcut: () => ipcRenderer.send('settings:shortcut-resume'),
+  showData: () => ipcRenderer.send('data:show'),
+  openStartupSettings: () => ipcRenderer.send('startup:open-settings'),
+  testNotification: () => ipcRenderer.invoke('notify:test'),
+  probeKeys: (kind) => ipcRenderer.send('doubletap:probe', kind),
+  allowKeys: () => ipcRenderer.invoke('doubletap:allow'),
+  restart: () => ipcRenderer.send('app:restart'),
+  showTour: () => ipcRenderer.send('settings:show-tour'),
+  exportTasks: () => ipcRenderer.invoke('data:export'),
+  importTasks: () => ipcRenderer.invoke('data:import'),
+  clearCompleted: () => ipcRenderer.invoke('data:clear-completed'),
+  clearAll: () => ipcRenderer.invoke('data:clear-all'),
+  onChanged: (callback) => ipcRenderer.on('settings:changed', (_event, snapshot) => callback(snapshot)),
+  onFocus: (callback) => ipcRenderer.on('settings:focus', (_event, section) => callback(section)),
+  checkUpdates: () => ipcRenderer.invoke('update:check'),
+  installUpdate: () => ipcRenderer.send('update:install'),
+  openUpdatePage: () => ipcRenderer.send('update:open-page'),
+});

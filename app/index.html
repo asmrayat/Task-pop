@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+  <title>TaskPop</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="panel">
+    <header>
+      <div class="titles">
+        <h1>Tasks</h1>
+        <p id="subtitle"></p>
+      </div>
+      <div class="actions">
+        <button class="icon-btn" id="settingsBtn" title="Settings (⌘,)">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M2 4.5h7M12.6 4.5H14M2 11.5h1.6M7.4 11.5H14" fill="none" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="10.8" cy="4.5" r="1.8" fill="none" stroke-width="1.6"/>
+            <circle cx="5.5" cy="11.5" r="1.8" fill="none" stroke-width="1.6"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="pinBtn" title="Keep open">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M5.5 1.5h5l-.8 4.2 2.6 2.3v1.2H8.6V14L8 15l-.6-1V9.2H4.7V8l2.6-2.3-.8-4.2z"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="closeBtn" title="Close (Esc)">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M4 4l8 8M12 4l-8 8" fill="none" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="update-bar" id="updateBar" hidden>
+      <span class="update-icon" id="updateIcon" aria-hidden="true"></span>
+      <button class="update-text" id="updateText" title="See what’s new"></button>
+      <button class="update-action" id="updateAction" hidden></button>
+      <button class="update-close" id="updateClose" title="Hide" hidden>
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="progress" id="progress"><div class="bar" id="bar"></div></div>
+    <div class="divider"></div>
+
+    <main id="list"></main>
+
+    <div class="undo-toast" id="undoToast">
+      <span id="undoText">Task deleted</span>
+      <button id="undoBtn">Undo</button>
+    </div>
+    <div class="divider"></div>
+    <div class="input-bar">
+      <span class="plus">
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <circle cx="10" cy="10" r="9"/>
+          <path d="M10 5.5v9M5.5 10h9" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <input id="newTask" type="text" placeholder="Add a task…" autocomplete="off" spellcheck="false" maxlength="500">
+    </div>
+  </div>
+
+  <!-- Add to Google Calendar -->
+  <div class="sheet-backdrop" id="calSheet" hidden>
+    <form class="sheet" id="calForm" autocomplete="off" novalidate>
+      <div class="sheet-head">
+        <span class="sheet-icon" aria-hidden="true">
+          <svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.8v2.6M10.5 1.8v2.6" stroke-linecap="round"/></svg>
+        </span>
+        <h2>Add to Google Calendar</h2>
+      </div>
+      <label class="field"><span>Title</span><input id="calTitle" maxlength="300"></label>
+      <div class="field-row">
+        <label class="field grow"><span>Date</span><input type="date" id="calDate"></label>
+        <label class="opt inline"><input type="checkbox" id="calAllDay"> All day</label>
+      </div>
+      <div class="field-row" id="calTimeRow">
+        <label class="field"><span>Starts</span><input type="time" id="calTime" step="300"></label>
+        <label class="field grow"><span>Length</span><select id="calLength"></select></label>
+      </div>
+      <label class="field"><span>Location</span><input id="calLocation" maxlength="300" placeholder="Optional"></label>
+      <label class="field"><span>Notes</span><textarea id="calNotes" rows="2" maxlength="2000" placeholder="Optional"></textarea></label>
+      <label class="opt"><input type="checkbox" id="calMeet"> Add a Google Meet video link</label>
+      <label class="opt"><input type="checkbox" id="calRepeat"> Repeat every day</label>
+      <label class="opt"><input type="checkbox" id="calRemind"> Also remind me here in TaskPop</label>
+      <p class="sheet-note" id="calNote">Opens Google Calendar in your browser with this filled in. Check it there and click Save.</p>
+      <div class="sheet-actions">
+        <button type="button" class="secondary" id="calCancel">Cancel</button>
+        <button type="submit" class="primary" id="calOpen">Open in Google Calendar</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="when.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

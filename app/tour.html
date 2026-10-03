@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+  <title>Welcome to TaskPop</title>
+  <link rel="stylesheet" href="tour.css">
+</head>
+<body>
+  <div class="titlebar" aria-hidden="true"></div>
+
+  <main class="steps">
+    <!-- 1. Welcome -->
+    <section class="step" id="step-welcome" aria-labelledby="welcomeTitle">
+      <div class="copy">
+        <img class="app-icon" src="assets/icon-128.png" alt="" width="64" height="64">
+        <h1 id="welcomeTitle">Welcome to TaskPop</h1>
+        <p class="lead">A small to-do list that slides in from the corner of your screen when you need it, and gets out of the way when you don’t.</p>
+        <p class="muted">This takes about a minute. You’ll choose how to open TaskPop and see how the list works.</p>
+      </div>
+      <div class="stage">
+        <div class="screen" data-scene="welcome">
+          <div class="screen-bar"></div>
+          <div class="mini-panel">
+            <div class="mp-head"><b>Tasks</b><span class="mp-sub" data-today></span></div>
+            <div class="mp-row starred"><i class="mp-check"></i><span>Send the proposal</span><em class="mp-star">★</em></div>
+            <div class="mp-row"><i class="mp-check"></i><span>Meeting with Adam at 3pm</span></div>
+            <div class="mp-row"><i class="mp-check"></i><span>Call the bank</span></div>
+            <div class="mp-row done"><i class="mp-check"></i><span>Reply to Sara</span></div>
+            <div class="mp-add">Add a task…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. How to open it -->
+    <section class="step" id="step-open" aria-labelledby="openTitle">
+      <div class="copy">
+        <h1 id="openTitle">Open it from any app</h1>
+        <p class="lead">Tap a key twice, quickly. Pick the key you’d like to use:</p>
+        <div class="key-picker" id="keyPicker" role="radiogroup" aria-label="Double-tap key"></div>
+        <ul class="other-ways">
+          <li><span class="kbd-group" id="shortcutKeys"></span><span>Or press this shortcut</span></li>
+          <li><span class="tray-glyph" aria-hidden="true"></span><span id="trayHint">Or click TaskPop in the menu bar</span></li>
+        </ul>
+      </div>
+      <div class="stage try">
+        <div class="keycap" id="keycap" aria-hidden="true">
+          <span class="keycap-symbol" id="keycapSymbol">⌃</span>
+          <span class="keycap-name" id="keycapName">control</span>
+          <i class="keycap-done" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4 8.4l2.6 2.6L12 5.4"/></svg></i>
+        </div>
+        <div class="taps" id="taps" aria-hidden="true"><i></i><i></i></div>
+        <p class="try-text" id="tryText" role="status" aria-live="polite"></p>
+        <div class="permission" id="permission" hidden>
+          <p><b>macOS needs your OK first.</b> Allow TaskPop under Input Monitoring. It only checks whether Control, Option, Command or Shift is held, never what you type.</p>
+          <div class="permission-buttons">
+            <button class="btn small" id="allowBtn" type="button">Open System Settings</button>
+            <button class="btn small" id="restartBtn" type="button">Restart TaskPop</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Opens by itself -->
+    <section class="step" id="step-auto" aria-labelledby="autoTitle">
+      <div class="copy">
+        <h1 id="autoTitle">Let it open by itself</h1>
+        <p class="lead" id="autoLead">TaskPop can show your list when you come back to your Mac, so you see what’s left before you start.</p>
+        <div class="toggles">
+          <label class="toggle"><span><b id="wakeLabel">When I open the lid</b><small id="wakeSmall">Waking your Mac from sleep</small></span><input type="checkbox" data-setting="showOnWake"><i></i></label>
+          <label class="toggle"><span><b>When I unlock the screen</b><small>After a screen lock or the screen saver</small></span><input type="checkbox" data-setting="showOnUnlock"><i></i></label>
+          <label class="toggle" id="loginToggle"><span><b id="loginLabel">Open TaskPop when I log in</b><small>So it’s always ready</small></span><input type="checkbox" data-setting="openAtLogin"><i></i></label>
+          <p class="muted small" id="storeLogin" hidden>TaskPop starts with Windows. You can change that in Windows Settings › Apps › Startup.</p>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="laptop" data-scene="auto">
+          <div class="laptop-screen">
+            <div class="screen-bar"></div>
+            <div class="mini-panel small">
+              <div class="mp-head"><b>Tasks</b><span class="mp-sub" data-today></span></div>
+              <div class="mp-row starred"><i class="mp-check"></i><span>Send the proposal</span><em class="mp-star">★</em></div>
+              <div class="mp-row"><i class="mp-check"></i><span>Call the bank</span></div>
+              <div class="mp-add">Add a task…</div>
+            </div>
+          </div>
+          <div class="laptop-base"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Using the list -->
+    <section class="step" id="step-use" aria-labelledby="useTitle">
+      <div class="copy">
+        <h1 id="useTitle">Using your list</h1>
+        <ul class="howto">
+          <li><kbd id="returnKey">Return</kbd><span>Type a task and press Return to add it</span></li>
+          <li><span class="glyph-check" aria-hidden="true"></span><span>Click the circle to tick a task off</span></li>
+          <li><kbd>!</kbd><span>Start a task with ! to star it. Starred tasks stay at the top.</span></li>
+          <li><kbd>⋯</kbd><span>Click ⋯ on a task for reminders, daily repeat and Google Calendar</span></li>
+          <li><span class="glyph-drag" aria-hidden="true"></span><span>Drag a task to move it up or down</span></li>
+          <li><svg class="glyph-move" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v16M2 10h16M10 2l-2.6 2.6M10 2l2.6 2.6M10 18l-2.6-2.6M10 18l2.6-2.6M2 10l2.6-2.6M2 10l2.6 2.6M18 10l-2.6-2.6M18 10l-2.6 2.6"/></svg><span>Drag the top of the panel to put it anywhere on your screen</span></li>
+          <li><kbd>Esc</kbd><span id="closeHow">Press Esc, or double-tap again, to put it away</span></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <div class="mini-panel large" data-scene="use">
+          <div class="mp-head"><b>Tasks</b><span class="mp-sub" data-today></span></div>
+          <div class="mp-row starred"><i class="mp-check"></i><span>Send the proposal</span><em class="mp-star">★</em></div>
+          <div class="mp-row hover"><i class="mp-check"></i><span>Meeting with Adam<small class="mp-chip"><svg viewBox="0 0 12 12"><path d="M3 8.5V5.5a3 3 0 0 1 6 0v3l1 1H2zM5 10.5a1 1 0 0 0 2 0"/></svg>Today 3:00 PM</small></span><em class="mp-more">⋯</em></div>
+          <div class="mp-row"><i class="mp-check"></i><span>Call the bank</span></div>
+          <div class="mp-row done"><i class="mp-check"></i><span>Reply to Sara</span></div>
+          <div class="mp-add typing">Buy milk<i class="caret"></i></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Done -->
+    <section class="step" id="step-done" aria-labelledby="doneTitle">
+      <div class="copy">
+        <img class="app-icon" src="assets/icon-128.png" alt="" width="64" height="64">
+        <h1 id="doneTitle">You’re all set</h1>
+        <p class="lead" id="doneLead"></p>
+        <p class="muted">You can take this tour again from Settings.</p>
+      </div>
+      <div class="stage try">
+        <div class="keycap still" id="doneKeycap" aria-hidden="true">
+          <span class="keycap-symbol" id="doneSymbol">⌃</span>
+          <span class="keycap-name" id="doneName">control</span>
+        </div>
+        <div class="taps done" aria-hidden="true"><i class="on"></i><i class="on"></i></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="nav">
+    <ol class="dots" id="dots" aria-label="Tour progress"></ol>
+    <div class="nav-buttons">
+      <button class="link" id="skipBtn" type="button">Skip tour</button>
+      <button class="btn" id="backBtn" type="button">Back</button>
+      <button class="btn" id="settingsBtn" type="button">Open Settings</button>
+      <button class="btn primary" id="nextBtn" type="button">Get started</button>
+    </div>
+  </footer>
+  <script src="tour.js"></script>
+</body>
+</html>

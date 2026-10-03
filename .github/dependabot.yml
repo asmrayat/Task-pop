@@ -1,0 +1,12 @@
+version: 2
+
+updates:
+  # Electron and koffi are pinned on purpose: the installers carry checksums for the exact
+  # Electron version, so both are updated by hand (see docs/BUILDING.md). This keeps the
+  # workflow's actions up to date.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "actions"

@@ -1,0 +1,103 @@
+#!/bin/bash
+# TaskPop installer, step 1 of 2.
+# The Electron runtime is too large to ship inside this small installer, so it is downloaded
+# here and checked against a fixed SHA-256 checksum. When TaskPop is already installed with the
+# same runtime (the usual case for an update), that runtime is reused, so nothing is downloaded.
+# Nothing on this Mac is changed in this step; if anything fails, the install stops cleanly.
+
+# Work happens in a folder only the system can write to, so no other program can interfere.
+STAGE="/Library/Application Support/TaskPop Installer Stage"
+INSTALLED="/Applications/TaskPop.app"
+ELECTRON_VERSION="44.4.5"
+ELECTRON_BASE="https://github.com/electron/electron/releases/download/v$ELECTRON_VERSION"
+ELECTRON_ARM64_SHA="a212eee63ba2f45fd83bd28f77a3e3313a336ad17a4c25adf617942eef5e0e2c"
+ELECTRON_X64_SHA="778350cc572c36484dd56c130cae96ad1a9a5b695ba22dd06abd23ba0a46c9de"
+
+tell_user() {
+  local user uid
+  user=$(stat -f%Su /dev/console 2>/dev/null)
+  [ -n "$user" ] && [ "$user" != "root" ] || return 0
+  uid=$(id -u "$user" 2>/dev/null) || return 0
+  launchctl asuser "$uid" sudo -u "$user" osascript \
+    -e "display dialog \"$1\" with title \"TaskPop\" buttons {\"OK\"} default button \"OK\" with icon caution giving up after 300" \
+    >/dev/null 2>&1 &
+}
+
+fail() {
+  echo "TaskPop installer: $1" >&2
+  tell_user "$1"
+  rm -rf "$STAGE"
+  exit 1
+}
+
+owner_uid() {
+  /usr/bin/stat -f %u "$1" 2>/dev/null
+}
+
+# download URL FILE SHA256
+download() {
+  curl -fL --silent --show-error --retry 3 --retry-delay 3 --connect-timeout 20 --max-time 1800 -o "$2" "$1" || return 1
+  echo "$3  $2" | shasum -a 256 -c - >/dev/null 2>&1 || return 2
+  return 0
+}
+
+rm -rf "$STAGE"
+mkdir -m 700 "$STAGE" || fail "Could not create a temporary folder for the installation."
+[ -d "$STAGE" ] && [ ! -L "$STAGE" ] && [ "$(owner_uid "$STAGE")" = "0" ] || fail "Could not create a temporary folder for the installation."
+
+if [ "$(sysctl -n hw.optional.arm64 2>/dev/null)" = "1" ]; then
+  ARCH="arm64"; ELECTRON_SHA="$ELECTRON_ARM64_SHA"
+else
+  ARCH="x64"; ELECTRON_SHA="$ELECTRON_X64_SHA"
+fi
+echo "$ARCH" > "$STAGE/arch"
+
+# Reuse the runtime inside the installed TaskPop. It is copied first, and only the copy (which
+# nothing but the system can change) is checked: every file must belong to the system, links
+# must stay inside the app, its signature must be intact, and it must be the same runtime
+# version, built for this Mac's chip.
+reuse_installed() {
+  local copy="$STAGE/Electron.app"
+  local c="$copy/Contents"
+  # First 8 bytes of a 64-bit Mach-O file: magic number, then the CPU type (arm64 or x86_64).
+  local header="cffaedfe0c000001"
+  [ "$ARCH" = "x64" ] && header="cffaedfe07000001"
+  [ -d "$INSTALLED" ] && [ ! -L "$INSTALLED" ] || return 1
+  [ "$(owner_uid "$INSTALLED")" = "0" ] || return 1
+  /usr/bin/ditto "$INSTALLED" "$copy" || return 1
+  [ -z "$(/usr/bin/find "$copy" ! -user 0 -print 2>/dev/null | head -n 1)" ] || return 1
+  # (Written without a "case" inside $( ), which macOS's bash 3.2 can't parse.)
+  local l target
+  /usr/bin/find "$copy" -type l > "$STAGE/links.txt" 2>/dev/null
+  while IFS= read -r l; do
+    target=$(readlink "$l")
+    case "$target" in
+      (/*|*..*) rm -f "$STAGE/links.txt"; return 1 ;;
+    esac
+  done < "$STAGE/links.txt"
+  rm -f "$STAGE/links.txt"
+  /usr/bin/codesign --verify --deep --strict "$copy" >/dev/null 2>&1 || return 1
+  [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$c/Frameworks/Electron Framework.framework/Versions/A/Resources/Info.plist" 2>/dev/null)" = "$ELECTRON_VERSION" ] || return 1
+  [ -x "$c/MacOS/TaskPop" ] && [ ! -L "$c/MacOS/TaskPop" ] || return 1
+  [ "$(/usr/bin/od -An -tx1 -N8 "$c/MacOS/TaskPop" | tr -d ' \n')" = "$header" ] || return 1
+  mv "$c/MacOS/TaskPop" "$c/MacOS/Electron" || return 1
+  rm -rf "$c/Resources/app" "$c/Resources/TaskPop.icns" "$c/_CodeSignature"
+  return 0
+}
+
+if reuse_installed; then
+  echo "TaskPop installer: reusing the installed app runtime"
+  exit 0
+fi
+rm -rf "$STAGE/Electron.app"
+
+NO_NET="TaskPop couldn't download the rest of the app. Check your internet connection and run the installer again."
+BAD_FILE="A downloaded file didn't pass its safety check, so nothing was installed. Please run the installer again."
+
+download "$ELECTRON_BASE/electron-v$ELECTRON_VERSION-darwin-$ARCH.zip" "$STAGE/runtime.zip" "$ELECTRON_SHA"
+case $? in 0) ;; 2) fail "$BAD_FILE" ;; *) fail "$NO_NET" ;; esac
+
+ditto -x -k "$STAGE/runtime.zip" "$STAGE" || fail "The downloaded app runtime could not be unpacked."
+rm -f "$STAGE/runtime.zip"
+[ -x "$STAGE/Electron.app/Contents/MacOS/Electron" ] || fail "The downloaded app runtime is incomplete."
+exit 0

@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+# Stand-in for macOS osascript: understands `do shell script "..." with prompt "..." with administrator privileges`.
+import sys, subprocess, os, re
+TMPD = os.environ.get('TP_TMP', '/tmp/taskpop-tests')
+os.makedirs(TMPD, exist_ok=True)
+src = sys.argv[sys.argv.index('-e') + 1]
+open(TMPD + '/mac-stub.log', 'a').write('osascript ' + src + '\n')
+def literal(s, i):
+    assert s[i] == '"'; i += 1; out = []
+    while s[i] != '"':
+        if s[i] == '\\':
+            i += 1; out.append({'n': '\n', 't': '\t', 'r': '\r'}.get(s[i], s[i]))
+        else:
+            out.append(s[i])
+        i += 1
+    return ''.join(out), i + 1
+m = re.match(r'do shell script ', src)
+if not m: print('syntax error', file=sys.stderr); sys.exit(2)
+script, i = literal(src, m.end())
+rest = src[i:]
+pm = re.match(r' with prompt ', rest)
+prompt, j = literal(rest, pm.end())
+if rest[j:] != ' with administrator privileges':
+    print('0:1: syntax error: expected administrator privileges', file=sys.stderr); sys.exit(1)
+open(TMPD + '/mac-prompt.txt', 'w').write(prompt)
+open(TMPD + '/mac-script.txt', 'w').write(script)
+if os.path.exists(TMPD + '/stub-cancel'):
+    print('0:180: execution error: User canceled. (-128)', file=sys.stderr); sys.exit(1)
+r = subprocess.run(['/bin/sh', '-c', script], capture_output=True, text=True)
+if r.returncode != 0:
+    print(f'0:180: execution error: The command exited with a non-zero status. ({r.returncode})', file=sys.stderr); sys.exit(1)
+sys.stdout.write(r.stdout)

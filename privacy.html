@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Privacy – TaskPop</title>
+  <meta name="description" content="TaskPop keeps your tasks on your computer. No account, no tracking, no ads.">
+  <meta name="theme-color" content="#F4F7F5">
+  <link rel="canonical" href="https://taskpop.asmlab.agency/privacy.html">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="preload" href="assets/fonts/InstrumentSans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .policy { max-width: 720px; padding: 48px 0 72px; }
+    .policy h1 { font-size: clamp(2rem, 4vw, 2.6rem); letter-spacing: -0.02em; margin: 0 0 8px; }
+    .policy .updated { color: var(--muted); margin: 0 0 36px; }
+    .policy h2 { font-size: 1.2rem; margin: 34px 0 10px; }
+    .policy p, .policy li { color: var(--ink); line-height: 1.65; }
+    .policy ul { padding-left: 1.2em; }
+    .policy li { margin: 6px 0; }
+    .policy .short { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 18px 22px; }
+    .policy a { color: var(--blue); }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav wrap" aria-label="Main">
+      <a class="brand" href="/" aria-label="TaskPop home">
+        <img src="assets/taskpop-icon.png" alt="" width="30" height="30">
+        <span>TaskPop</span>
+      </a>
+      <a class="btn btn-primary btn-small" href="/#download">Download</a>
+    </nav>
+  </header>
+
+  <main class="wrap policy" id="main">
+    <h1>Privacy</h1>
+    <p class="updated">Last updated 3 October 2026</p>
+
+    <div class="short">
+      <p><strong>In short:</strong> your tasks stay on your computer. TaskPop has no account, no analytics, no ads and no tracking, and it doesn’t send your tasks or settings anywhere.</p>
+    </div>
+
+    <h2>What TaskPop stores</h2>
+    <p>Your tasks, reminders and settings are saved in a folder on your own computer, along with a backup copy. You can see that folder from TaskPop’s Settings, export your tasks to a file, or delete them at any time. Uninstalling TaskPop lets you remove them too.</p>
+
+    <h2>What TaskPop sends over the internet</h2>
+    <ul>
+      <li><strong>Nothing about you or your tasks.</strong></li>
+      <li><strong>Google Calendar (only when you choose it):</strong> “Add to Google Calendar” opens Google Calendar in your web browser with the event details you entered, for you to review and save. TaskPop doesn’t sign in to your Google account. From there, <a href="https://policies.google.com/privacy" rel="noopener">Google’s privacy policy</a> applies.</li>
+      <li><strong>Update checks (downloaded from our website only):</strong> the version from our website asks TaskPop’s GitHub page whether a newer version exists, a few times a day. You can turn this off in Settings. Like any web request, GitHub sees your internet address and the TaskPop version. When you choose to update, the new version is downloaded from GitHub. The Microsoft Store version is updated by the Store instead and makes no such request.</li>
+      <li><strong>Installing (downloaded from our website only):</strong> the installer downloads the rest of TaskPop, the Electron runtime it’s built on, from GitHub, and checks it before installing.</li>
+    </ul>
+
+    <h2>The double-tap shortcut</h2>
+    <p>To notice when you double-tap a key like Ctrl or Shift, TaskPop checks whether those modifier keys are held down, and keeps a running count of key presses so that shortcuts like Ctrl+C don’t count as a tap. It never records which keys you type, and none of this leaves your computer. You can turn the double-tap off in Settings.</p>
+
+    <h2>Notifications and start-up</h2>
+    <p>Reminders and the morning summary are shown by your computer’s own notification system. TaskPop starts with your computer so it can show your tasks when you open the lid or unlock; you can turn this off in Settings (on Windows: Settings → Apps → Startup).</p>
+
+    <h2>Children</h2>
+    <p>TaskPop doesn’t collect personal information from anyone, including children.</p>
+
+    <h2>Changes and questions</h2>
+    <p>If this policy changes, the new version will be posted on this page with a new date. Questions are welcome on <a href="https://github.com/asmrayat/Task-pop/issues" rel="noopener">TaskPop’s GitHub page</a>, where you can also read TaskPop’s <a href="https://github.com/asmrayat/Task-pop" rel="noopener">source code</a> and the <a href="https://github.com/asmrayat/Task-pop/blob/main/docs/PRIVACY.md" rel="noopener">technical details</a> of what it stores and sends.</p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div class="footer-brand">
+        <img src="assets/taskpop-icon.png" alt="" width="26" height="26">
+        <span>TaskPop</span>
+      </div>
+      <p>Developed by <a href="https://asmlab.agency" rel="noopener">asmlab</a>. © 2026 TaskPop.</p>
+    </div>
+  </footer>
+</body>
+</html>

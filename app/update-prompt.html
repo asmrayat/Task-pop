@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+  <title>TaskPop update</title>
+  <link rel="stylesheet" href="update-prompt.css">
+</head>
+<body>
+  <main class="card" id="card" role="alertdialog" aria-labelledby="title" aria-describedby="lead">
+    <header class="top">
+      <img class="icon" src="assets/icon-128.png" alt="" width="52" height="52">
+      <div class="heading">
+        <h1 id="title">New update is here</h1>
+        <p id="lead"></p>
+      </div>
+      <button class="close" id="closeBtn" type="button" title="Update later" aria-label="Update later">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6"/></svg>
+      </button>
+    </header>
+
+    <section class="notes" id="notesBox" hidden>
+      <h2 id="notesTitle">What’s new</h2>
+      <div class="notes-text" id="notes"></div>
+      <button class="link" id="pageBtn" type="button" hidden>Read the full release notes</button>
+    </section>
+
+    <section class="progress" id="progressBox" hidden>
+      <div class="meter"><i id="meterFill"></i></div>
+      <p id="progressText"></p>
+    </section>
+
+    <p class="note" id="note"></p>
+
+    <footer id="buttons">
+      <button class="btn" id="laterBtn" type="button">Update later</button>
+      <button class="btn primary" id="nowBtn" type="button">Update now</button>
+    </footer>
+  </main>
+  <script src="update-prompt.js"></script>
+</body>
+</html>

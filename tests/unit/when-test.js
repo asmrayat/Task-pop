@@ -1,0 +1,75 @@
+// Tests for app/when.js. "Now" is Monday 28 September 2026, 11:51.
+const P = require('../paths');
+const W = require(P.APP + '/when.js');
+const NOW = new Date(2026, 8, 28, 11, 51);
+let pass = 0; let fail = 0;
+const fmt = (p) => `${p.date ? `${p.date.y}-${String(p.date.m + 1).padStart(2, '0')}-${String(p.date.d).padStart(2, '0')}` : '-'} ${p.time ? `${String(p.time.h).padStart(2, '0')}:${String(p.time.m).padStart(2, '0')}` : '--:--'} ${p.durationMin || '-'} | ${p.title}`;
+function t(text, want, locale = 'en-GB') {
+  const got = fmt(W.parse(text, NOW, { locale }));
+  if (got === want) { pass += 1; } else { fail += 1; console.log(`FAIL  ${JSON.stringify(text)}\n      want ${want}\n      got  ${got}`); }
+}
+t('Meeting with Adam', '- --:-- - | Meeting with Adam');
+t('Meeting with Adam tomorrow at 3pm', '2026-09-29 15:00 - | Meeting with Adam');
+t('Call the bank Fri 10:30 for 30 min', '2026-10-02 10:30 30 | Call the bank');
+t('Dentist 5 Oct 2-3pm', '2026-10-05 14:00 60 | Dentist');
+t('Lunch with Sara on Friday at 1', '2026-10-02 13:00 - | Lunch with Sara');
+t('Team sync next Monday 9:30am', '2026-10-05 09:30 - | Team sync');
+t('Submit report by October 12th', '2026-10-12 --:-- - | Submit report');
+t('Gym tonight', '2026-09-28 20:00 - | Gym');
+t('Call mom tomorrow morning', '2026-09-29 09:00 - | Call mom');
+t('Pay rent 2026-10-01', '2026-10-01 --:-- - | Pay rent');
+t('Workshop 14:00-16:30 on 3 Nov', '2026-11-03 14:00 150 | Workshop');
+t('Buy 2 apples', '- --:-- - | Buy 2 apples');
+t('Read chapters 2-3', '- --:-- - | Read chapters 2-3');
+t('Sun cream', '- --:-- - | Sun cream');
+t("Finish today's report", "- --:-- - | Finish today's report");
+t('Interview in 3 days at 11am', '2026-10-01 11:00 - | Interview');
+t('Call Adam at noon', '- 12:00 - | Call Adam');
+t('Standup 9am for 15 minutes', '- 09:00 15 | Standup');
+t('Meeting Jan 5', '2027-01-05 --:-- - | Meeting');
+t('Review 5/10', '2026-10-05 --:-- - | Review');
+t('Review 5/10', '2027-05-10 --:-- - | Review', 'en-US');
+t('Flight for 1.5 hours tomorrow 6pm', '2026-09-29 18:00 90 | Flight');
+t('Presentation for half an hour tomorrow 4 pm', '2026-09-29 16:00 30 | Presentation');
+t('Meeting with Adam @ 3:30', '- 15:30 - | Meeting with Adam');
+t('v1.10 release notes', '- --:-- - | v1.10 release notes');
+t('Board meeting this friday evening', '2026-10-02 18:00 - | Board meeting');
+t('Call at 8', '- 08:00 - | Call');
+t('Plan the launch next week', '2026-10-05 --:-- - | Plan the launch');
+t('Weds 7pm book club', '2026-09-30 19:00 - | book club');
+t('Send invoice to client, due 30 September', '2026-09-30 --:-- - | Send invoice to client, due');
+t('Meeting with Adam 3-4', '- --:-- - | Meeting with Adam 3-4');
+t('Meeting with Adam from 3 to 4', '- 15:00 60 | Meeting with Adam');
+t('Doctor on the 2nd of October at 9', '2026-10-02 09:00 - | Doctor');
+t('Coffee with Tom day after tomorrow 10am', '2026-09-30 10:00 - | Coffee with Tom');
+t('Sprint review Thursday 11-12', '2026-10-01 11:00 60 | Sprint review');
+t('Call supplier at 5 for an hour', '- 17:00 60 | Call supplier');
+t('Dinner tonight at 8', '2026-09-28 20:00 - | Dinner');
+t('Pick up kids today 3:15pm', '2026-09-28 15:15 - | Pick up kids');
+t('Invite 30 people at 5', '- 17:00 - | Invite 30 people');
+t('Report at 50% done', '- --:-- - | Report at 50% done');
+t('Meeting on Monday', '2026-09-28 --:-- - | Meeting');
+t('Meeting next Monday', '2026-10-05 --:-- - | Meeting');
+t('Car service 12/31', '- --:-- - | Car service 12/31');
+t('Car service 12/31', '2026-12-31 --:-- - | Car service', 'en-US');
+t('Webinar 23:30', '- 23:30 - | Webinar');
+t('Launch in 2 weeks', '2026-10-12 --:-- - | Launch');
+t('Standup at 9:00 tomorrow', '2026-09-29 09:00 - | Standup');
+t('Call Adam at 10.45am', '- 10:45 - | Call Adam');
+t('May 20 anniversary dinner 7:30pm', '2027-05-20 19:30 - | anniversary dinner');
+t('Renew passport', '- --:-- - | Renew passport');
+
+// suggest(): what the pop-up starts with
+const S = (o) => { const s = W.suggest({ now: NOW, locale: 'en-GB', ...o }); const d = new Date(s.start); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} ${s.allDay ? 'all-day' : `${s.durationMin}min`} | ${s.title}`; };
+const u = (text, o, want) => { const got = S({ title: text, ...o }); if (got === want) pass += 1; else { fail += 1; console.log(`FAIL  suggest ${JSON.stringify(text)}\n      want ${want}\n      got  ${got}`); } };
+u('Meeting with Adam', {}, '2026-09-28 12:00 60min | Meeting with Adam');
+u('Meeting with Adam', { defaultMinutes: 30 }, '2026-09-28 12:00 30min | Meeting with Adam');
+u('Meeting with Adam', { now: new Date(2026, 8, 28, 22, 10) }, '2026-09-29 09:00 60min | Meeting with Adam');
+u('Meeting with Adam tomorrow at 3pm', {}, '2026-09-29 15:00 60min | Meeting with Adam');
+u('Submit report Friday', {}, '2026-10-02 00:00 all-day | Submit report');
+u('Standup 9am', {}, '2026-09-29 09:00 60min | Standup');
+u('Call at 2pm', {}, '2026-09-28 14:00 60min | Call');
+u('Meeting with Adam', { remindAt: new Date(2026, 9, 1, 16, 30).getTime() }, '2026-10-01 16:30 60min | Meeting with Adam');
+u('Call the bank Fri 10:30 for 30 min', {}, '2026-10-02 10:30 30min | Call the bank');
+console.log(`${pass}/${pass + fail} passed`);
+process.exit(fail ? 1 : 0);

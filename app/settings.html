@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+  <title>TaskPop Settings</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="titlebar">TaskPop Settings</div>
+
+  <div class="content">
+    <!-- General -->
+    <h2>General</h2>
+    <section class="card">
+      <div class="row">
+        <div class="label">
+          <span>Keyboard shortcut</span>
+          <small id="shortcutHint">Opens and closes the task panel from anywhere.</small>
+        </div>
+        <div class="control shortcut-control">
+          <button class="shortcut" id="shortcutBtn" title="Click, then press a new shortcut"></button>
+          <button class="link" id="shortcutReset">Reset</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="label">
+          <span>Double-tap to open</span>
+          <small id="doubleTapHint">Tap the key twice quickly, from any app.</small>
+        </div>
+        <select data-setting="doubleTapKey" id="doubleTapKey">
+          <option value="control">⌃ Control</option>
+          <option value="option">⌥ Option</option>
+          <option value="command">⌘ Command</option>
+          <option value="shift">⇧ Shift</option>
+          <option value="off">Off</option>
+        </select>
+      </div>
+      <div class="row" id="doubleTapStatusRow" hidden>
+        <div class="label">
+          <span class="voice-status"><i class="dot" id="doubleTapDot"></i><span id="doubleTapStatus"></span></span>
+          <small id="doubleTapDetail"></small>
+        </div>
+        <div class="control">
+          <button class="btn" id="doubleTapAllow" hidden>Allow</button>
+          <button class="btn" id="doubleTapRestart" hidden>Restart TaskPop</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="label"><span id="loginLabel">Open at login</span><small id="loginHint">Keeps TaskPop running so it can pop up when you open the lid.</small></div>
+        <label class="switch" id="loginSwitch"><input type="checkbox" data-setting="openAtLogin"><i></i></label>
+        <button class="btn" id="startupSettings" hidden>Open Startup settings</button>
+      </div>
+      <div class="row">
+        <div class="label"><span id="countLabel">Show task count in menu bar</span></div>
+        <label class="switch"><input type="checkbox" data-setting="showCountInMenuBar"><i></i></label>
+      </div>
+    </section>
+
+    <!-- Updates -->
+    <h2 id="updatesHeading">Updates</h2>
+    <section class="card" id="updatesSection">
+      <div class="row">
+        <div class="label">
+          <span id="updateTitle">TaskPop</span>
+          <small id="updateDetail"></small>
+        </div>
+        <div class="control">
+          <button class="btn" id="updateCheck">Check now</button>
+          <button class="btn primary" id="updateInstall" hidden>Update now</button>
+        </div>
+      </div>
+      <div class="row" id="updateMeterRow" hidden>
+        <div class="meter"><i id="updateMeter"></i></div>
+      </div>
+      <div class="row notes-row" id="updateNotesRow" hidden>
+        <div class="label notes">
+          <span id="updateNotesTitle"></span>
+          <div class="notes-text" id="updateNotes"></div>
+          <button class="link" id="updatePage">Read the full release notes</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="label">
+          <span>Check for updates automatically</span>
+        </div>
+        <label class="switch"><input type="checkbox" data-setting="autoCheckUpdates"><i></i></label>
+      </div>
+    </section>
+
+    <!-- Auto open -->
+    <h2>Open automatically</h2>
+    <section class="card">
+      <div class="row">
+        <div class="label"><span>When I open the lid</span><small id="wakeHint">Shows your tasks when the Mac wakes from sleep.</small></div>
+        <label class="switch"><input type="checkbox" data-setting="showOnWake"><i></i></label>
+      </div>
+      <div class="row">
+        <div class="label"><span>When I unlock the screen</span><small>Also after the screen saver or a screen lock.</small></div>
+        <label class="switch"><input type="checkbox" data-setting="showOnUnlock"><i></i></label>
+      </div>
+    </section>
+
+    <!-- Reminders -->
+    <h2>Reminders</h2>
+    <section class="card">
+      <div class="row">
+        <div class="label"><span>Reminder notifications</span><small id="remindHint">Right-click a task → Remind me. You'll get a macOS notification.</small></div>
+        <label class="switch"><input type="checkbox" data-setting="notifications"><i></i></label>
+      </div>
+      <div class="row">
+        <div class="label"><span>Morning summary</span><small>A daily notification listing what's left to do.</small></div>
+        <div class="control">
+          <select id="summaryTime" data-setting="dailySummaryTime"></select>
+          <label class="switch"><input type="checkbox" data-setting="dailySummary"><i></i></label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="label"><span>Test notifications</span><small id="testNotifyHint">The first time, macOS asks you to allow TaskPop notifications.</small></div>
+        <button class="btn" id="testNotify">Send test</button>
+      </div>
+    </section>
+
+    <!-- Panel -->
+    <h2>Panel</h2>
+    <section class="card">
+      <div class="row">
+        <div class="label"><span>Position</span><small id="positionHint">Or drag the panel by its top bar to put it anywhere.</small></div>
+        <div class="segmented" data-setting="position">
+          <button data-value="left">Left</button>
+          <button data-value="right">Right</button>
+          <button data-value="custom" id="positionCustom" title="Where you last dragged it">Custom</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="label"><span>Width</span></div>
+        <div class="control slider-control">
+          <input type="range" id="widthRange" min="280" max="480" step="10">
+          <output id="widthValue"></output>
+        </div>
+      </div>
+      <div class="row">
+        <div class="label"><span>Hide when clicking outside</span><small>Turn off to keep the panel open (same as the pin button).</small></div>
+        <label class="switch"><input type="checkbox" id="hideOnBlur"><i></i></label>
+      </div>
+      <div class="row">
+        <div class="label"><span>Sound when completing a task</span></div>
+        <label class="switch"><input type="checkbox" data-setting="completionSound"><i></i></label>
+      </div>
+      <div class="row">
+        <div class="label"><span>Appearance</span></div>
+        <div class="segmented" data-setting="theme">
+          <button data-value="system">System</button>
+          <button data-value="light">Light</button>
+          <button data-value="dark">Dark</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data -->
+    <h2>Tasks &amp; data</h2>
+    <section class="card">
+      <div class="row">
+        <div class="label"><span>Delete completed tasks</span><small>Automatically clean up ticked tasks.</small></div>
+        <select data-setting="autoClearCompleted">
+          <option value="never">Never</option>
+          <option value="1d">After 1 day</option>
+          <option value="7d">After 7 days</option>
+        </select>
+      </div>
+      <div class="row">
+        <div class="label">
+          <span id="savedLabel">Saved on this Mac</span>
+          <small class="path" id="dataPath"></small>
+          <small id="stats"></small>
+        </div>
+        <button class="btn" id="showData">Show in Finder</button>
+      </div>
+      <div class="row">
+        <div class="label"><span>Backup</span><small id="backupHint">Export your tasks to a file, or import them on another Mac.</small></div>
+        <div class="control">
+          <button class="btn" id="exportBtn">Export…</button>
+          <button class="btn" id="importBtn">Import…</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="label"><span>Clean up</span></div>
+        <div class="control">
+          <button class="btn danger" id="clearCompletedBtn">Delete completed</button>
+          <button class="btn danger" id="clearAllBtn">Delete all</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Google Calendar -->
+    <h2>Google Calendar</h2>
+    <section class="card">
+      <div class="row">
+        <div class="label">
+          <span>Add a task to Google Calendar</span>
+          <small id="calendarHint">Click ⋯ on a task (or right-click it, or select it and press G) and choose Add to Google Calendar. It opens in your browser, filled in, for you to check and save. Nothing to connect: TaskPop never signs in to your Google account.</small>
+        </div>
+      </div>
+      <div class="row">
+        <div class="label"><span>Default event length</span></div>
+        <select id="calendarDuration">
+          <option value="15">15 min</option>
+          <option value="30">30 min</option>
+          <option value="45">45 min</option>
+          <option value="60">1 hour</option>
+          <option value="90">1 h 30 min</option>
+          <option value="120">2 hours</option>
+          <option value="180">3 hours</option>
+        </select>
+      </div>
+      <div class="row">
+        <div class="label">
+          <span>Google account</span>
+          <small id="googleAccountHint">Only needed if your browser is signed in to more than one Google account. Leave empty to use your main one.</small>
+        </div>
+        <input type="email" class="text-input" id="googleAccount" placeholder="name@gmail.com" spellcheck="false" maxlength="254">
+      </div>
+    </section>
+
+    <!-- Help -->
+    <h2>Help</h2>
+    <section class="card">
+      <div class="row">
+        <div class="label"><span>Welcome tour</span><small>A one-minute guide to opening TaskPop and using your list.</small></div>
+        <button class="btn" id="tourBtn">Show tour</button>
+      </div>
+    </section>
+
+    <!-- Tips -->
+    <h2>Tips &amp; keyboard</h2>
+    <section class="card tips-card">
+      <div class="tip">Double-tap <span class="keys" id="tipDoubleTapKey"><kbd>⌃</kbd></span><span>Opens TaskPop (choose the key above)</span></div>
+      <div class="tip" id="tipSiri">Say <kbd>Hey Siri, open TaskPop</kbd><span>Opens it by voice, using Siri</span></div>
+      <div class="tip"><kbd>!</kbd> at the start of a task<span>Marks it important (stays at the top)</span></div>
+      <div class="tip"><kbd>⋯</kbd> or <kbd>Right-click</kbd> a task<span>Google Calendar, remind me, repeat, copy</span></div>
+      <div class="tip"><kbd>Drag</kbd> a task<span>Reorder your list</span></div>
+      <div class="tip"><span class="keys" id="tipMoveKeys"><kbd>⌥</kbd><kbd>↑</kbd><kbd>↓</kbd></span><span>Move the selected task up or down</span></div>
+      <div class="tip"><kbd>↑</kbd><kbd>↓</kbd><span>Move between tasks</span></div>
+      <div class="tip"><kbd>Space</kbd><span>Tick / untick the selected task</span></div>
+      <div class="tip"><span class="keys" id="tipReturnKey"><kbd>Return</kbd></span><span>Edit the selected task (or double-click it)</span></div>
+      <div class="tip"><kbd>I</kbd><span>Toggle important</span></div>
+      <div class="tip"><kbd>G</kbd><span>Add the selected task to Google Calendar</span></div>
+      <div class="tip"><span class="keys" id="tipDeleteKey"><kbd>⌫</kbd></span><span>Delete the selected task</span></div>
+      <div class="tip"><span class="keys" id="tipUndoKeys"><kbd>⌘</kbd><kbd>Z</kbd></span><span>Undo a delete</span></div>
+      <div class="tip"><kbd>N</kbd><span>Jump to "Add a task"</span></div>
+      <div class="tip"><kbd>Esc</kbd><span>Hide the panel</span></div>
+    </section>
+
+    <p class="footer" id="footer"></p>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="settings.js"></script>
+</body>
+</html>

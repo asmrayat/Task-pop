@@ -1,0 +1,25 @@
+#!/bin/bash
+# Stand-in for macOS hdiutil: "attach" unpacks the DMG's files into the mount point.
+TMPD="${TP_TMP:-/tmp/taskpop-tests}"; mkdir -p "$TMPD"
+# the disk-image tools from tools/fetch-build-deps.sh
+T="${TASKPOP_BUILD_BIN:-$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)/.build-tools/bin}"
+echo "hdiutil $*" >> "$TMPD/mac-stub.log"
+case "$1" in
+  attach)
+    file="$2"; mnt=""
+    while [ $# -gt 0 ]; do [ "$1" = "-mountpoint" ] && mnt="$2"; shift; done
+    [ -n "$mnt" ] || exit 1
+    img=$(mktemp "$TMPD/vol.XXXX")
+    $T/dmg extract "$file" "$img" >/dev/null 2>&1 || { rm -f "$img"; echo "hdiutil: attach failed - image not recognized" >&2; exit 1; }
+    mkdir -p "$mnt"
+    # (names follow the "HH:MM" time column; dates like " 9/ 1/2026" contain spaces, so don't count columns)
+    $T/hfsplus "$img" ls / 2>/dev/null | sed -n -E '2,$ s/^[0-7]+ +[0-9]+ +[0-9]+ +[0-9]+ +.* [0-9]{1,2}:[0-9]{2} (.+)$/\1/p' | while IFS= read -r name; do
+      [ -n "$name" ] && $T/hfsplus "$img" extract "/$name" "$mnt/$name" >/dev/null 2>&1
+    done
+    rm -f "$img"
+    ls "$mnt"/*.pkg >/dev/null 2>&1 || { echo "hdiutil: attach failed" >&2; exit 1; }
+    exit 0 ;;
+  detach)
+    rm -rf "$2"/* ; exit 0 ;;
+esac
+exit 1

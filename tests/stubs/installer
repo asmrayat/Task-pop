@@ -1,0 +1,9 @@
+#!/bin/bash
+# Stand-in for macOS /usr/sbin/installer: records the package it was given.
+TMPD="${TP_TMP:-/tmp/taskpop-tests}"
+echo "installer $*" >> "$TMPD/mac-stub.log"
+pkg="$2"
+sha256sum "$pkg" | cut -d' ' -f1 > "$TMPD/installed-pkg.sha"
+echo "$pkg" > "$TMPD/installed-pkg.path"
+[ -f "$TMPD/stub-install-fail" ] && exit 1
+exit 0

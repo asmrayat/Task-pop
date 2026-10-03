@@ -1,0 +1,28 @@
+{
+  "name": "taskpop",
+  "productName": "TaskPop",
+  "version": "1.6.7",
+  "description": "A small to-do list that slides in from the corner of your screen. For macOS and Windows.",
+  "main": "main.js",
+  "author": "asmlab",
+  "license": "MIT",
+  "homepage": "https://taskpop.asmlab.agency",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asmrayat/Task-pop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/asmrayat/Task-pop/issues"
+  },
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "bash ../tests/run.sh"
+  },
+  "dependencies": {
+    "koffi": "3.3.1"
+  },
+  "devDependencies": {
+    "electron": "44.4.5"
+  }
+}

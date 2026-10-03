@@ -1,0 +1,12 @@
+blank_issues_enabled: true
+
+contact_links:
+  - name: Troubleshooting guide
+    about: The usual fixes for the double-tap, notifications, installing and updating.
+    url: https://github.com/asmrayat/Task-pop/blob/main/docs/TROUBLESHOOTING.md
+  - name: Security vulnerability
+    about: Please report security problems privately, not as an issue.
+    url: https://github.com/asmrayat/Task-pop/security/advisories/new
+  - name: Website and downloads
+    about: The latest TaskPop for Mac and Windows.
+    url: https://taskpop.asmlab.agency

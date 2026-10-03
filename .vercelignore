@@ -1,0 +1,9 @@
+# Only the website is deployed; the app, installers, tests and docs live in the repository only.
+/app
+/installers
+/tools
+/tests
+/docs
+/.github
+/*.md
+/LICENSE
