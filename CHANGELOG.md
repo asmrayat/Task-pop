@@ -4,6 +4,18 @@ All notable changes to TaskPop are listed here. The format follows [Keep a Chang
 
 Installers for every version are on the [releases page](https://github.com/asmrayat/Task-pop/releases).
 
+## [1.7.0] - 2026-10-06
+
+### Added
+
+- **Timers.** Give a task a time frame to finish in: **⋯ → Set a timer** (15 minutes, 30 minutes, 1, 2 or 4 hours, 1 day, or **Custom…** for any number of days, hours and minutes), or select a task and press **T**.
+  - The task becomes important, moves to the top of the list and is highlighted.
+  - Under its name, a countdown ("1d 5h left", "4h 12m left", "23:41 left") and a line that shrinks as the time runs out. Both turn orange in the last minutes and red when the time is up.
+  - A **Time’s up** notification arrives right on time, with **Mark as done** and **Add 15 min**.
+  - Click the countdown to change the timer or remove it; the menu can also add 15 minutes or an hour. Removing a timer takes away the star it gave (a task you'd starred yourself keeps it).
+  - Finished tasks show how it went: "15m early", "Just in time" or "5m late".
+  - A timer on a task that repeats every day is cleared each morning, when the task starts afresh.
+
 ## [1.6.8] - 2026-10-03
 
 ### Fixed
@@ -116,6 +128,7 @@ The first public release.
 - Export and import your tasks, and delete completed ones automatically after a day or a week.
 - Tasks saved locally the moment they change, with a backup of the previous save.
 
+[1.7.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.7.0
 [1.6.8]: https://github.com/asmrayat/Task-pop/releases/tag/v1.6.8
 [1.6.6]: https://github.com/asmrayat/Task-pop/releases/tag/v1.6.6
 [1.6.5]: https://github.com/asmrayat/Task-pop/releases/tag/v1.6.5

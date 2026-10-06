@@ -135,6 +135,7 @@ The **app tests** start the real TaskPop on Linux under a virtual screen (`xvfb`
 | | `tour-*` | the welcome tour, including when macOS blocks the double-tap and for Store copies |
 | | `move-panel-*` | dragging the panel by its top bar, snapping to edges, staying on screen, Position settings |
 | | `store` | the Microsoft Store copy: no self-updates, its start-up task |
+| | `timers-*` | task timers: the menu and **T**, the countdown, the highlight, orange and red, **Time's up** on time, adding time, finishing early or late, undo |
 | release | `updater` | the updater against a local stand-in for GitHub: version numbers, picking the right file, release notes, errors, downloading and checking installers |
 | | `update-popup*` | the **New update is here** pop-up end to end: **Update later**, asking again, then **Update now** through to the built installer starting |
 

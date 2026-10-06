@@ -63,8 +63,16 @@ TaskPop is the list you don't have to remember to open. It lives in the menu bar
 - **Daily routines.** Tasks set to repeat every day un-tick themselves each morning, reminder included.
 - **Morning summary.** One notification at the time you choose, listing what's left.
 - **Reorder** by dragging, or with ⌥↑ / ⌥↓ (Alt+↑ / Alt+↓). The blue line shows exactly where a task will land.
-- **Keyboard first.** Arrows to move, Space to tick, Return to edit, Delete to remove, ⌘Z / Ctrl+Z to undo, N to start a new task, G to send the selected task to Google Calendar.
+- **Keyboard first.** Arrows to move, Space to tick, Return to edit, Delete to remove, ⌘Z / Ctrl+Z to undo, N to start a new task, T to set a timer, G to send the selected task to Google Calendar.
 - **Tidy by itself.** Delete completed tasks automatically after a day or a week, or clear them with one click.
+
+### Timers for what can't wait
+
+Give a task a time frame to finish in: **⋯ → Set a timer** for 15 minutes up to a day, **Custom…** for any number of days, hours and minutes, or select the task and press **T**. It's starred, moves to the top and is highlighted, with a countdown under it and a line that shrinks as the time runs out. Both turn orange in the last minutes and red when the time is up, and a **Time's up** notification arrives right on time, with **Mark as done** and **Add 15 min**. Finished tasks show whether you made it: "15m early" or "5m late".
+
+<p align="center">
+  <img src="docs/assets/readme/timers.png" width="280" alt="Two tasks with timers at the top of the list, highlighted in blue, showing 14:58 left and 1h 14m left with a line that shrinks as time runs out">
+</p>
 
 ### Google Calendar, without connecting anything
 

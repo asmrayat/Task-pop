@@ -37,7 +37,7 @@ Everything is saved in one folder on your computer:
 
 | File | What's in it |
 | --- | --- |
-| `tasks.json` | Your tasks: title, star, done, reminder, repeat and when you created and completed them |
+| `tasks.json` | Your tasks: title, star, done, reminder, timer, repeat and when you created and completed them |
 | `settings.json` | Your choices in Settings |
 | `meta.json` | Small bits of bookkeeping: whether the tour has run, the last version you used, the last update check |
 | `*.bak` | A copy of the previous good save of each file, used if a save is ever damaged |

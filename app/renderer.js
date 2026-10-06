@@ -45,6 +45,7 @@ const ICONS = {
   warn: '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4"/><path d="M8 4.8v3.8M8 11.1v.1" stroke-linecap="round"/></svg>',
   more: '<svg viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12.5" cy="8" r="1.3"/></svg>',
   calendar: '<svg viewBox="0 0 12 12"><rect x="1.5" y="2.2" width="9" height="8.3" rx="1.6"/><path d="M1.5 4.8h9M4 1.2v2M8 1.2v2"/></svg>',
+  timer: '<svg viewBox="0 0 12 12"><circle cx="6" cy="6.8" r="4.3"/><path d="M6 4.4v2.5l1.6 1M4.7 1.2h2.6M9.6 3.1l.8-.8"/></svg>',
 };
 
 let tasks = [];
@@ -52,6 +53,7 @@ let keepOpen = false;
 let soundOn = true;
 let editingId = null;
 let pickerId = null;
+let pickerKind = 'reminder'; // which picker is open under the task: 'reminder' or 'timer'
 let selectedId = null;
 let reorder = null; // the task being dragged to a new place (pointer events, see "Drag to reorder")
 let renderPending = false; // a re-render waits until the drag ends
@@ -111,6 +113,77 @@ function reminderLabel(ts) {
   return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${timeLabel(d)}`;
 }
 
+// ---------- Timers (v1.7) ----------
+// A time frame to finish a task in: it counts down beside the task, which is highlighted and
+// moved to the top as important. The app shows "Time's up" when it runs out.
+
+/** "2d", "1d 5h", "4h 12m", "1h", or "23:41" under an hour (minutes:seconds). */
+function durationLabel(ms, withSeconds = true) {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = total % 60;
+  if (d) return h ? `${d}d ${h}h` : `${d}d`;
+  if (h) return m ? `${h}h ${m}m` : `${h}h`;
+  if (withSeconds) return `${m}:${String(sec).padStart(2, '0')}`;
+  return `${Math.max(1, m)}m`;
+}
+
+/** 'running', 'soon' (the last 10 minutes, or the last fifth of a short timer) or 'over'. */
+function timerState(task, now) {
+  const left = task.timerEnd - now;
+  if (left <= 0) return 'over';
+  const total = Math.max(1, task.timerEnd - task.timerStart);
+  return left <= Math.min(10 * 60 * 1000, total * 0.2) ? 'soon' : 'running';
+}
+
+function countdownText(task, now) {
+  const left = task.timerEnd - now;
+  if (left > 0) return `${durationLabel(left)} left`;
+  const over = now - task.timerEnd;
+  return over < 60 * 1000 ? 'Time’s up' : `${durationLabel(over, false)} over`;
+}
+
+/** Bring a row's countdown, colour and progress line up to date (every second while open). */
+function paintTimer(row, task, now) {
+  const state = timerState(task, now);
+  for (const s of ['running', 'soon', 'over']) row.classList.toggle(`timer-${s}`, s === state);
+  const label = row.querySelector('.countdown span');
+  if (label) label.textContent = countdownText(task, now);
+  const bar = row.querySelector('.timer-bar');
+  if (bar) {
+    const total = Math.max(1, task.timerEnd - task.timerStart);
+    bar.style.transform = `scaleX(${Math.min(1, Math.max(0, (task.timerEnd - now) / total)).toFixed(4)})`;
+  }
+}
+
+function updateCountdowns() {
+  const now = Date.now();
+  listEl.querySelectorAll('.row.timed').forEach((row) => {
+    const task = findTask(row.dataset.id);
+    if (task && task.timerEnd && !task.done) paintTimer(row, task, now);
+  });
+}
+
+function setTimer(task, minutes) {
+  const now = Date.now();
+  task.timerStart = now;
+  task.timerEnd = now + minutes * 60 * 1000;
+  task.timerNotified = false;
+  if (!task.important) {
+    task.important = true;
+    task.timerStarred = true;
+  }
+  tasks = [task, ...tasks.filter((t) => t !== task)]; // to the top of the list
+}
+
+function removeTimer(task) {
+  Object.assign(task, { timerStart: null, timerEnd: null, timerNotified: false });
+  if (task.timerStarred) task.important = false;
+  task.timerStarred = false;
+}
+
 /** Display order: important first, then the rest, then completed. */
 function orderedGroups() {
   const pending = tasks.filter((t) => !t.done);
@@ -165,6 +238,7 @@ function addTask(rawTitle) {
   tasks.push({
     id: newId(), title, done: false, createdAt: Date.now(), completedAt: null,
     important, repeat: 'none', remindAt: null, reminded: false,
+    timerStart: null, timerEnd: null, timerNotified: false, timerStarred: false,
   });
   save();
   render();
@@ -175,6 +249,8 @@ function toggleTask(id) {
   if (!task) return;
   task.done = !task.done;
   task.completedAt = task.done ? Date.now() : null;
+  // Back on the list: a timer that has already run out doesn't say so again
+  if (!task.done && task.timerEnd) task.timerNotified = task.timerEnd <= Date.now();
   if (task.done) playDoneSound();
   save();
   render();
@@ -184,6 +260,7 @@ function toggleImportant(id) {
   const task = findTask(id);
   if (!task) return;
   task.important = !task.important;
+  task.timerStarred = false; // your choice now, whatever the timer does
   save();
   render();
 }
@@ -347,11 +424,97 @@ function buildPicker(task) {
   return box;
 }
 
-function openPicker(id) {
-  if (!findTask(id)) return;
+function openPicker(id, kind = 'reminder') {
+  const task = findTask(id);
+  if (!task || (kind === 'timer' && task.done)) return;
   pickerId = id;
+  pickerKind = kind;
   window.taskpop.hold(true);
   render();
+  if (kind === 'timer') {
+    const field = listEl.querySelector('.timer-picker select[data-unit="hours"]');
+    if (field) field.focus();
+  }
+}
+
+/** "Finish in [days] [hours] [minutes]": a custom timer, or a change to the running one. */
+function buildTimerPicker(task) {
+  const box = document.createElement('div');
+  box.className = 'picker timer-picker';
+  const label = document.createElement('span');
+  label.className = 'picker-label';
+  label.textContent = 'Finish in';
+
+  const now = Date.now();
+  const running = task.timerEnd && task.timerEnd > now;
+  // Starts at what's left (rounded up to 5 minutes), or 1 hour
+  const start = running ? Math.ceil((task.timerEnd - now) / (5 * 60 * 1000)) * 5 : 60;
+  const select = (unit, values, text, value) => {
+    const field = document.createElement('select');
+    field.dataset.unit = unit;
+    for (const v of values) field.add(new Option(text(v), String(v)));
+    field.value = String(value);
+    return field;
+  };
+  const range = (from, to, step = 1) => Array.from({ length: Math.floor((to - from) / step) + 1 }, (_, i) => from + i * step);
+  const days = select('days', range(0, 30), (v) => `${v} day${v === 1 ? '' : 's'}`, Math.min(30, Math.floor(start / 1440)));
+  const hours = select('hours', range(0, 23), (v) => `${v} hr`, Math.floor((start % 1440) / 60));
+  const minutes = select('minutes', range(0, 55, 5), (v) => `${v} min`, start % 60);
+  const chosen = () => Number(days.value) * 1440 + Number(hours.value) * 60 + Number(minutes.value);
+
+  const setBtn = document.createElement('button');
+  setBtn.textContent = task.timerEnd ? 'Change timer' : 'Start timer';
+  const refresh = () => { setBtn.disabled = chosen() === 0; };
+  [days, hours, minutes].forEach((field) => field.addEventListener('change', refresh));
+  refresh();
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'secondary';
+  cancelBtn.textContent = 'Cancel';
+
+  const close = () => {
+    pickerId = null;
+    window.taskpop.hold(false);
+    render();
+  };
+  const apply = () => {
+    const current = findTask(task.id);
+    if (current && !current.done && chosen() > 0) {
+      setTimer(current, chosen());
+      selectedId = current.id;
+      scrollToSelection = true;
+      save();
+    }
+    close();
+  };
+  setBtn.addEventListener('click', apply);
+  cancelBtn.addEventListener('click', close);
+  box.addEventListener('click', (e) => e.stopPropagation());
+  box.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Escape') close();
+    if (e.key === 'Enter' && e.target.tagName === 'SELECT') {
+      e.preventDefault();
+      apply();
+    }
+  });
+
+  box.append(label, days, hours, minutes, setBtn);
+  if (task.timerEnd) {
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'secondary';
+    removeBtn.textContent = 'Remove';
+    removeBtn.addEventListener('click', () => {
+      const current = findTask(task.id);
+      if (current) {
+        removeTimer(current);
+        save();
+      }
+      close();
+    });
+    box.append(removeBtn);
+  }
+  box.append(cancelBtn);
+  return box;
 }
 
 // ---------- Rendering ----------
@@ -364,9 +527,11 @@ function selectRow(id) {
 
 function rowElement(task) {
   const row = document.createElement('div');
+  const timed = !!task.timerEnd && !task.done;
   row.className = 'row'
     + (task.done ? ' done' : '')
     + (task.important ? ' important' : '')
+    + (timed ? ' timed' : '')
     + (task.id === selectedId ? ' selected' : '');
   row.dataset.id = task.id;
 
@@ -392,6 +557,29 @@ function rowElement(task) {
   });
   col.append(title);
 
+  if (timed) {
+    // Under the title: the countdown, and a line that shrinks as the time runs out
+    const line = document.createElement('div');
+    line.className = 'timer-line';
+    const countdown = document.createElement('button');
+    countdown.className = 'countdown';
+    countdown.innerHTML = ICONS.timer;
+    countdown.append(document.createElement('span'));
+    countdown.title = `Finish by ${reminderLabel(task.timerEnd)} — click to change`;
+    countdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectRow(task.id);
+      openPicker(task.id, 'timer');
+    });
+    const track = document.createElement('span');
+    track.className = 'timer-track';
+    const bar = document.createElement('i');
+    bar.className = 'timer-bar';
+    track.append(bar);
+    line.append(countdown, track);
+    col.append(line);
+  }
+
   const chips = [];
   if (task.remindAt && !task.done) {
     const overdue = task.remindAt <= Date.now();
@@ -404,6 +592,16 @@ function rowElement(task) {
       e.stopPropagation();
       openPicker(task.id);
     });
+    chips.push(chip);
+  }
+  if (task.done && task.timerEnd && task.completedAt) {
+    // How it went against the timer
+    const spare = task.timerEnd - task.completedAt;
+    const chip = document.createElement('span');
+    chip.className = 'chip' + (spare >= 0 ? ' timer-done' : '');
+    chip.innerHTML = ICONS.timer;
+    chip.append(document.createTextNode(spare >= 60 * 1000 ? `${durationLabel(spare, false)} early`
+      : spare >= 0 ? 'Just in time' : `${durationLabel(-spare, false)} late`));
     chips.push(chip);
   }
   if (task.repeat === 'daily') {
@@ -443,7 +641,7 @@ function rowElement(task) {
 
   const more = document.createElement('button');
   more.className = 'more';
-  more.title = 'More: Google Calendar, reminders, repeat…';
+  more.title = 'More: timer, reminders, Google Calendar, repeat…';
   more.innerHTML = ICONS.more;
   more.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -461,6 +659,7 @@ function rowElement(task) {
   });
 
   row.append(check, col, star, more, del);
+  if (timed) paintTimer(row, task, Date.now());
 
   row.addEventListener('click', () => selectRow(task.id));
   row.addEventListener('contextmenu', (e) => {
@@ -502,14 +701,14 @@ function render() {
     const empty = document.createElement('div');
     empty.className = 'empty';
     empty.innerHTML = `${ICONS.empty}<strong>No tasks yet</strong><span>Type below and press Return</span>
-      <p class="tips">Start a task with <b>!</b> to mark it important.<br>Click <b>⋯</b> on a task for reminders, Google Calendar and more.</p>`;
+      <p class="tips">Start a task with <b>!</b> to mark it important.<br>Click <b>⋯</b> on a task for a timer, reminders, Google Calendar and more.</p>`;
     listEl.append(empty);
     return;
   }
 
   const addRow = (t) => {
     listEl.append(rowElement(t));
-    if (t.id === pickerId) listEl.append(buildPicker(t));
+    if (t.id === pickerId) listEl.append(pickerKind === 'timer' ? buildTimerPicker(t) : buildPicker(t));
   };
 
   pending.forEach(addRow);
@@ -1105,6 +1304,12 @@ document.addEventListener('keydown', (e) => {
         openCalendar(selectedId);
       }
       break;
+    case 't':
+      if (selectedId) {
+        e.preventDefault();
+        openPicker(selectedId, 'timer');
+      }
+      break;
     case 'n':
     case '/':
       e.preventDefault();
@@ -1176,13 +1381,19 @@ window.taskpop.onSettingsChanged((settings) => {
 
 window.taskpop.onToggleTask((id) => toggleTask(id));
 window.taskpop.onDeleteTask((id) => deleteTask(id));
-window.taskpop.onPickReminder((id) => openPicker(id));
+window.taskpop.onPickReminder((id) => openPicker(id, 'reminder'));
+window.taskpop.onPickTimer((id) => openPicker(id, 'timer'));
 window.taskpop.onCalendarTask((id) => openCalendar(id));
 window.taskpop.onEditTask((id) => {
   const titleEl = listEl.querySelector(`.row[data-id="${CSS.escape(id)}"] .title`);
   const task = findTask(id);
   if (titleEl && task) startEditing(task, titleEl);
 });
+
+// Timers count down every second while the panel is open (just the numbers, not the whole list).
+setInterval(() => {
+  if (document.visibilityState === 'visible') updateCountdowns();
+}, 1000);
 
 // Keep reminder labels ("Overdue", "Today 6:00 PM") fresh while the panel is open.
 setInterval(() => {

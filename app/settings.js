@@ -174,7 +174,7 @@ function applyPlatform(p, keys) {
   text('showData', 'Show in File Explorer');
   text('savedLabel', 'Saved on this PC');
   text('backupHint', 'Export your tasks to a file, or import them on another computer.');
-  text('remindHint', 'Right-click a task → Remind me. You’ll get a Windows notification.');
+  text('remindHint', 'Reminders, and “Time’s up” when a task’s timer runs out. You’ll get a Windows notification.');
   text('testNotifyHint', 'If nothing appears, check Windows Settings → System → Notifications.');
   const tipSiri = document.getElementById('tipSiri');
   if (tipSiri) tipSiri.remove();

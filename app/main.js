@@ -193,8 +193,22 @@ function sanitizeTasks(list) {
       reminded: !!t.reminded,
       calendarAt: t.calendarAt ? Number(t.calendarAt) || null : null, // sent to Google Calendar for this time
       calendarAllDay: !!t.calendarAllDay,
+      ...cleanTimer(t),
     }))
     .filter((t) => (seen.has(t.id) ? false : seen.add(t.id)));
+}
+
+/** v1.7: a timer to finish the task: started at timerStart, time's up at timerEnd. */
+function cleanTimer(t) {
+  const end = Number(t.timerEnd);
+  if (!(end > 0)) return { timerStart: null, timerEnd: null, timerNotified: false, timerStarred: false };
+  const start = Number(t.timerStart);
+  return {
+    timerStart: start > 0 && start < end ? start : end - 60 * 1000,
+    timerEnd: end,
+    timerNotified: !!t.timerNotified, // the "Time's up" notification was shown
+    timerStarred: !!t.timerStarred && !!t.important, // the timer starred it (removing the timer unstars it)
+  };
 }
 
 function sanitizeSettings(raw) {
@@ -310,6 +324,7 @@ function broadcastSettings() {
 }
 
 function pushTasks() {
+  scheduleTimerAlarm();
   send(panel, 'tasks:replace', { tasks, rev });
   send(settingsWin, 'settings:changed', settingsSnapshot());
   refreshTray();
@@ -383,6 +398,84 @@ function notifyTask(task) {
   });
 }
 
+// ---------- Timers (v1.7) ----------
+// Set a time frame to finish a task: it counts down beside the task, the task becomes important
+// and moves to the top, and a notification says when the time is up.
+
+const TIMER_PRESETS = [['15 minutes', 15], ['30 minutes', 30], ['1 hour', 60], ['2 hours', 120], ['4 hours', 240], ['1 day', 24 * 60]];
+let timerAlarm = null;
+
+function setTimer(task, minutes) {
+  const now = Date.now();
+  task.timerStart = now;
+  task.timerEnd = now + minutes * 60 * 1000;
+  task.timerNotified = false;
+  if (!task.important) {
+    task.important = true;
+    task.timerStarred = true;
+  }
+  tasks = [task, ...tasks.filter((t) => t !== task)]; // to the top of the list
+}
+
+function extendTimer(task, minutes) {
+  if (!task.timerEnd) return;
+  task.timerEnd = Math.max(task.timerEnd, Date.now()) + minutes * 60 * 1000; // time's up: from now
+  task.timerNotified = false;
+}
+
+function removeTimer(task) {
+  Object.assign(task, { timerStart: null, timerEnd: null, timerNotified: false });
+  if (task.timerStarred) task.important = false; // it was only important because of the timer
+  task.timerStarred = false;
+}
+
+/** Wake up exactly when the next timer runs out (and at least hourly, in case the clock changes). */
+function scheduleTimerAlarm() {
+  clearTimeout(timerAlarm);
+  timerAlarm = null;
+  let next = Infinity;
+  for (const t of tasks) {
+    if (t.timerEnd && !t.done && !t.timerNotified) next = Math.min(next, t.timerEnd);
+  }
+  if (next === Infinity) return;
+  const delay = Math.min(Math.max(0, next - Date.now()), 60 * 60 * 1000);
+  timerAlarm = setTimeout(checkTimers, delay + 20);
+}
+
+function checkTimers() {
+  const now = Date.now();
+  const changed = [];
+  for (const t of tasks) {
+    if (t.timerEnd && !t.done && !t.timerNotified && t.timerEnd <= now) {
+      t.timerNotified = true;
+      changed.push(t.id);
+      if (settings.notifications) notifyTimeUp(t);
+    }
+  }
+  if (changed.length) commit({ changed }); // also schedules the next one
+  else scheduleTimerAlarm();
+}
+
+function notifyTimeUp(task) {
+  notify({
+    title: 'Time’s up',
+    body: task.title,
+    actions: [{ type: 'button', text: 'Mark as done' }, { type: 'button', text: 'Add 15 min' }],
+    onClick: () => showPanel(true),
+    onAction: (index) => {
+      const current = tasks.find((t) => t.id === task.id);
+      if (!current) return;
+      if (index === 0) {
+        current.done = true;
+        current.completedAt = Date.now();
+      } else {
+        extendTimer(current, 15);
+      }
+      commit({ changed: [current.id] });
+    },
+  });
+}
+
 function summaryTimeToday(now) {
   const [h, m] = settings.dailySummaryTime.split(':').map(Number);
   return new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m).getTime();
@@ -402,6 +495,10 @@ function tick() {
       if (t.done) {
         t.done = false;
         t.completedAt = null;
+        changed.add(t.id);
+      }
+      if (t.timerEnd) {
+        removeTimer(t); // a new day starts without yesterday's timer
         changed.add(t.id);
       }
       if (t.remindAt && t.remindAt < startOfToday) {
@@ -441,6 +538,7 @@ function tick() {
 
   if (changed.size) commit({ changed: [...changed] });
   autoClearCompleted();
+  checkTimers(); // in case a timer ran out while the Mac or PC was asleep
 }
 
 // ---------- Global shortcut ----------
@@ -1499,6 +1597,7 @@ ipcMain.on('tasks:save', (event, payload) => {
   if (baseRev >= rev) {
     tasks = incoming;
     saveTasks();
+    scheduleTimerAlarm();
     refreshTray();
     send(settingsWin, 'settings:changed', settingsSnapshot());
     return;
@@ -1566,11 +1665,31 @@ ipcMain.on('task:context-menu', (event, id) => {
     });
   }
 
+  const timerItems = TIMER_PRESETS.map(([label, minutes]) => ({ label, click: update((t) => setTimer(t, minutes)) }));
+  timerItems.push({ label: 'Custom…', click: () => send(panel, 'task:pick-timer', id) });
+  if (task.timerEnd) {
+    timerItems.push(
+      { type: 'separator' },
+      { label: 'Add 15 minutes', click: update((t) => extendTimer(t, 15)) },
+      { label: 'Add 1 hour', click: update((t) => extendTimer(t, 60)) },
+      { label: 'Remove timer', click: update(removeTimer) },
+    );
+  }
+
   Menu.buildFromTemplate([
     { label: task.done ? 'Mark as not done' : 'Mark as done', click: () => send(panel, 'task:toggle', id) },
     { label: 'Edit', click: () => send(panel, 'task:edit', id) },
     { type: 'separator' },
-    { label: 'Important', type: 'checkbox', checked: task.important, click: update((t) => { t.important = !t.important; }) },
+    {
+      label: 'Important',
+      type: 'checkbox',
+      checked: task.important,
+      click: update((t) => {
+        t.important = !t.important;
+        t.timerStarred = false; // your choice now, whatever the timer does
+      }),
+    },
+    ...(task.done ? [] : [{ label: 'Set a timer', submenu: timerItems }]),
     { label: 'Remind me', submenu: remindItems },
     { label: 'Add to Google Calendar…', click: () => send(panel, 'task:calendar', id) },
     {

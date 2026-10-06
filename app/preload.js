@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('taskpop', {
   onEditTask: on('task:edit'),
   onDeleteTask: on('task:delete'),
   onPickReminder: on('task:pick-reminder'),
+  onPickTimer: on('task:pick-timer'),
   onCalendarTask: on('task:calendar'),
   openCalendar: (event) => ipcRenderer.invoke('calendar:open', event),
   // Updates
