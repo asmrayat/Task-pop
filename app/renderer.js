@@ -46,7 +46,25 @@ const ICONS = {
   more: '<svg viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12.5" cy="8" r="1.3"/></svg>',
   calendar: '<svg viewBox="0 0 12 12"><rect x="1.5" y="2.2" width="9" height="8.3" rx="1.6"/><path d="M1.5 4.8h9M4 1.2v2M8 1.2v2"/></svg>',
   timer: '<svg viewBox="0 0 12 12"><circle cx="6" cy="6.8" r="4.3"/><path d="M6 4.4v2.5l1.6 1M4.7 1.2h2.6M9.6 3.1l.8-.8"/></svg>',
+  plus: '<svg viewBox="0 0 12 12"><path d="M6 2.2v7.6M2.2 6h7.6"/></svg>',
 };
+
+// v1.8: categories
+const tagsEl = document.getElementById('tags');
+const sortCard = document.getElementById('sortCard');
+const sortEls = {
+  count: document.getElementById('sortCount'),
+  intro: document.getElementById('sortIntro'),
+  task: document.getElementById('sortTask'),
+  choices: document.getElementById('sortChoices'),
+  skip: document.getElementById('sortSkip'),
+  later: document.getElementById('sortLater'),
+  meter: document.getElementById('sortMeter'),
+};
+const CAT_COLORS = {
+  blue: '#2f7cf6', orange: '#ff9500', green: '#34c759', purple: '#af52de', pink: '#ff2d55', teal: '#30b0c7', yellow: '#f2b600', gray: '#8e8e93',
+};
+const MAX_CATEGORIES = 30;
 
 let tasks = [];
 let keepOpen = false;
@@ -70,6 +88,10 @@ let updateState = null; // what the updater reports (new version available, down
 let calendarId = null; // task shown in the "Add to Google Calendar" pop-up
 let calendarDuration = 60; // default event length (minutes), from Settings
 let calendarLengthPicked = false; // you changed the length yourself (then it becomes the default)
+let categories = []; // [{ id, name, color }], in the order of the tags
+let currentCat = 'all'; // the tag you're looking at: 'all', 'none' (Unsorted) or a category id
+let tagEdit = null; // naming a category in the tag row: { id: 'new' or the category's id, forTask }
+let sorting = null; // "Sort your tasks": { queue, pos, total, intro, back, adding }
 
 // ---------- Helpers ----------
 
@@ -83,8 +105,417 @@ const findTask = (id) => tasks.find((t) => t.id === id);
 const isToday = (ts) => ts && new Date(ts).toDateString() === new Date().toDateString();
 
 function save() {
-  window.taskpop.saveTasks(tasks, knownRev);
+  window.taskpop.saveTasks(tasks, knownRev, categories);
 }
+
+const snapshot = () => ({ tasks: clone(tasks), categories: clone(categories) });
+
+// ---------- Categories (v1.8) ----------
+// Tags along the top: All, your categories, Unsorted (tasks in none, when there are any) and +.
+// The list shows the tag you pick; new tasks go into it.
+
+const findCat = (id) => categories.find((c) => c.id === id);
+/** The task's category, or null when it's in none (or in one that's gone). */
+const catOf = (task) => (task && task.category && findCat(task.category)) || null;
+/** A task still to sort: in no category, and not finished (a daily one comes back, so it counts). */
+const needsSort = (t) => !catOf(t) && (!t.done || t.repeat === 'daily');
+const cleanName = (s) => String(s || '').trim().replace(/\s+/g, ' ').slice(0, 30);
+const squash = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+
+function inView(task, view = currentCat) {
+  if (view === 'all') return true;
+  if (view === 'none') return !catOf(task);
+  return task.category === view && !!findCat(view);
+}
+
+const showUnsorted = () => categories.length > 0 && (currentCat === 'none' || tasks.some(needsSort));
+const views = () => ['all', ...categories.map((c) => c.id), ...(showUnsorted() ? ['none'] : [])];
+
+/** Back to All when the tag you were on is gone (deleted, or Unsorted with nothing left in it). */
+function fixView() {
+  if (currentCat === 'none' && (!categories.length || !tasks.some((t) => !catOf(t)))) currentCat = 'all';
+  else if (currentCat !== 'all' && currentCat !== 'none' && !findCat(currentCat)) currentCat = 'all';
+}
+
+function selectCat(view, again = false) {
+  // (picking the tag you're on does nothing, so a double-click on it can rename it)
+  if ((view === currentCat && !again) || !views().includes(view)) return;
+  currentCat = view;
+  if (selectedId && !inView(findTask(selectedId) || {})) selectedId = null;
+  if (pickerId) {
+    pickerId = null;
+    window.taskpop.hold(false);
+  }
+  listEl.scrollTop = 0;
+  render();
+  const tag = tagsEl.querySelector(`.tag[data-cat="${CSS.escape(view)}"]`);
+  if (tag) revealTag(tag);
+}
+
+/** ← / →: the tag before or after the one you're on. */
+function stepCat(step) {
+  const all = views();
+  const next = all[all.indexOf(currentCat) + step];
+  if (next) selectCat(next);
+}
+
+function nextColor() {
+  const used = new Set(categories.map((c) => c.color));
+  const names = Object.keys(CAT_COLORS);
+  return names.find((c) => !used.has(c)) || names[categories.length % names.length];
+}
+
+/** A new category (or the one you already have with that name). */
+function addCategory(rawName) {
+  const name = cleanName(rawName);
+  if (!name) return null;
+  const same = categories.find((c) => c.name.toLowerCase() === name.toLowerCase());
+  if (same) return same;
+  if (categories.length >= MAX_CATEGORIES) return null;
+  const cat = { id: newId(), name, color: nextColor() };
+  categories.push(cat);
+  return cat;
+}
+
+function deleteCategory(id) {
+  const cat = findCat(id);
+  if (!cat) return;
+  undoSnapshot = snapshot();
+  const moved = tasks.filter((t) => t.category === id);
+  moved.forEach((t) => { t.category = null; });
+  categories = categories.filter((c) => c.id !== id);
+  save();
+  render();
+  showUndo(moved.length
+    ? `Deleted “${cat.name}”. Its ${moved.length === 1 ? 'task is' : `${moved.length} tasks are`} in Unsorted.`
+    : `Deleted “${cat.name}”`);
+}
+
+function moveCategory(id, step) {
+  const i = categories.findIndex((c) => c.id === id);
+  const j = i + step;
+  if (i === -1 || j < 0 || j >= categories.length) return;
+  [categories[i], categories[j]] = [categories[j], categories[i]];
+  save();
+  render();
+}
+
+/** Put a task into a category (null: Unsorted), with Undo. */
+function moveTaskTo(id, catId) {
+  const task = findTask(id);
+  const cat = catId ? findCat(catId) : null;
+  if (!task || (catId && !cat)) return;
+  const was = catOf(task);
+  if ((was ? was.id : null) === (cat ? cat.id : null)) return;
+  undoSnapshot = snapshot();
+  task.category = cat ? cat.id : null;
+  if (selectedId === id && !inView(task)) selectedId = null; // it left the tag you're on
+  save();
+  render();
+  showUndo(`Moved to ${cat ? cat.name : 'Unsorted'}`);
+}
+
+/** "Buy milk #personal": the category named after the #, and the title without it. */
+function hashCategory(title) {
+  const re = /(^|\s)#([^\s#]+)/g;
+  let m;
+  while ((m = re.exec(title))) {
+    const word = squash(m[2]);
+    const cat = word && categories.find((c) => squash(c.name) === word);
+    if (cat) {
+      const at = m.index + m[1].length;
+      return { cat, title: `${title.slice(0, at)}${title.slice(at + 1 + m[2].length)}`.replace(/\s{2,}/g, ' ').trim() };
+    }
+  }
+  return null;
+}
+
+function revealTag(tag) {
+  const pad = 28; // clear of the faded edge
+  const left = tag.offsetLeft - pad;
+  const right = tag.offsetLeft + tag.offsetWidth + pad;
+  let to = null;
+  if (left < tagsEl.scrollLeft) to = Math.max(0, left);
+  else if (right > tagsEl.scrollLeft + tagsEl.clientWidth) to = right - tagsEl.clientWidth;
+  if (to !== null) tagsEl.scrollTo({ left: to, behavior: 'smooth' });
+}
+
+function updateTagFades() {
+  const max = tagsEl.scrollWidth - tagsEl.clientWidth;
+  tagsEl.classList.toggle('fade-left', tagsEl.scrollLeft > 1);
+  tagsEl.classList.toggle('fade-right', tagsEl.scrollLeft < max - 1);
+}
+
+function dotEl(color) {
+  const dot = document.createElement('i');
+  dot.className = 'dot';
+  dot.style.setProperty('--c', CAT_COLORS[color] || CAT_COLORS.gray);
+  return dot;
+}
+
+function tagButton(view, name, color) {
+  const tag = document.createElement('button');
+  tag.className = 'tag' + (view === currentCat ? ' on' : '') + (view === 'none' ? ' unsorted' : '');
+  tag.dataset.cat = view;
+  if (color) tag.append(dotEl(color));
+  const label = document.createElement('span');
+  label.textContent = name;
+  tag.append(label);
+  const pending = tasks.filter((t) => !t.done && inView(t, view)).length;
+  if (pending) {
+    const count = document.createElement('small');
+    count.textContent = String(pending);
+    tag.append(count);
+  }
+  if (view === 'none') tag.title = 'Tasks in no category — right-click to sort them';
+  else if (view !== 'all') tag.title = `${name} — double-click to rename, right-click for more`;
+  return tag;
+}
+
+/** The box for naming a new category, or renaming one, in place of its tag. */
+function tagInput(cat) {
+  const field = document.createElement('input');
+  field.className = 'tag-input';
+  field.maxLength = 30;
+  field.placeholder = 'New category';
+  field.spellcheck = false;
+  field.value = cat ? cat.name : '';
+  const fit = () => { field.style.width = `${Math.max(9, Math.min(22, field.value.length + 2))}ch`; };
+  fit();
+  let finished = false;
+  const finish = (keep) => {
+    if (finished) return;
+    const edit = tagEdit;
+    const name = cleanName(field.value);
+    if (keep && name && cat && categories.some((c) => c.id !== cat.id && c.name.toLowerCase() === name.toLowerCase())) {
+      field.classList.remove('taken');
+      void field.offsetWidth; // restart the shake
+      field.classList.add('taken'); // another category has that name
+      field.title = 'You already have a category with that name';
+      return;
+    }
+    finished = true;
+    tagEdit = null;
+    const renamed = keep && name && cat && findCat(cat.id);
+    if (renamed) {
+      renamed.name = name;
+      save();
+      render();
+    } else if (keep && name && !cat) {
+      const made = addCategory(name);
+      if (made) save();
+      if (made && edit.forTask) {
+        render();
+        moveTaskTo(edit.forTask, made.id); // from the task's Move to › New category…
+      } else if (made) {
+        selectCat(made.id, true); // a new, empty category: type its first task
+        inputEl.focus();
+      } else render();
+    } else render();
+  };
+  field.addEventListener('input', () => {
+    field.classList.remove('taken');
+    fit();
+  });
+  field.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter' && !e.isComposing) finish(true);
+    if (e.key === 'Escape') finish(false);
+  });
+  field.addEventListener('blur', () => finish(true));
+  field.addEventListener('click', (e) => e.stopPropagation());
+  return field;
+}
+
+function startTagEdit(id, forTask = null) {
+  if (id === 'new' && categories.length >= MAX_CATEGORIES) return;
+  if (id !== 'new' && !findCat(id)) return;
+  tagEdit = { id, forTask };
+  renderTags(true);
+  const field = tagsEl.querySelector('.tag-input');
+  if (field) {
+    revealTag(field);
+    field.focus();
+    field.select();
+  }
+}
+
+function renderTags(force = false) {
+  if (!force && tagEdit && tagsEl.querySelector('.tag-input')) return; // don't disturb the name you're typing
+  const scroll = tagsEl.scrollLeft;
+  const items = [tagButton('all', 'All')];
+  for (const c of categories) items.push(tagEdit && tagEdit.id === c.id ? tagInput(c) : tagButton(c.id, c.name, c.color));
+  if (showUnsorted()) items.push(tagButton('none', 'Unsorted'));
+  if (tagEdit && tagEdit.id === 'new') {
+    items.push(tagInput(null));
+  } else if (categories.length < MAX_CATEGORIES) {
+    const add = document.createElement('button');
+    add.className = 'tag add';
+    add.title = 'New category';
+    add.innerHTML = ICONS.plus;
+    items.push(add);
+  }
+  tagsEl.replaceChildren(...items);
+  tagsEl.scrollLeft = scroll;
+  updateTagFades();
+}
+
+tagsEl.addEventListener('click', (e) => {
+  const tag = e.target.closest('.tag');
+  if (!tag) return;
+  if (tag.classList.contains('add')) startTagEdit('new');
+  else selectCat(tag.dataset.cat);
+});
+tagsEl.addEventListener('dblclick', (e) => {
+  const tag = e.target.closest('.tag[data-cat]');
+  if (tag && findCat(tag.dataset.cat)) startTagEdit(tag.dataset.cat);
+});
+tagsEl.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  const tag = e.target.closest('.tag[data-cat]');
+  if (tag && tag.dataset.cat !== 'all') window.taskpop.showCategoryMenu(tag.dataset.cat);
+});
+// A mouse wheel scrolls the tags sideways
+tagsEl.addEventListener('wheel', (e) => {
+  if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+  tagsEl.scrollLeft += e.deltaY;
+  e.preventDefault();
+}, { passive: false });
+tagsEl.addEventListener('scroll', updateTagFades);
+// Clicking a tag doesn't take the keyboard focus (from "Add a task", or from the list's keys)
+tagsEl.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.tag')) e.preventDefault();
+});
+sortCard.addEventListener('mousedown', (e) => {
+  if (e.target.closest('button')) e.preventDefault();
+});
+window.addEventListener('resize', updateTagFades);
+
+// ---------- Sort your tasks (v1.8) ----------
+// After updating, the tasks you already had are in no category. This card goes through them one
+// at a time: pick a category, Skip, or "Do the rest later" (they wait under Unsorted).
+
+/** Unsorted tasks in the order the list shows them. */
+function sortQueue() {
+  const need = tasks.filter(needsSort);
+  const open = need.filter((t) => !t.done);
+  return [...open.filter((t) => t.important), ...open.filter((t) => !t.important), ...need.filter((t) => t.done)].map((t) => t.id);
+}
+
+function startSorting(intro = false) {
+  const queue = sortQueue();
+  if (!queue.length || !categories.length) {
+    if (intro) window.taskpop.sortDone();
+    return;
+  }
+  sorting = { queue, pos: 0, total: queue.length, intro, back: currentCat === 'none' ? 'all' : currentCat, adding: false };
+  if (!intro && document.activeElement === inputEl && !inputEl.value) inputEl.blur(); // so 1–9 pick
+  currentCat = 'none';
+  selectedId = null;
+  listEl.scrollTop = 0;
+  render();
+  const tag = tagsEl.querySelector('.tag.on');
+  if (tag) revealTag(tag);
+}
+
+/** The task the card asks about (passing over any finished, sorted or deleted meanwhile). */
+function sortingTask() {
+  while (sorting && sorting.pos < sorting.queue.length) {
+    const t = findTask(sorting.queue[sorting.pos]);
+    if (t && needsSort(t)) return t;
+    sorting.pos += 1;
+  }
+  return null;
+}
+
+function sortPick(catId) {
+  const task = sortingTask();
+  if (!task || !findCat(catId)) return;
+  task.category = catId;
+  sorting.pos += 1;
+  sorting.adding = false;
+  save();
+  render();
+}
+
+function sortSkip() {
+  if (!sortingTask()) return;
+  sorting.pos += 1;
+  sorting.adding = false;
+  render();
+}
+
+function finishSorting(later = false) {
+  const s = sorting;
+  if (!s) return;
+  sorting = null;
+  if (s.intro) window.taskpop.sortDone();
+  const left = tasks.filter(needsSort).length;
+  currentCat = later || !left ? s.back : 'none';
+  fixView();
+  render();
+  if (later) hideToast();
+  else showUndo(left ? `${left} task${left === 1 ? '' : 's'} left in Unsorted` : 'All sorted 🎉', false);
+}
+
+function renderSort() {
+  const task = sorting && sortingTask();
+  sortCard.hidden = !task;
+  if (!task) return;
+  const naming = sortEls.choices.querySelector('.sort-new');
+  if (sorting.adding && naming && document.activeElement === naming) return; // you're naming a new category
+  sortEls.intro.hidden = !sorting.intro;
+  sortEls.count.textContent = `${Math.min(sorting.pos + 1, sorting.total)} of ${sorting.total}`;
+  sortEls.task.textContent = task.title;
+  sortEls.task.classList.toggle('important', !!task.important);
+  sortEls.meter.style.width = `${(sorting.pos / sorting.total) * 100}%`;
+  const choices = categories.map((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'tag sort-choice';
+    b.dataset.cat = c.id;
+    b.append(dotEl(c.color), Object.assign(document.createElement('span'), { textContent: c.name }));
+    if (i < 9) b.title = `${c.name} (${i + 1})`;
+    b.addEventListener('click', () => sortPick(c.id));
+    return b;
+  });
+  if (sorting.adding) {
+    const field = document.createElement('input');
+    field.className = 'tag-input sort-new';
+    field.maxLength = 30;
+    field.placeholder = 'New category';
+    field.spellcheck = false;
+    const done = (keep) => {
+      if (!sorting || !sorting.adding) return;
+      sorting.adding = false;
+      const made = keep && cleanName(field.value) ? addCategory(field.value) : null;
+      if (made) sortPick(made.id); // saves
+      else render();
+    };
+    field.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter' && !e.isComposing) done(true);
+      if (e.key === 'Escape') done(false);
+    });
+    field.addEventListener('blur', () => done(true));
+    choices.push(field);
+  } else if (categories.length < MAX_CATEGORIES) {
+    const add = document.createElement('button');
+    add.className = 'tag add sort-add';
+    add.innerHTML = `${ICONS.plus}<span>New</span>`;
+    add.title = 'Put it in a new category';
+    add.addEventListener('click', () => {
+      sorting.adding = true;
+      render();
+      const field = sortEls.choices.querySelector('.sort-new');
+      if (field) field.focus();
+    });
+    choices.push(add);
+  }
+  sortEls.choices.replaceChildren(...choices);
+}
+
+sortEls.skip.addEventListener('click', sortSkip);
+sortEls.later.addEventListener('click', () => finishSorting(true));
 
 function timeLabel(date) {
   return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -184,12 +615,13 @@ function removeTimer(task) {
   task.timerStarred = false;
 }
 
-/** Display order: important first, then the rest, then completed. */
+/** Display order for the tag you're on: important first, then the rest, then completed. */
 function orderedGroups() {
-  const pending = tasks.filter((t) => !t.done);
+  const shown = tasks.filter((t) => inView(t));
+  const pending = shown.filter((t) => !t.done);
   return {
     pending: [...pending.filter((t) => t.important), ...pending.filter((t) => !t.important)],
-    done: tasks.filter((t) => t.done),
+    done: shown.filter((t) => t.done),
   };
 }
 
@@ -234,14 +666,23 @@ function addTask(rawTitle) {
     important = true;
     title = title.replace(/^!+\s*/, '');
   }
+  // Into the category you're looking at, or the one named with # ("Buy milk #personal")
+  let category = findCat(currentCat) ? currentCat : null;
+  const tagged = hashCategory(title);
+  if (tagged && tagged.title) {
+    category = tagged.cat.id;
+    title = tagged.title;
+  }
   if (!title) return;
-  tasks.push({
+  const task = {
     id: newId(), title, done: false, createdAt: Date.now(), completedAt: null,
     important, repeat: 'none', remindAt: null, reminded: false,
-    timerStart: null, timerEnd: null, timerNotified: false, timerStarred: false,
-  });
+    timerStart: null, timerEnd: null, timerNotified: false, timerStarred: false, category,
+  };
+  tasks.push(task);
   save();
   render();
+  if (!inView(task)) showUndo(`Added to ${tagged.cat.name}`, false);
 }
 
 function toggleTask(id) {
@@ -274,21 +715,27 @@ function renameTask(id, title) {
   render();
 }
 
-function showUndo(message) {
+/** The message at the bottom, with Undo (or, with canUndo false, just the message). */
+function showUndo(message, canUndo = true) {
   undoText.textContent = message;
+  undoBtn.hidden = !canUndo;
+  if (!canUndo) undoSnapshot = null;
   undoToast.classList.add('show');
   clearTimeout(undoTimer);
-  undoTimer = setTimeout(() => {
-    undoToast.classList.remove('show');
-    undoSnapshot = null;
-  }, 6000);
+  undoTimer = setTimeout(hideToast, canUndo ? 6000 : 3500);
+}
+
+function hideToast() {
+  clearTimeout(undoTimer);
+  undoToast.classList.remove('show');
+  undoSnapshot = null;
 }
 
 function undo() {
   if (!undoSnapshot) return;
-  tasks = undoSnapshot;
-  undoSnapshot = null;
-  undoToast.classList.remove('show');
+  tasks = undoSnapshot.tasks;
+  categories = undoSnapshot.categories;
+  hideToast();
   save();
   render();
 }
@@ -298,7 +745,7 @@ function deleteTask(id) {
   if (!task) return;
   const order = visibleOrder();
   const idx = order.findIndex((t) => t.id === id);
-  undoSnapshot = clone(tasks);
+  undoSnapshot = snapshot();
   tasks = tasks.filter((t) => t.id !== id);
   if (selectedId === id) {
     const next = order[idx + 1] || order[idx - 1];
@@ -309,11 +756,13 @@ function deleteTask(id) {
   showUndo('Task deleted');
 }
 
+/** "Clear" on the Completed list: the finished tasks you can see (under the tag you're on). */
 function clearCompleted() {
-  const count = tasks.filter((t) => t.done).length;
+  const cleared = new Set(orderedGroups().done.map((t) => t.id));
+  const count = cleared.size;
   if (!count) return;
-  undoSnapshot = clone(tasks);
-  tasks = tasks.filter((t) => !t.done);
+  undoSnapshot = snapshot();
+  tasks = tasks.filter((t) => !cleared.has(t.id));
   save();
   render();
   showUndo(`${count} completed task${count === 1 ? '' : 's'} cleared`);
@@ -532,7 +981,8 @@ function rowElement(task) {
     + (task.done ? ' done' : '')
     + (task.important ? ' important' : '')
     + (timed ? ' timed' : '')
-    + (task.id === selectedId ? ' selected' : '');
+    + (task.id === selectedId ? ' selected' : '')
+    + (sorting && sorting.queue[sorting.pos] === task.id ? ' sorting-now' : '');
   row.dataset.id = task.id;
 
   const check = document.createElement('button');
@@ -551,6 +1001,20 @@ function rowElement(task) {
   title.className = 'title';
   title.title = 'Double-click to edit · right-click for more';
   title.textContent = task.title;
+  const cat = currentCat === 'all' && catOf(task);
+  if (cat) {
+    // Under All, which category it's in, after the title (click to go there)
+    const label = document.createElement('span');
+    label.className = 'cat-label';
+    label.append(dotEl(cat.color), document.createTextNode(cat.name));
+    label.title = `In ${cat.name} — click to show only ${cat.name}`;
+    label.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectCat(cat.id);
+    });
+    label.addEventListener('dblclick', (e) => e.stopPropagation());
+    title.append(label);
+  }
   title.addEventListener('dblclick', (e) => {
     e.stopPropagation();
     startEditing(task, title);
@@ -641,7 +1105,7 @@ function rowElement(task) {
 
   const more = document.createElement('button');
   more.className = 'more';
-  more.title = 'More: timer, reminders, Google Calendar, repeat…';
+  more.title = 'More: move to a category, timer, reminders, Google Calendar…';
   more.innerHTML = ICONS.more;
   more.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -677,21 +1141,33 @@ function render() {
     return;
   }
   renderPending = false;
+  if (sorting && !sortingTask()) {
+    finishSorting(); // that was the last one; it renders again
+    return;
+  }
+  fixView();
   const { pending, done } = orderedGroups();
+  const shown = pending.length + done.length;
   const doneToday = done.filter((t) => isToday(t.completedAt)).length;
 
+  // The date, and how many are left (under the tag you're on)
   const date = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   let status = 'Nothing yet';
-  if (tasks.length && !pending.length) status = 'All done 🎉';
+  if (shown && !pending.length) status = 'All done 🎉';
   else if (pending.length) status = `${pending.length} left`;
   if (doneToday && pending.length) status += ` · ${doneToday} done today`;
   subtitleEl.textContent = `${date} · ${status}`;
 
-  progressEl.classList.toggle('hidden', tasks.length === 0);
-  barEl.style.width = tasks.length ? `${(done.length / tasks.length) * 100}%` : '0';
+  progressEl.classList.toggle('hidden', shown === 0);
+  barEl.style.width = shown ? `${(done.length / shown) * 100}%` : '0';
 
   pinBtn.classList.toggle('active', keepOpen);
   pinBtn.title = keepOpen ? 'Unpin (hide when clicking outside)' : 'Keep open';
+
+  const cat = findCat(currentCat);
+  inputEl.placeholder = cat ? `Add to ${cat.name}…` : 'Add a task…';
+  renderTags();
+  renderSort();
 
   if (selectedId && !findTask(selectedId)) selectedId = null;
 
@@ -704,6 +1180,29 @@ function render() {
       <p class="tips">Start a task with <b>!</b> to mark it important.<br>Click <b>⋯</b> on a task for a timer, reminders, Google Calendar and more.</p>`;
     listEl.append(empty);
     return;
+  }
+
+  if (!shown) {
+    // A category with nothing in it yet
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.innerHTML = `${ICONS.empty}<strong></strong><span>Type below and press Return to add one</span>`;
+    empty.querySelector('strong').textContent = `Nothing in ${cat ? cat.name : 'here'} yet`;
+    listEl.append(empty);
+    return;
+  }
+
+  if (currentCat === 'none' && !sorting && tasks.some(needsSort)) {
+    // Unsorted: offer to go through them one by one
+    const hint = document.createElement('div');
+    hint.className = 'sort-hint';
+    const text = document.createElement('span');
+    text.textContent = 'These tasks aren’t in a category yet.';
+    const go = document.createElement('button');
+    go.textContent = 'Sort them';
+    go.addEventListener('click', () => startSorting());
+    hint.append(text, go);
+    listEl.append(hint);
   }
 
   const addRow = (t) => {
@@ -731,6 +1230,8 @@ function render() {
     const selectedEl = selectedId && listEl.querySelector(`.row[data-id="${CSS.escape(selectedId)}"]`);
     if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest' });
   }
+  const sortingEl = sorting && listEl.querySelector('.row.sorting-now');
+  if (sortingEl) sortingEl.scrollIntoView({ block: 'nearest' });
 }
 
 // ---------- Update bar ----------
@@ -987,8 +1488,32 @@ function reorderTarget(y) {
   return { id: best.el.dataset.id, after: y > best.rect.top + best.rect.height / 2, el: best.el };
 }
 
+/** v1.8: a category tag under the pointer that the dragged task could go into. */
+function tagUnder(x, y) {
+  const el = Number.isFinite(x) && document.elementFromPoint(x, y);
+  const tag = el && el.closest('#tags .tag[data-cat]');
+  if (!tag || tag.dataset.cat === 'all') return null;
+  const task = findTask(reorder.id);
+  const now = catOf(task);
+  return tag.dataset.cat === (now ? now.id : 'none') ? null : tag; // already in it
+}
+
 function updateReorder() {
   if (!reorder || !reorder.active) return;
+  // Over a category tag: drop it in there
+  const tag = tagUnder(reorder.lastX, reorder.lastY);
+  tagsEl.querySelectorAll('.drop-into').forEach((t) => { if (t !== tag) t.classList.remove('drop-into'); });
+  reorder.dropCat = tag ? tag.dataset.cat : null;
+  if (reorder.ghost) reorder.ghost.classList.toggle('over-tag', !!tag);
+  if (tag) {
+    tag.classList.add('drop-into');
+    clearDropMarks();
+    reorder.target = null;
+    showDropLine(null);
+    // the dragged copy waits just under the tags, so you can see which one lights up
+    if (reorder.ghost) reorder.ghost.style.transform = `translateY(${tagsEl.getBoundingClientRect().bottom + 4 - parseFloat(reorder.ghost.style.top)}px) scale(0.94)`;
+    return;
+  }
   const target = reorderTarget(reorder.lastY);
   clearDropMarks();
   if (target) target.el.classList.add(target.after ? 'drop-after' : 'drop-before');
@@ -1021,7 +1546,14 @@ function autoScrollTick() {
   if (!reorder || !reorder.active) return;
   const rect = listEl.getBoundingClientRect();
   let dy = 0;
-  if (reorder.lastY < rect.top + EDGE_PX) dy = -Math.min(12, Math.ceil((rect.top + EDGE_PX - reorder.lastY) / 3));
+  const tags = tagsEl.getBoundingClientRect();
+  if (reorder.lastY >= tags.top && reorder.lastY <= tags.bottom) {
+    // Over the tags: near either end, they scroll sideways to show more
+    const dx = reorder.lastX < tags.left + EDGE_PX ? -8 : reorder.lastX > tags.right - EDGE_PX ? 8 : 0;
+    const before = tagsEl.scrollLeft;
+    if (dx) tagsEl.scrollLeft += dx;
+    if (tagsEl.scrollLeft !== before) updateReorder();
+  } else if (reorder.lastY < rect.top + EDGE_PX) dy = -Math.min(12, Math.ceil((rect.top + EDGE_PX - reorder.lastY) / 3));
   else if (reorder.lastY > rect.bottom - EDGE_PX) dy = Math.min(12, Math.ceil((reorder.lastY - rect.bottom + EDGE_PX) / 3));
   if (dy) {
     const before = listEl.scrollTop;
@@ -1070,11 +1602,15 @@ function endReorder(apply) {
   if (r.ghost) r.ghost.remove();
   if (r.line) r.line.remove();
   clearDropMarks();
+  tagsEl.querySelectorAll('.drop-into').forEach((t) => t.classList.remove('drop-into'));
   listEl.querySelectorAll('.row.dragging').forEach((row) => row.classList.remove('dragging'));
   document.body.classList.remove('reordering');
   suppressClick = true; // the click that ends a drag isn't a click on a task
   setTimeout(() => { suppressClick = false; }, 0);
-  if (apply && r.target && findTask(r.id)) {
+  if (apply && r.dropCat && findTask(r.id)) {
+    selectedId = r.id;
+    moveTaskTo(r.id, r.dropCat === 'none' ? null : r.dropCat); // dropped on a category tag
+  } else if (apply && r.target && findTask(r.id)) {
     selectedId = r.id;
     moveTask(r.id, r.target.id, r.target.after);
   }
@@ -1087,7 +1623,9 @@ listEl.addEventListener('pointerdown', (e) => {
   if (editingId || pickerId || calendarId !== null) return;
   const row = e.target.closest('.row');
   if (!row || !listEl.contains(row) || e.target.closest('input, textarea, select')) return;
-  reorder = { id: row.dataset.id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, lastY: e.clientY, active: false, target: null };
+  reorder = {
+    id: row.dataset.id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, lastX: e.clientX, lastY: e.clientY, active: false, target: null, dropCat: null,
+  };
 });
 
 // Moves and the release are heard on the whole page, not just the list: until the drag starts
@@ -1099,6 +1637,7 @@ document.addEventListener('pointermove', (e) => {
     endReorder(true); // the release happened somewhere we didn't hear about
     return;
   }
+  reorder.lastX = e.clientX;
   reorder.lastY = e.clientY;
   if (!reorder.active) {
     if (Math.hypot(e.clientX - reorder.startX, e.clientY - reorder.startY) < DRAG_START_PX) return;
@@ -1114,7 +1653,10 @@ document.addEventListener('pointermove', (e) => {
 
 document.addEventListener('pointerup', (e) => {
   if (!reorder || e.pointerId !== reorder.pointerId) return;
-  if (reorder.active) reorder.lastY = e.clientY;
+  if (reorder.active) {
+    reorder.lastX = e.clientX;
+    reorder.lastY = e.clientY;
+  }
   updateReorder();
   endReorder(true);
 });
@@ -1266,7 +1808,22 @@ document.addEventListener('keydown', (e) => {
   }
   if (e.metaKey || e.ctrlKey || e.altKey) return;
 
+  // Sorting: 1–9 picks a category for the task on the card
+  if (sorting && /^[1-9]$/.test(e.key)) {
+    const cat = categories[Number(e.key) - 1];
+    if (cat) {
+      e.preventDefault();
+      sortPick(cat.id);
+    }
+    return;
+  }
+
   switch (e.key) {
+    case 'ArrowLeft':
+    case 'ArrowRight':
+      e.preventDefault();
+      stepCat(e.key === 'ArrowRight' ? 1 : -1);
+      break;
     case 'ArrowDown':
       e.preventDefault();
       moveSelection(1);
@@ -1348,12 +1905,15 @@ closeBtn.addEventListener('click', () => window.taskpop.hide());
 window.taskpop.onShown(({ focusInput, accent }) => {
   applyAccent(accent);
   if (!editingId && !pickerId) render(); // refreshes the date and reminder labels
+  const tag = tagsEl.querySelector('.tag.on');
+  if (tag && !tagEdit) tagsEl.scrollLeft = Math.max(0, Math.min(tagsEl.scrollLeft, tag.offsetLeft - 28), tag.offsetLeft + tag.offsetWidth + 28 - tagsEl.clientWidth);
   if (focusInput) setTimeout(() => inputEl.focus(), 30);
   else inputEl.blur();
 });
 
 window.taskpop.onTasksReplaced((payload) => {
   tasks = Array.isArray(payload && payload.tasks) ? payload.tasks : [];
+  if (payload && Array.isArray(payload.categories)) categories = payload.categories;
   knownRev = Number(payload && payload.rev) || knownRev;
   if (pickerId && !findTask(pickerId)) {
     pickerId = null;
@@ -1384,6 +1944,21 @@ window.taskpop.onDeleteTask((id) => deleteTask(id));
 window.taskpop.onPickReminder((id) => openPicker(id, 'reminder'));
 window.taskpop.onPickTimer((id) => openPicker(id, 'timer'));
 window.taskpop.onCalendarTask((id) => openCalendar(id));
+window.taskpop.onMoveTask(({ id, category }) => moveTaskTo(id, category));
+window.taskpop.onNewCategoryFor((id) => {
+  if (findTask(id)) startTagEdit('new', id);
+});
+window.taskpop.onCategoryAction(({ id, action, value }) => {
+  if (action === 'sort') startSorting();
+  else if (action === 'rename') startTagEdit(id);
+  else if (action === 'delete') deleteCategory(id);
+  else if (action === 'move') moveCategory(id, Number(value) < 0 ? -1 : 1);
+  else if (action === 'color' && findCat(id) && CAT_COLORS[value]) {
+    findCat(id).color = value;
+    save();
+    render();
+  }
+});
 window.taskpop.onEditTask((id) => {
   const titleEl = listEl.querySelector(`.row[data-id="${CSS.escape(id)}"] .title`);
   const task = findTask(id);
@@ -1405,10 +1980,12 @@ window.taskpop.getState().then((state) => {
   document.documentElement.classList.add(`platform-${platform}`);
   if (platform !== 'darwin') settingsBtn.title = 'Settings (Ctrl+,)';
   tasks = Array.isArray(state.tasks) ? state.tasks : [];
+  categories = Array.isArray(state.categories) ? state.categories : [];
   knownRev = Number(state.rev) || 0;
   applySettings(state.settings);
   applyAccent(state.accent);
   updateState = state.update || null;
   renderUpdate();
   render();
+  if (state.sortPrompt) startSorting(true); // just updated to 1.8: sort the tasks you had
 });

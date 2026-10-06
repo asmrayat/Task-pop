@@ -95,6 +95,13 @@ let settings = { ...DEFAULT_SETTINGS };
 let tasks = [];
 let meta = { firstRunDone: false, lastDay: null, lastSummaryDay: null };
 
+// v1.8: categories ("Personal", "Work", …). Each task is in one, or in none ("Unsorted").
+const CATEGORY_COLORS = ['blue', 'orange', 'green', 'purple', 'pink', 'teal', 'yellow', 'gray'];
+const MAX_CATEGORIES = 30;
+const defaultCategories = () => [{ id: 'personal', name: 'Personal', color: 'blue' }, { id: 'work', name: 'Work', color: 'orange' }];
+let categories = defaultCategories();
+const categoryAddedAt = new Map(); // category id -> rev when the app added it (imports)
+
 // Revision tracking: the panel keeps its own copy of the list. When it saves on top of an older
 // copy, changes the app made in the meantime (reminders, snoozes, clean-up, imports) are kept.
 let rev = 0;
@@ -194,9 +201,38 @@ function sanitizeTasks(list) {
       calendarAt: t.calendarAt ? Number(t.calendarAt) || null : null, // sent to Google Calendar for this time
       calendarAllDay: !!t.calendarAllDay,
       ...cleanTimer(t),
+      category: typeof t.category === 'string' && t.category ? t.category.slice(0, 64) : null,
     }))
     .filter((t) => (seen.has(t.id) ? false : seen.add(t.id)));
 }
+
+/** v1.8: [{ id, name, color }], names unique (ignoring case), at most MAX_CATEGORIES. */
+function sanitizeCategories(list) {
+  if (!Array.isArray(list)) return [];
+  const ids = new Set();
+  const names = new Set();
+  const clean = [];
+  for (const c of list) {
+    if (!c || typeof c.name !== 'string' || clean.length >= MAX_CATEGORIES) continue;
+    const name = c.name.trim().replace(/\s+/g, ' ').slice(0, 30);
+    const id = typeof c.id === 'string' && c.id ? c.id.slice(0, 64) : `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+    if (!name || ids.has(id) || names.has(name.toLowerCase())) continue;
+    ids.add(id);
+    names.add(name.toLowerCase());
+    const color = CATEGORY_COLORS.includes(c.color) ? c.color : CATEGORY_COLORS[clean.length % CATEGORY_COLORS.length];
+    clean.push({ id, name, color });
+  }
+  return clean;
+}
+
+/** A task in a category that no longer exists is Unsorted. */
+function dropMissingCategories() {
+  const known = new Set(categories.map((c) => c.id));
+  for (const t of tasks) if (t.category && !known.has(t.category)) t.category = null;
+}
+
+/** Ask to sort the tasks you already had into categories (once, after updating to 1.8). */
+const needsSorting = () => tasks.some((t) => !t.category && (!t.done || t.repeat === 'daily'));
 
 /** v1.7: a timer to finish the task: started at timerStart, time's up at timerEnd. */
 function cleanTimer(t) {
@@ -223,7 +259,7 @@ function sanitizeSettings(raw) {
   return clean;
 }
 
-const saveTasks = () => writeJSON('tasks.json', { version: 1, updatedAt: new Date().toISOString(), tasks });
+const saveTasks = () => writeJSON('tasks.json', { version: 1, updatedAt: new Date().toISOString(), categories, tasks });
 const saveSettings = () => writeJSON('settings.json', settings);
 const saveMeta = () => writeJSON('meta.json', meta);
 
@@ -237,6 +273,12 @@ function loadAll() {
   const stored = readJSON('tasks.json', null);
   if (stored && Array.isArray(stored.tasks)) {
     tasks = sanitizeTasks(stored.tasks);
+    if (Array.isArray(stored.categories)) {
+      categories = sanitizeCategories(stored.categories);
+      dropMissingCategories();
+    } else {
+      introduceCategories(); // saved by a version before 1.8
+    }
     return;
   }
 
@@ -246,10 +288,22 @@ function loadAll() {
     tasks = sanitizeTasks(old.tasks);
     settings.keepOpen = !!old.pinned;
     if (old.firstRunDone) meta.firstRunDone = true;
+    introduceCategories();
     saveTasks();
     saveSettings();
     saveMeta();
   }
+}
+
+/** v1.8: start with Personal and Work, and ask once to sort the tasks you already have into them. */
+function introduceCategories() {
+  categories = defaultCategories();
+  for (const t of tasks) t.category = null;
+  if (needsSorting()) {
+    meta.sortPrompt = true;
+    saveMeta();
+  }
+  saveTasks();
 }
 
 // ---------- Helpers ----------
@@ -325,7 +379,7 @@ function broadcastSettings() {
 
 function pushTasks() {
   scheduleTimerAlarm();
-  send(panel, 'tasks:replace', { tasks, rev });
+  send(panel, 'tasks:replace', { tasks, categories, rev });
   send(settingsWin, 'settings:changed', settingsSnapshot());
   refreshTray();
 }
@@ -1586,13 +1640,33 @@ function setAppMenu() {
 const fromPanel = (event) => alive(panel) && event.sender === panel.webContents;
 
 ipcMain.handle('panel:get-state', () => ({
-  tasks, rev, settings, accent: accentColor(), platform: process.platform, update: updater ? updater.publicState() : null,
+  tasks,
+  categories,
+  rev,
+  settings,
+  accent: accentColor(),
+  platform: process.platform,
+  update: updater ? updater.publicState() : null,
+  sortPrompt: !!meta.sortPrompt,
 }));
+
+// The panel showed "Sort your tasks" and you finished it or chose "Do the rest later"
+ipcMain.on('categories:sort-done', (event) => {
+  if (!fromPanel(event) || !meta.sortPrompt) return;
+  meta.sortPrompt = false;
+  saveMeta();
+});
 
 ipcMain.on('tasks:save', (event, payload) => {
   if (!fromPanel(event) || !payload) return;
   const incoming = sanitizeTasks(payload.tasks);
   const baseRev = Number(payload.rev) || 0;
+  if (Array.isArray(payload.categories)) {
+    const mine = sanitizeCategories(payload.categories);
+    // keep categories an import added since the panel's copy
+    const extra = categories.filter((c) => (categoryAddedAt.get(c.id) || 0) > baseRev && !mine.some((m) => m.id === c.id));
+    categories = sanitizeCategories([...mine, ...extra]);
+  }
 
   if (baseRev >= rev) {
     tasks = incoming;
@@ -1617,6 +1691,7 @@ ipcMain.on('tasks:save', (event, payload) => {
     if (!seen.has(t.id) && (addedAt.get(t.id) || 0) > baseRev) merged.push(t);
   }
   tasks = merged;
+  dropMissingCategories();
   saveTasks();
   pushTasks();
 });
@@ -1676,9 +1751,19 @@ ipcMain.on('task:context-menu', (event, id) => {
     );
   }
 
+  // v1.8: Move to › Personal / Work / … / Unsorted / New category…
+  const current = categories.some((c) => c.id === task.category) ? task.category : null;
+  const moveTo = (category) => () => send(panel, 'task:move-to', { id, category });
+  const moveItems = categories.map((c) => ({ label: c.name, type: 'radio', checked: c.id === current, click: moveTo(c.id) }));
+  moveItems.push({ label: 'Unsorted', type: 'radio', checked: !current, click: moveTo(null) });
+  if (categories.length < MAX_CATEGORIES) {
+    moveItems.push({ type: 'separator' }, { label: 'New category…', click: () => send(panel, 'category:new-for', id) });
+  }
+
   Menu.buildFromTemplate([
     { label: task.done ? 'Mark as not done' : 'Mark as done', click: () => send(panel, 'task:toggle', id) },
     { label: 'Edit', click: () => send(panel, 'task:edit', id) },
+    { label: 'Move to', submenu: moveItems },
     { type: 'separator' },
     {
       label: 'Important',
@@ -1703,6 +1788,32 @@ ipcMain.on('task:context-menu', (event, id) => {
     { label: 'Delete', click: () => send(panel, 'task:delete', id) },
   ]).popup({ window: panel });
 });
+// v1.8: right-click on a category tag: rename, colour, order, delete. "Unsorted": sort one by one.
+const COLOR_NAMES = { blue: 'Blue', orange: 'Orange', green: 'Green', purple: 'Purple', pink: 'Pink', teal: 'Teal', yellow: 'Yellow', gray: 'Gray' };
+ipcMain.on('category:context-menu', (event, id) => {
+  if (!fromPanel(event)) return;
+  const action = (name, value) => () => send(panel, 'category:action', { id, action: name, value });
+  if (id === 'none') {
+    if (!needsSorting()) return;
+    Menu.buildFromTemplate([{ label: 'Sort one by one…', click: action('sort') }]).popup({ window: panel });
+    return;
+  }
+  const index = categories.findIndex((c) => c.id === id);
+  if (index === -1) return;
+  const cat = categories[index];
+  Menu.buildFromTemplate([
+    { label: 'Rename…', click: action('rename') },
+    {
+      label: 'Colour',
+      submenu: CATEGORY_COLORS.map((color) => ({ label: COLOR_NAMES[color], type: 'radio', checked: cat.color === color, click: action('color', color) })),
+    },
+    { label: 'Move left', enabled: index > 0, click: action('move', -1) },
+    { label: 'Move right', enabled: index < categories.length - 1, click: action('move', 1) },
+    { type: 'separator' },
+    { label: `Delete “${cat.name}”`, click: action('delete') },
+  ]).popup({ window: panel });
+});
+
 ipcMain.on('panel:open-settings', (event) => {
   if (fromPanel(event)) openSettings();
 });
@@ -1813,7 +1924,7 @@ ipcMain.handle('data:export', async (event) => {
   if (canceled || !filePath) return { canceled: true };
   try {
     fs.writeFileSync(filePath, JSON.stringify({
-      app: 'TaskPop', version: app.getVersion(), exportedAt: new Date().toISOString(), tasks,
+      app: 'TaskPop', version: app.getVersion(), exportedAt: new Date().toISOString(), categories, tasks,
     }, null, 2));
     return { ok: true, message: `Exported ${tasks.length} task${tasks.length === 1 ? '' : 's'}.` };
   } catch (err) {
@@ -1834,6 +1945,22 @@ ipcMain.handle('data:import', async (event) => {
     const incoming = sanitizeTasks(Array.isArray(raw) ? raw : raw.tasks);
     const existing = new Set(tasks.map((t) => t.id));
     const added = incoming.filter((t) => !existing.has(t.id));
+    // v1.8: the file's categories join yours; one with the same name as yours is the same category
+    const theirs = sanitizeCategories(Array.isArray(raw) ? [] : raw.categories);
+    const sameAs = new Map();
+    for (const c of theirs) {
+      const mine = categories.find((m) => m.name.toLowerCase() === c.name.toLowerCase());
+      if (mine) {
+        sameAs.set(c.id, mine.id);
+      } else if (categories.length < MAX_CATEGORIES) {
+        // a different category that happens to have the same id as one of yours gets a new id
+        const id = categories.some((m) => m.id === c.id) ? `${c.id}-${Date.now().toString(36)}` : c.id;
+        categories = [...categories, { ...c, id }];
+        categoryAddedAt.set(id, rev + 1);
+        sameAs.set(c.id, id);
+      }
+    }
+    for (const t of added) t.category = sameAs.get(t.category) || null;
     tasks = tasks.concat(added);
     commit({ added: added.map((t) => t.id) });
     return { ok: true, message: `Imported ${added.length} new task${added.length === 1 ? '' : 's'}.` };

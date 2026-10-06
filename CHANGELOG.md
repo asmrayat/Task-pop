@@ -4,6 +4,19 @@ All notable changes to TaskPop are listed here. The format follows [Keep a Chang
 
 Installers for every version are on the [releases page](https://github.com/asmrayat/Task-pop/releases).
 
+## [1.8.0] - 2026-10-06
+
+### Added
+
+- **Categories.** A row of small tags along the top of the panel: **All**, your categories, and **+** to make a new one. It scrolls sideways when there are more than fit (with a mouse wheel too).
+  - TaskPop starts you off with **Personal** and **Work**. Rename them, give them one of eight colours, put them in another order or delete them: double-click a tag to rename it, or right-click it for the rest.
+  - Click a tag to see only its tasks; the count at the top and the progress line are for that tag. Tasks you add there go into it. Under **All** you see everything, each task with its category after its name. **←** and **→** move between tags.
+  - Move a task with **⋯ → Move to**, by dragging it onto a tag, or by adding **#name** when you type it ("Buy milk #personal").
+  - Tasks in no category are under **Unsorted**, which only shows up when there are some.
+  - Deleting a category moves its tasks to Unsorted, with **Undo**. **Clear** under a tag clears only that tag's finished tasks.
+  - Export and import carry your categories; an imported category with the same name as one of yours is the same one.
+- **Sort your tasks.** The first time TaskPop 1.8 opens, the tasks you already had are in no category, so a card at the top goes through them one at a time ("3 of 13"): click a category (or press 1–9), make a new one with **New**, **Skip** it, or **Do the rest later**. Anything left waits under **Unsorted**, where **Sort them** picks up where you left off.
+
 ## [1.7.0] - 2026-10-06
 
 ### Added
@@ -128,6 +141,7 @@ The first public release.
 - Export and import your tasks, and delete completed ones automatically after a day or a week.
 - Tasks saved locally the moment they change, with a backup of the previous save.
 
+[1.8.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.8.0
 [1.7.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.7.0
 [1.6.8]: https://github.com/asmrayat/Task-pop/releases/tag/v1.6.8
 [1.6.6]: https://github.com/asmrayat/Task-pop/releases/tag/v1.6.6

@@ -85,6 +85,10 @@ for group in $GROUPS_TO_RUN; do
       app_test double-tap-stale doubletap-app darwin TP_MODE=stale
       app_test store store-app win32
       for p in darwin win32; do app_test "timers-$p" timer-app $p; done
+      for p in darwin win32; do
+        app_test "categories-$p" category-app $p
+        app_test "categories-new-$p" category-app $p TP_MODE=fresh
+      done
       # the Mac key-event tap through the real koffi, with a stand-in for macOS (needs a C compiler)
       if cc -shared -fPIC -o "$TMP/libfakemac.so" tests/stubs/fakemac.c -ldl 2>"$LOG/fakemac-build.log"; then
         app_test event-tap eventtap-app darwin TP_FAKEMAC="$TMP/libfakemac.so"

@@ -37,7 +37,8 @@ const now = new Date();
 fs.writeFileSync(path.join(UD, 'meta.json'), JSON.stringify({ firstRunDone: true, lastVersion: '1.6.3', lastDay: `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}` }));
 fs.writeFileSync(path.join(UD, 'settings.json'), JSON.stringify({ keepOpen: true }));
 const T = (id, title, extra = {}) => ({ id, title, done: false, important: false, createdAt: Date.now(), repeat: 'none', remindAt: null, ...extra });
-fs.writeFileSync(path.join(UD, 'tasks.json'), JSON.stringify({ version: 1, tasks: [
+// saved by 1.8 (with categories), so the "Sort your tasks" card for updates doesn't take up the panel
+fs.writeFileSync(path.join(UD, 'tasks.json'), JSON.stringify({ version: 1, categories: [], tasks: [
   T('A', 'Send the proposal', { important: true }),
   T('B', 'Pay the invoice', { important: true }),
   T('C', 'Meeting with Adam'),

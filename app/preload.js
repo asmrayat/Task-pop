@@ -4,7 +4,7 @@ const on = (channel) => (callback) => ipcRenderer.on(channel, (_event, data) => 
 
 contextBridge.exposeInMainWorld('taskpop', {
   getState: () => ipcRenderer.invoke('panel:get-state'),
-  saveTasks: (tasks, rev) => ipcRenderer.send('tasks:save', { tasks, rev }),
+  saveTasks: (tasks, rev, categories) => ipcRenderer.send('tasks:save', { tasks, rev, categories }),
   updateSetting: (key, value) => ipcRenderer.invoke('settings:update', key, value),
   hide: () => ipcRenderer.send('panel:hide'),
   drag: (phase, dx, dy) => ipcRenderer.send('panel:drag', phase, dx, dy),
@@ -21,6 +21,12 @@ contextBridge.exposeInMainWorld('taskpop', {
   onPickReminder: on('task:pick-reminder'),
   onPickTimer: on('task:pick-timer'),
   onCalendarTask: on('task:calendar'),
+  // Categories (v1.8)
+  showCategoryMenu: (id) => ipcRenderer.send('category:context-menu', id),
+  onMoveTask: on('task:move-to'),
+  onNewCategoryFor: on('category:new-for'),
+  onCategoryAction: on('category:action'),
+  sortDone: () => ipcRenderer.send('categories:sort-done'),
   openCalendar: (event) => ipcRenderer.invoke('calendar:open', event),
   // Updates
   onUpdateState: on('update:state'),

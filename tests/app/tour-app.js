@@ -233,7 +233,7 @@ async function run() {
   // Step 4: using the list
   await clickButton('nextBtn');
   s = await state();
-  check('step 4: “Using your list”, seven basics (moving the panel too)', s.step === 'step-use' && s.howto.length === 7 && /Drag the top of the panel/.test(s.howto[5]) && s.howto[0].endsWith(`Type a task and press ${mac ? 'Return' : 'Enter'} to add it`), s.howto[0]);
+  check('step 4: “Using your list”, eight basics (categories and moving the panel too)', s.step === 'step-use' && s.howto.length === 8 && /^WorkClick a category at the top/.test(s.howto[4]) && /Drag the top of the panel/.test(s.howto[6]) && s.howto[0].endsWith(`Type a task and press ${mac ? 'Return' : 'Enter'} to add it`), s.howto[0]);
   await shot(tourWin(), `${tag}-4-use.png`);
 
   // Step 5: done

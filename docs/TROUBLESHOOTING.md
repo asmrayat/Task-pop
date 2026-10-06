@@ -54,6 +54,8 @@ Drag it by its top bar to where you want it, or choose **Left** or **Right** in 
 
 ## My tasks are missing or look wrong
 
+First, check the tags at the top of the panel: the list shows only the category whose tag is dark. Click **All** to see every task. Tasks in no category are under **Unsorted**, and deleting a category moves its tasks there rather than deleting them.
+
 If `tasks.json` is ever damaged, TaskPop loads its backup (`tasks.json.bak`, the save before the last one) by itself. If the list opens but looks wrong, you can go back to that backup by hand; it helps most right after something went wrong.
 
 1. Quit TaskPop.

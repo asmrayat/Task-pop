@@ -45,7 +45,23 @@
     </div>
 
     <div class="progress" id="progress"><div class="bar" id="bar"></div></div>
+    <nav class="tags" id="tags" aria-label="Categories"></nav>
     <div class="divider"></div>
+
+    <section class="sort-card" id="sortCard" hidden aria-live="polite">
+      <div class="sort-head">
+        <b id="sortHeading">Sort your tasks</b>
+        <span class="sort-count" id="sortCount"></span>
+      </div>
+      <p class="sort-intro" id="sortIntro">TaskPop now has categories. Pick one for each of your tasks.</p>
+      <div class="sort-task" id="sortTask"></div>
+      <div class="sort-choices" id="sortChoices"></div>
+      <div class="sort-foot">
+        <button class="sort-link" id="sortSkip">Skip</button>
+        <button class="sort-link" id="sortLater">Do the rest later</button>
+      </div>
+      <div class="sort-meter"><i id="sortMeter"></i></div>
+    </section>
 
     <main id="list"></main>
 

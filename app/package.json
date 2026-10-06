@@ -1,7 +1,7 @@
 {
   "name": "taskpop",
   "productName": "TaskPop",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "A small to-do list that slides in from the corner of your screen. For macOS and Windows.",
   "main": "main.js",
   "author": "asmlab",

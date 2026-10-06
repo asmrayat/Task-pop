@@ -63,8 +63,19 @@ TaskPop is the list you don't have to remember to open. It lives in the menu bar
 - **Daily routines.** Tasks set to repeat every day un-tick themselves each morning, reminder included.
 - **Morning summary.** One notification at the time you choose, listing what's left.
 - **Reorder** by dragging, or with ⌥↑ / ⌥↓ (Alt+↑ / Alt+↓). The blue line shows exactly where a task will land.
-- **Keyboard first.** Arrows to move, Space to tick, Return to edit, Delete to remove, ⌘Z / Ctrl+Z to undo, N to start a new task, T to set a timer, G to send the selected task to Google Calendar.
+- **Keyboard first.** Arrows to move, Space to tick, Return to edit, Delete to remove, ⌘Z / Ctrl+Z to undo, N to start a new task, T to set a timer, G to send the selected task to Google Calendar, ← / → to switch categories.
 - **Tidy by itself.** Delete completed tasks automatically after a day or a week, or clear them with one click.
+
+### Categories
+
+Small tags along the top keep things apart: **All**, **Personal**, **Work** and any you add with **+**. Click one to see only its tasks; whatever you add there goes into it. Under **All**, each task shows its category after its name. Move a task with **⋯ → Move to**, by dragging it onto a tag, or by typing **#work** in it. Double-click a tag to rename it, or right-click it to change its colour, move it or delete it. When there are more tags than fit, the row scrolls sideways.
+
+Updating from an older version? Your tasks start in no category, and a **Sort your tasks** card goes through them one at a time: pick a category, skip, or do the rest later. Whatever's left waits under **Unsorted**.
+
+<p align="center">
+  <img src="docs/assets/readme/categories.png" width="280" alt="The task list under All, with tags for All, Personal, Work and Study along the top, and each task's category shown after its name">
+  <img src="docs/assets/readme/categories-sort.png" width="280" alt="The Sort your tasks card asking which category a task goes in, with Personal, Work and New, and Skip or Do the rest later">
+</p>
 
 ### Timers for what can't wait
 
