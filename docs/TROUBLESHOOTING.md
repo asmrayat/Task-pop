@@ -11,9 +11,10 @@ The common problems and their fixes. If yours isn't here, see [SUPPORT.md](../SU
 - **Mac: check the status line under the setting.**
   - **macOS is blocking the double-tap** means TaskPop isn't allowed under **System Settings → Privacy & Security → Input Monitoring**. Click **Allow**, turn on **TaskPop** in the list, then click **Restart TaskPop**.
   - If TaskPop is switched on in that list and it still says it's blocked, select TaskPop there, remove it with **−**, then click **Allow** in TaskPop again and switch it back on. This clears a stale entry left by an older copy.
-  - **Allow TaskPop again to hear every double-tap** (an orange dot) means macOS no longer recognises TaskPop under Input Monitoring, which can happen after an update. The double-tap still works most of the time, but can be missed while another app is busy. Click **Allow**, switch **TaskPop** off and on in that list, then click **Restart TaskPop**.
+  - **Allow TaskPop again to hear every double-tap** (an orange dot) means macOS no longer recognises TaskPop under Input Monitoring, which can happen after an update. The double-tap still works most of the time, but can be missed while another app is busy. Its switch in that list may still look on, because it belongs to the earlier version. Click **Allow**, select **TaskPop** in the list and remove it with **−**, add it back with **+** (it's in Applications), then click **Restart TaskPop**. If it's still orange, quit TaskPop, run `tccutil reset ListenEvent com.pixmint.taskpop` in Terminal, open TaskPop and click **Allow** again.
   - **Double-tap isn't available on this Mac** means macOS didn't let TaskPop read the keys at all. Use the keyboard shortcut instead.
 - **It only fails while another app is open (a video player, for example):** update to TaskPop 1.6.8 or newer, which hears the keys as macOS reports them instead of only checking them, so a busy or background TaskPop doesn't miss a quick double-tap.
+- **Mac: it only works on one desktop (Space), or not over a full-screen app:** update to TaskPop 1.8.1 or newer. Before that, the panel could open on the desktop where it was first shown instead of the one you're on, so nothing seemed to happen.
 - **Still not working?** Open **Settings → Help → Double-tap report**, click **Copy report**, and paste it into a [bug report](https://github.com/asmrayat/Task-pop/issues/new?template=bug_report.yml). It has only counts and timings, never what you typed.
 - **The keyboard shortcut and the menu bar or tray icon always work**, even when the double-tap doesn't.
 
@@ -30,7 +31,9 @@ Another app is probably using the same shortcut. Open **Settings → General →
 
 ## The panel opens in the wrong place
 
-Drag it by its top bar to where you want it, or choose **Left** or **Right** in **Settings → Panel → Position** to put it back in a corner. If the screen you put it on is unplugged, it opens on the screen you're using instead, in the same spot.
+**Mac, on another desktop (Space):** TaskPop 1.8.1 and newer open the panel on the desktop you're on, full-screen apps included. If yours still opens it elsewhere, copy the report from **Settings → Help → Double-tap report** (its "Desktops" line says what happened) into a [bug report](https://github.com/asmrayat/Task-pop/issues/new?template=bug_report.yml).
+
+**In the wrong spot on the screen:** drag it by its top bar to where you want it, or choose **Left** or **Right** in **Settings → Panel → Position** to put it back in a corner. If the screen you put it on is unplugged, it opens on the screen you're using instead, in the same spot.
 
 ## Installing on a Mac
 

@@ -12,7 +12,7 @@ TaskPop asks for as little as it can. Here is everything it may ask for, why, an
 
 **When it asks:** the welcome tour asks when you choose a double-tap key, and opens the right page in System Settings. Turn on **TaskPop** there. If macOS asks you to quit and reopen TaskPop, choose **Quit & Reopen**.
 
-**After an update:** TaskPop isn't signed with an Apple Developer ID yet, so each version looks new to macOS, and macOS may stop recognising the earlier OK. TaskPop notices, tells you once, and **Settings → General** shows an orange dot with an **Allow** button: switch TaskPop off and on in the Input Monitoring list, then restart it.
+**After an update:** TaskPop isn't signed with an Apple Developer ID yet, so each version looks new to macOS, and macOS may stop recognising the earlier OK. TaskPop notices, tells you once, and **Settings → General** shows an orange dot with an **Allow** button. The switch next to TaskPop in the Input Monitoring list may still look on, because it belongs to the earlier version: select TaskPop, remove it with the **−** button, add it back with **+** (it's in Applications), then restart TaskPop. Switching it off and on isn't enough.
 
 **If you say no:** everything else works. Open TaskPop with the keyboard shortcut (⌃⌥T unless you changed it) or the menu bar icon instead, or set **Settings → General → Double-tap to open** to **Off**.
 

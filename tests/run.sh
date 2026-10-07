@@ -3,7 +3,7 @@
 #
 #   tests/run.sh               unit + app (what CI runs)
 #   tests/run.sh unit          plain Node tests: date parsing, the double-tap detector, App Nap,
-#                              the Mac key-event tap
+#                              the Mac key-event tap, opening on the right Mac desktop (needs cc)
 #   tests/run.sh app           the real app on Linux, made to act as macOS and as Windows, driven
 #                              with real mouse and keyboard input (needs xvfb-run, xdotool and cc)
 #   tests/run.sh release       the update flows end to end: needs built installers
@@ -60,7 +60,13 @@ app_test() { # name file platform [VAR=value ...]
 for group in $GROUPS_TO_RUN; do
   case $group in
     unit)
-      for t in when-test doubletap-test win-source-test appnap-test eventtap-test; do node_test "$t"; done ;;
+      for t in when-test doubletap-test win-source-test appnap-test eventtap-test; do node_test "$t"; done
+      # the desktop (Spaces) handling against a stand-in Objective-C runtime (needs cc and app/node_modules)
+      if cc -shared -fPIC -o "$TMP/libfakeobjc.so" tests/stubs/fakeobjc.c 2>"$LOG/fakeobjc-build.log"; then
+        TP_FAKEOBJC="$TMP/libfakeobjc.so" node_test spaces-test
+      else
+        failed=$((failed + 1)); ran=$((ran + 1)); echo "FAIL  spaces-test  could not build tests/stubs/fakeobjc.c (log: $LOG/fakeobjc-build.log)"
+      fi ;;
     app)
       need_electron
       future=$(python3 tests/app/seed.py regress "$TMP/userdata/regress")
@@ -85,6 +91,7 @@ for group in $GROUPS_TO_RUN; do
       app_test double-tap-stale doubletap-app darwin TP_MODE=stale
       app_test store store-app win32
       for p in darwin win32; do app_test "timers-$p" timer-app $p; done
+      app_test desktops spaces-app darwin
       for p in darwin win32; do
         app_test "categories-$p" category-app $p
         app_test "categories-new-$p" category-app $p TP_MODE=fresh

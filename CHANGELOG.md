@@ -4,6 +4,17 @@ All notable changes to TaskPop are listed here. The format follows [Keep a Chang
 
 Installers for every version are on the [releases page](https://github.com/asmrayat/Task-pop/releases).
 
+## [1.8.1] - 2026-10-07
+
+### Fixed
+
+- Mac: the double-tap (and the keyboard shortcut) seemed to do nothing on any desktop (Space) except the first one, and over full-screen apps such as VLC. The panel did open, but on the desktop where it had first been shown, out of sight. It now opens on the desktop you're on, every time. If the panel is pinned open on another desktop, the double-tap brings it to you instead of closing it. Settings comes to your desktop too.
+- Mac: **Settings → General** gave the wrong advice when macOS stops recognising TaskPop under Input Monitoring after an update. Switching TaskPop off and on in that list isn't enough, because the switch belongs to the earlier version: remove TaskPop with **−** and add it back with **+**.
+
+### Added
+
+- The double-tap report (**Settings → Help**) has a "Desktops" line: whether the panel opens on the desktop you're on, and how often it didn't.
+
 ## [1.8.0] - 2026-10-06
 
 ### Added
@@ -141,6 +152,7 @@ The first public release.
 - Export and import your tasks, and delete completed ones automatically after a day or a week.
 - Tasks saved locally the moment they change, with a backup of the previous save.
 
+[1.8.1]: https://github.com/asmrayat/Task-pop/releases/tag/v1.8.1
 [1.8.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.8.0
 [1.7.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.7.0
 [1.6.8]: https://github.com/asmrayat/Task-pop/releases/tag/v1.6.8

@@ -15,6 +15,7 @@ const { DoubleTapWatcher, createKeySource, acceleratorMask, KEY_MASKS } = requir
 const { createWinFocus } = require('./winfocus');
 const { createUpdater, Updater, compareVersions } = require('./updater');
 const calendar = require('./calendar');
+const { createSpaces } = require('./spaces');
 
 const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
@@ -89,6 +90,9 @@ let appHidden = false;
 let quitting = false;
 let registeredShortcut = null;
 let holdPanel = false; // true while the reminder picker is open in the panel
+let spaces = null; // macOS (v1.8.1): opens windows on the desktop you're on (see spaces.js)
+// …and how that went, for the double-tap report
+const desktopStats = { shown: 0, notHere: 0, newWindow: 0, newWindowFailed: false };
 const liveNotifications = new Set();
 
 let settings = { ...DEFAULT_SETTINGS };
@@ -855,15 +859,19 @@ function fade(from, to, ms, done) {
 
 // focusInput = true  -> shortcut / double-tap / menu: cursor goes straight into "Add a task"
 // focusInput = false -> wake / unlock: panel just appears
-function showPanel(focusInput) {
+function showPanel(focusInput, freshWindow = false) {
   if (!alive(panel)) return;
   tick();
   const payload = { focusInput, accent: accentColor() };
-
-  if (isShown) {
+  const bringUp = () => {
     panel.show();
     if (focusInput) focusPanel();
+  };
+
+  if (isShown) {
+    showOnThisDesktop(panel, bringUp); // (it may have been left open on another desktop)
     send(panel, 'panel:shown', payload);
+    checkPanelDesktop(focusInput, freshWindow);
     return;
   }
 
@@ -873,11 +881,47 @@ function showPanel(focusInput) {
   const target = targetBounds();
   panel.setBounds({ ...target, x: target.x + slideOffset() });
   panel.setOpacity(0);
-  panel.show();
-  if (focusInput) focusPanel();
+  showOnThisDesktop(panel, bringUp);
   send(panel, 'panel:shown', payload);
   panel.setBounds(target, true);
   fade(0, 1, 200);
+  checkPanelDesktop(focusInput, freshWindow);
+}
+
+/** Show a window on the desktop (Space) you're on, not the one where it was last shown. */
+function showOnThisDesktop(win, show) {
+  if (spaces && alive(win)) spaces.showHere(win, show);
+  else show();
+}
+
+/**
+ * Mac (v1.8.1): make sure the panel really opened on your desktop. If macOS kept it on another
+ * one even so, a new panel window is made instead (a new window always opens where you are).
+ * Once per opening; if that didn't help either, it isn't tried again.
+ */
+function checkPanelDesktop(focusInput, freshWindow) {
+  if (!spaces) return;
+  desktopStats.shown += 1;
+  setTimeout(() => {
+    if (!isShown || !alive(panel) || spaces.onActiveSpace(panel) !== false) return;
+    desktopStats.notHere += 1;
+    if (freshWindow) {
+      desktopStats.newWindowFailed = true;
+      console.error('TaskPop: the panel opened on another desktop, even as a new window');
+      return;
+    }
+    if (!desktopStats.newWindowFailed) newPanelWindow(focusInput);
+  }, 150);
+}
+
+function newPanelWindow(focusInput) {
+  const old = panel;
+  desktopStats.newWindow += 1;
+  stopFollowing();
+  isShown = false;
+  createPanel();
+  panel.webContents.once('did-finish-load', () => showPanel(focusInput, true));
+  if (alive(old)) old.destroy();
 }
 
 function focusPanel() {
@@ -906,7 +950,10 @@ function hidePanel() {
 // whether or not it has keyboard focus. (It may have popped up by itself when the lid opened,
 // be pinned while you work in another app, or the system may not have given it focus.)
 function togglePanel() {
-  if (isShown) hidePanel();
+  // (an open panel on another desktop, say pinned there, comes to you instead of closing,
+  // unless it's known that it can't be brought here on this Mac)
+  const elsewhere = spaces && !desktopStats.newWindowFailed && spaces.onActiveSpace(panel) === false;
+  if (isShown && !elsewhere) hidePanel();
   else showPanel(true);
 }
 
@@ -924,7 +971,7 @@ function openSettings(section) {
   };
   if (alive(settingsWin)) {
     if (settingsWin.isMinimized()) settingsWin.restore();
-    settingsWin.show();
+    showOnThisDesktop(settingsWin, () => settingsWin.show());
     settingsWin.focus();
     if (winFocus) winFocus(settingsWin);
     app.focus({ steal: true });
@@ -975,7 +1022,7 @@ function openSettings(section) {
 
 function openTour(step = 0) {
   if (alive(tourWin)) {
-    tourWin.show();
+    showOnThisDesktop(tourWin, () => tourWin.show());
     tourWin.focus();
     send(tourWin, 'tour:go', step);
     return;
@@ -1234,6 +1281,15 @@ ipcMain.on('doubletap:probe', (event, kind) => {
   }
 });
 
+/** Mac: whether the panel opens on the desktop you're on (v1.8.1). */
+function desktopReport() {
+  if (!spaces) return 'Desktops: unknown';
+  const here = alive(panel) ? spaces.onActiveSpace(panel) : null;
+  const behavior = alive(panel) ? spaces.behavior(panel) : null;
+  const s = desktopStats;
+  return `Desktops: panel ${here === null ? 'unknown' : here ? 'opens' : 'doesn’t open'} on this one (0x${(behavior || 0).toString(16)}) · opened ${s.shown} times, elsewhere ${s.notHere}, new panel window ${s.newWindow}${s.newWindowFailed ? ' (didn’t help)' : ''}`;
+}
+
 /** A short report for bug reports: what the double-tap watcher sees. Counts and timings only. */
 function doubleTapReport() {
   const w = doubleTap;
@@ -1256,6 +1312,7 @@ function doubleTapReport() {
     `Key: ${settings.doubleTapKey} · status: ${status.status} · listening by: ${w ? w.mode : 'off'}`,
     isMac ? `Input Monitoring allowed: ${access}` : null,
     isMac ? `Key events: ${ev.received || 0} received, last ${ago(ev.lastAt)}, paused ${ev.pauses || 0} times, back to checks ${ev.fallbacks || 0} times` : null,
+    isMac ? desktopReport() : null,
     `Checks: every ${w ? w.intervalMs : 0} ms, slowest gap in the last minute ${w ? w.slowest.gap : 0} ms`,
     `Taps: ${stats.taps || 0} seen, ${stats.doubleTaps || 0} double-taps, ${stats.withOtherKeys || 0} with another key or click, ${stats.heldTooLong || 0} held too long, ${stats.single || 0} with no second tap in time`,
     `App Nap opt-out: ${w && w.endAwake ? 'on' : 'off'} · screen locked: ${screenLocked ? 'yes' : 'no'}`,
@@ -1451,7 +1508,7 @@ function showUpdatePrompt() {
   win.revealPrompt = () => {
     if (shown || !alive(win)) return;
     shown = true;
-    win.showInactive();
+    showOnThisDesktop(win, () => win.showInactive());
   };
   setTimeout(() => win.revealPrompt(), 1500);
   win.on('closed', () => {
@@ -2068,6 +2125,7 @@ if (!app.requestSingleInstanceLock()) {
       if (!isMac && alive(panel)) panel.setBackgroundColor(panelBackground());
     });
     setAppMenu();
+    spaces = createSpaces();
     createPanel();
     createTray();
 

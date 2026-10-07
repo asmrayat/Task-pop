@@ -224,7 +224,7 @@ function renderDoubleTap() {
     // v1.6.8: the keys can be read, but macOS doesn't recognise TaskPop under Input Monitoring
     dot = 'amber';
     title = 'Allow TaskPop again to hear every double-tap';
-    detail = 'After an update, macOS may stop recognising TaskPop under Input Monitoring, and then a double-tap can be missed while another app is busy. Click Allow, switch TaskPop off and on in that list, then restart TaskPop.';
+    detail = 'After an update, macOS may stop recognising TaskPop under Input Monitoring, even though its switch there is still on, and then a double-tap can be missed while another app is busy. Click Allow, select TaskPop in that list and remove it with the − button, add it back with + (it’s in Applications), then restart TaskPop.';
     allow.hidden = false;
     restart.hidden = false;
   } else if (d.status === 'unavailable') {
