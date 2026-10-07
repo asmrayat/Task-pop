@@ -1,6 +1,7 @@
 import "./globals.css";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const description =
   "TaskPop slides your to-do list in from the side of the screen when you start your computer. Reminders, daily routines, Google Calendar, and a keyboard shortcut. Your tasks stay on your device.";
@@ -65,6 +66,7 @@ export default function RootLayout({ children }) {
         </noscript>
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
