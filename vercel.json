@@ -1,4 +1,8 @@
 {
+  "framework": null,
+  "installCommand": "npm install --prefix website",
+  "buildCommand": "npm run build --prefix website",
+  "outputDirectory": "website/out",
   "cleanUrls": false,
   "headers": [
     {

@@ -26,8 +26,8 @@ tests/                unit tests and app tests (see Tests)
 tools/
   fetch-build-deps.sh build tools, pinned and checksum-verified, into .build-tools/
 docs/                 these documents, and the README images in docs/assets/readme/
-index.html, styles.css, script.js, assets/, privacy.html, ...
-                      the website at taskpop.asmlab.agency (see WEBSITE.md)
+website/                 the website at taskpop.asmlab.agency (see WEBSITE.md)
+assets/                   icons and font used by the website
 ```
 
 There's no build step for the app: what's in `app/` is what runs.

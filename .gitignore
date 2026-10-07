@@ -3,8 +3,11 @@
 *.exe
 *.msix
 
-# app dependencies (cd app && npm install)
+# app dependencies (cd app && npm install) and the website (cd website && npm install)
 node_modules/
+website/.next/
+website/out/
+website/public/assets/
 
 # build tools (tools/fetch-build-deps.sh) and build output
 .build-tools/

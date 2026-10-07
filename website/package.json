@@ -1,0 +1,16 @@
+{
+  "name": "taskpop-website",
+  "private": true,
+  "scripts": {
+    "predev": "rm -rf public/assets && cp -R ../assets public/assets",
+    "prebuild": "rm -rf public/assets && cp -R ../assets public/assets",
+    "dev": "next dev",
+    "build": "next build"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1",
+    "next": "^15.5.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  }
+}

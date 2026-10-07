@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Instrument Sans";
-  src: url("assets/fonts/InstrumentSans.woff2") format("woff2");
+  src: url("/assets/fonts/InstrumentSans.woff2") format("woff2");
   font-weight: 400 700;
   font-stretch: 75% 100%;
   font-style: normal;
@@ -988,3 +988,15 @@ html[data-os="windows"] #build-windows .build-cta { background: var(--blue); }
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+
+.policy { max-width: 720px; padding: 48px 0 72px; }
+.policy h1 { font-size: clamp(2rem, 4vw, 2.6rem); letter-spacing: -0.02em; margin: 0 0 8px; }
+.policy .updated { color: var(--muted); margin: 0 0 36px; }
+.policy h2 { font-size: 1.2rem; margin: 34px 0 10px; }
+.policy p, .policy li { color: var(--ink); line-height: 1.65; }
+.policy ul { padding-left: 1.2em; }
+.policy li { margin: 6px 0; }
+.policy .short { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 18px 22px; }
+.policy a { color: var(--blue); }
+

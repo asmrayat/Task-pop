@@ -1,19 +1,17 @@
 # The website
 
-[taskpop.asmlab.agency](https://taskpop.asmlab.agency) is a static site that lives at the root of this repository and is deployed by [Vercel](https://vercel.com). No build step and no framework.
+[taskpop.asmlab.agency](https://taskpop.asmlab.agency) is a Next.js site in `website/` and is deployed by [Vercel](https://vercel.com). The desktop app stays in `app/` and is not part of the site build.
 
 ```text
-index.html         the page
-privacy.html       the privacy policy (also the Microsoft Store listing's privacy link)
-styles.css         design
-script.js          live demo, lid animation, download links
-assets/            app icon, favicon, social share image, font (Instrument Sans, OFL)
-vercel.json        caching and security headers
-.vercelignore      keeps the app, installers, tests and docs out of the deployment
-robots.txt, sitemap.xml, google…html   search engines
+website/app            pages, layout, and Vercel Web Analytics
+website/content        the homepage and privacy page markup
+website/lib/site.js    live demo, lid animation, download links
+website/app/globals.css
+assets/                app icon, favicon, social share image, font (Instrument Sans, OFL)
+vercel.json            build command, caching and security headers
 ```
 
-`vercel.json` turns clean URLs off, so pages are reached with their `.html` (for example `/privacy.html`).
+The privacy policy stays at `/privacy.html`, which is also the Microsoft Store listing's privacy link. Visits are counted with Vercel Web Analytics. The TaskPop app itself still has no analytics.
 
 ## Downloads
 
@@ -21,12 +19,16 @@ The download buttons point at the [latest GitHub release](https://github.com/asm
 
 ## Deploying
 
-When the Vercel project is connected to this repository (the usual setup), every push to `main` deploys the site. Framework preset: **Other**, with the build command and output directory left empty. Keep the root of the repository free of a `package.json` so Vercel treats the site as plain files; the app's own `package.json` is in `app/`.
-
-From the command line instead: `npx vercel` in the repository root (then `npx vercel --prod`).
+When the Vercel project is connected to this repository, every push to `main` deploys the site. The project stays on the **Other** preset. `vercel.json` installs and builds `website/`, then publishes `website/out`. There is no `package.json` at the repository root, so Vercel does not try to build the desktop app.
 
 The custom domain is set under **Project → Settings → Domains**.
 
 ## Previewing locally
 
-Open `index.html` in a browser, or run `npx serve .` in the repository root.
+```sh
+cd website
+npm install
+npm run dev
+```
+
+Then open http://localhost:3000.

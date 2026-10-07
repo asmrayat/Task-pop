@@ -4,7 +4,10 @@
 const RELEASES_LATEST = 'https://github.com/asmrayat/Task-pop/releases/latest';
 const RELEASES_API = 'https://api.github.com/repos/asmrayat/Task-pop/releases/latest';
 
-(() => {
+export function startSite() {
+  if (document.documentElement.dataset.siteReady === '1') return;
+  document.documentElement.dataset.siteReady = '1';
+
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- Header border on scroll ---------- */
@@ -13,7 +16,9 @@ const RELEASES_API = 'https://api.github.com/repos/asmrayat/Task-pop/releases/la
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  document.getElementById('year').textContent = String(new Date().getFullYear());
+  const year = document.getElementById('year');
+  if (year) year.textContent = String(new Date().getFullYear());
+  if (!document.getElementById('devicePanel')) return;
 
   /* ---------- Live TaskPop demo ---------- */
   const ICONS = {
@@ -344,4 +349,5 @@ const RELEASES_API = 'https://api.github.com/repos/asmrayat/Task-pop/releases/la
     builds.insertBefore(primaryCard, builds.firstElementChild);
     primaryCard.after(secondaryCard);
   }
-})();
+
+}

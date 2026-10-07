@@ -1,51 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <script>
-    (function () {
-      var ua = navigator.userAgent || '';
-      var apple = /iPhone|iPad|iPod|Macintosh|Mac OS X/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      var os = /Windows/i.test(ua) ? 'windows' : (apple ? 'macos' : '');
-      if (os) document.documentElement.setAttribute('data-os', os);
-    })();
-  </script>
-  <title>TaskPop – Your to-do list, there when you start your computer</title>
-  <meta name="description" content="TaskPop slides your to-do list in from the side of the screen when you start your computer. Reminders, daily routines, Google Calendar, and a keyboard shortcut. Your tasks stay on your device.">
-  <meta name="theme-color" content="#F4F7F5">
-  <link rel="canonical" href="https://taskpop.asmlab.agency/">
-
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://taskpop.asmlab.agency/">
-  <meta property="og:title" content="TaskPop – Your to-do list, there when you start your computer">
-  <meta property="og:description" content="TaskPop shows your tasks when you start your computer. Reminders, daily routines, and a shortcut from anywhere.">
-  <meta property="og:image" content="https://taskpop.asmlab.agency/assets/og-image.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="TaskPop – Your to-do list, there when you start your computer">
-  <meta name="twitter:description" content="TaskPop shows your tasks when you start your computer.">
-  <meta name="twitter:image" content="https://taskpop.asmlab.agency/assets/og-image.png">
-
-  <link rel="icon" type="image/png" href="assets/favicon.png">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="preload" href="assets/fonts/InstrumentSans.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css">
-  <noscript>
-    <style>
-      .device.closed .lid { transform: none; }
-      .device.closed .screen-off { opacity: 0; }
-      .tp-panel { display: none !important; }
-      .demo-controls { display: none; }
-    </style>
-  </noscript>
-</head>
-<body>
-  <a class="skip-link" href="#main">Skip to content</a>
+<a class="skip-link" href="#main">Skip to content</a>
 
   <header class="site-header">
     <nav class="nav wrap" aria-label="Main">
       <a class="brand" href="#top" aria-label="TaskPop home">
-        <img src="assets/taskpop-icon.png" alt="" width="30" height="30">
+        <img src="/assets/taskpop-icon.png" alt="" width="30" height="30">
         <span>TaskPop</span>
       </a>
       <ul class="nav-links">
@@ -164,7 +122,7 @@
             </div>
             <div class="spec-visual">
               <div class="notif">
-                <img src="assets/taskpop-icon.png" alt="" width="30" height="30">
+                <img src="/assets/taskpop-icon.png" alt="" width="30" height="30">
                 <div class="notif-body">
                   <span class="notif-app">TaskPop reminder</span>
                   <strong>Send the weekly report</strong>
@@ -217,7 +175,7 @@
             </div>
             <div class="spec-visual">
               <div class="notif">
-                <img src="assets/taskpop-icon.png" alt="" width="30" height="30">
+                <img src="/assets/taskpop-icon.png" alt="" width="30" height="30">
                 <div class="notif-body">
                   <span class="notif-app">TaskPop</span>
                   <strong>You have 4 tasks today</strong>
@@ -296,7 +254,7 @@
     <!-- ================= Download ================= -->
     <section class="download" id="download" aria-labelledby="download-title">
       <div class="wrap download-inner">
-        <img class="download-icon" src="assets/taskpop-icon.png" alt="TaskPop app icon" width="112" height="112">
+        <img class="download-icon" src="/assets/taskpop-icon.png" alt="TaskPop app icon" width="112" height="112">
         <h2 id="download-title">Download TaskPop</h2>
         <p class="download-sub" id="downloadSub">One Mac installer for Apple Silicon and Intel, plus a Windows installer.</p>
 
@@ -369,7 +327,7 @@
   <footer class="site-footer">
     <div class="wrap footer-inner">
       <div class="footer-brand">
-        <img src="assets/taskpop-icon.png" alt="" width="26" height="26">
+        <img src="/assets/taskpop-icon.png" alt="" width="26" height="26">
         <span>TaskPop</span>
       </div>
       <p>Developed by <a href="https://asmlab.agency" rel="noopener">asmlab</a>. © <span id="year">2026</span> TaskPop. <a href="privacy.html">Privacy</a>&nbsp;·&nbsp;<a href="https://github.com/asmrayat/Task-pop" rel="noopener">Source code</a></p>
@@ -409,11 +367,3 @@
       <button class="btn btn-primary setup-done" type="submit">Got it</button>
     </form>
   </dialog>
-
-  <script src="script.js" defer></script>
-  <script>
-    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-  </script>
-  <script defer src="/_vercel/insights/script.js"></script>
-</body>
-</html>
