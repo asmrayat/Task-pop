@@ -96,6 +96,7 @@ let appHidden = false;
 let quitting = false;
 let registeredShortcut = null;
 let holdPanel = false; // true while the reminder picker is open in the panel
+let holdUntil = 0; // v1.9.1: until then, losing the focus doesn't close the panel (a system dialog just closed)
 let spaces = null; // macOS (v1.8.1): opens windows on the desktop you're on (see spaces.js)
 let note = null; // v1.9: the quick note (see notes.js)
 let verifier = null; // …and "is it really you?" before hidden text in it is shown (see verify.js)
@@ -695,7 +696,7 @@ function createPanel() {
   lockDown(panel);
 
   panel.on('blur', () => {
-    if (isShown && !settings.keepOpen && !holdPanel) {
+    if (isShown && !settings.keepOpen && !holdPanel && Date.now() >= holdUntil) {
       lastBlurHideAt = Date.now();
       hidePanel();
     }
@@ -1898,7 +1899,18 @@ async function confirmItsYou(action) {
   } finally {
     confirming = false;
     holdPanel = wasHeld;
-    if (isShown && alive(panel)) focusPanel();
+    // macOS answers while its dialog is still closing. Once it's gone, the focus goes back to the
+    // app in front and the panel hears that it lost the focus: that isn't you leaving, so the
+    // panel stays (and the text you just unlocked with it), and takes the focus back.
+    holdUntil = Date.now() + 1500;
+    if (isShown && alive(panel)) {
+      focusPanel();
+      for (const ms of [400, 1200]) {
+        setTimeout(() => {
+          if (isShown && alive(panel) && !panel.isFocused()) focusPanel();
+        }, ms);
+      }
+    }
   }
 }
 

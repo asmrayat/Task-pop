@@ -216,6 +216,11 @@ app.whenReady().then(async () => {
     await until(async () => (await state()).chips[0].shown);
     s = await state();
     check('confirmed: it shows "hunter2"', s.chips[0].shown && s.chips[0].text === 'hunter2' && enc.decrypted === 1, JSON.stringify(s.chips));
+    // (v1.9.1) as on a real Mac: the system's dialog closes just after it answers, and the panel hears it lost the focus
+    panel.emit('blur');
+    await wait(400);
+    s = await state();
+    check('when the system\'s dialog closes after Touch ID or the password, the panel stays open, showing it', panel.isVisible() && s.chips[0].shown && s.chips[0].text === 'hunter2');
     await shot('note-shown');
     await wait(700);
     check('…it isn\'t saved as plain text even while it shows', !noteFile().includes('hunter2'));
@@ -239,10 +244,13 @@ app.whenReady().then(async () => {
     auth.next = 'yes';
     auth.release();
     await until(async () => (await state()).chips[0].shown);
-    await js('window.taskpop.hide()');
+    panel.emit('blur'); // the dialog closing
+    await wait(1700);
+    check('…also after the password', panel.isVisible() && (await state()).chips[0].shown);
+    panel.emit('blur'); // and now you click somewhere else
     await until(() => !panel.isVisible());
     s = await state();
-    check('closing the panel hides it again', !s.chips[0].shown && !s.text.includes('hunter2'));
+    check('clicking somewhere else afterwards still closes the panel, as always, and hides it again', !panel.isVisible() && !s.chips[0].shown && !s.text.includes('hunter2'));
     await js(`window.taskpop.updateSetting('keepOpen', true)`);
     shortcut(); // open it again, as the keyboard shortcut does
     await until(() => panel.isVisible() && panel.getOpacity() > 0.9);

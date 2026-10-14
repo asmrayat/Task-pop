@@ -4,6 +4,12 @@ All notable changes to TaskPop are listed here. The format follows [Keep a Chang
 
 Installers for every version are on the [releases page](https://github.com/asmrayat/Task-pop/releases).
 
+## [1.9.1] - 2026-10-14
+
+### Fixed
+
+- Mac: after Touch ID or your password, the panel closed instead of showing the hidden text. macOS answers while its dialog is still closing; when the dialog went away, the panel was told it had lost the focus and closed (hiding the text again). It now stays open, shows the text, and takes the focus back. Clicking somewhere else afterwards still closes it as usual.
+
 ## [1.9.0] - 2026-10-14
 
 ### Added
@@ -162,6 +168,7 @@ The first public release.
 - Export and import your tasks, and delete completed ones automatically after a day or a week.
 - Tasks saved locally the moment they change, with a backup of the previous save.
 
+[1.9.1]: https://github.com/asmrayat/Task-pop/releases/tag/v1.9.1
 [1.9.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.9.0
 [1.8.1]: https://github.com/asmrayat/Task-pop/releases/tag/v1.8.1
 [1.8.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.8.0
