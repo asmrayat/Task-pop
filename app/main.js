@@ -1,13 +1,15 @@
 // TaskPop - a tiny side-panel task list for macOS and Windows.
 // Data lives on this computer (macOS: ~/Library/Application Support/TaskPop/, Windows: %APPDATA%\\TaskPop\\)
 //   tasks.json     - your tasks
+//   notes.json     - the quick note (hidden text in it is encrypted)
 //   settings.json  - your preferences
 //   *.bak          - automatic backup of the previous good save
 
 const {
   app, BrowserWindow, Tray, Menu, nativeImage, globalShortcut, powerMonitor, screen, ipcMain,
-  systemPreferences, nativeTheme, shell, dialog, Notification, clipboard, session,
+  systemPreferences, nativeTheme, shell, dialog, Notification, clipboard, session, safeStorage,
 } = require('electron');
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -16,6 +18,8 @@ const { createWinFocus } = require('./winfocus');
 const { createUpdater, Updater, compareVersions } = require('./updater');
 const calendar = require('./calendar');
 const { createSpaces } = require('./spaces');
+const { QuickNote, config: noteConfig } = require('./notes');
+const { createVerifier } = require('./verify');
 
 const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
@@ -44,6 +48,7 @@ const DEFAULT_SETTINGS = {
   autoCheckUpdates: true,
   calendarDuration: 60, // minutes, default length of a Google Calendar event
   googleAccount: '', // optional: which Google account opens (for people signed in to several)
+  noteOpen: false, // v1.9: the quick note under the list is open
 };
 
 const AUTO_CLEAR_MS = { never: 0, '1d': 24 * 3600 * 1000, '7d': 7 * 24 * 3600 * 1000 };
@@ -69,6 +74,7 @@ const VALIDATORS = {
   autoCheckUpdates: isBool,
   calendarDuration: (v) => calendar.LENGTHS.includes(v),
   googleAccount: (v) => v === '' || calendar.isEmail(v),
+  noteOpen: isBool,
 };
 
 const PANEL_MAX_HEIGHT = 640;
@@ -91,6 +97,8 @@ let quitting = false;
 let registeredShortcut = null;
 let holdPanel = false; // true while the reminder picker is open in the panel
 let spaces = null; // macOS (v1.8.1): opens windows on the desktop you're on (see spaces.js)
+let note = null; // v1.9: the quick note (see notes.js)
+let verifier = null; // …and "is it really you?" before hidden text in it is shown (see verify.js)
 // …and how that went, for the double-tap report
 const desktopStats = { shown: 0, notHere: 0, newWindow: 0, newWindowFailed: false };
 const liveNotifications = new Set();
@@ -184,6 +192,19 @@ function writeJSON(name, data) {
     fs.renameSync(tmp, target);
   } catch (err) {
     console.error(`TaskPop: failed to write ${name}`, err);
+  }
+}
+
+/**
+ * The quick note: like writeJSON, and the backup becomes this same save. So once you hide text,
+ * no file keeps the earlier copy of the note in which it was still plain.
+ */
+function writeNote(name, data) {
+  writeJSON(name, data);
+  try {
+    fs.copyFileSync(dataFile(name), dataFile(`${name}.bak`));
+  } catch (err) {
+    console.error(`TaskPop: failed to back up ${name}`, err);
   }
 }
 
@@ -1705,6 +1726,7 @@ ipcMain.handle('panel:get-state', () => ({
   platform: process.platform,
   update: updater ? updater.publicState() : null,
   sortPrompt: !!meta.sortPrompt,
+  note: note ? note.forPanel() : { segments: [] },
 }));
 
 // The panel showed "Sort your tasks" and you finished it or chose "Do the rest later"
@@ -1845,6 +1867,116 @@ ipcMain.on('task:context-menu', (event, id) => {
     { label: 'Delete', click: () => send(panel, 'task:delete', id) },
   ]).popup({ window: panel });
 });
+// ---------- IPC: the quick note (v1.9) ----------
+
+ipcMain.handle('notes:save', (event, segments) => {
+  if (!fromPanel(event) || !note) return false;
+  note.save(segments);
+  return true;
+});
+
+// Hide a piece of text: it's encrypted now, and the panel gets back only its id
+ipcMain.handle('notes:hide', (event, text) => {
+  if (!fromPanel(event) || !note) return { ok: false };
+  try {
+    return { ok: true, id: note.hide(text) };
+  } catch (err) {
+    console.error('TaskPop: could not hide text', err);
+    return { ok: false, message: err.message };
+  }
+});
+
+let confirming = false;
+/** Touch ID / your Mac password, or Windows Hello / your Windows password. One at a time. */
+async function confirmItsYou(action) {
+  if (confirming || !verifier) return { ok: false, canceled: true };
+  confirming = true;
+  const wasHeld = holdPanel;
+  holdPanel = true; // the system's dialog takes the focus: the panel stays open meanwhile
+  try {
+    return await verifier.verify(panel, action);
+  } finally {
+    confirming = false;
+    holdPanel = wasHeld;
+    if (isShown && alive(panel)) focusPanel();
+  }
+}
+
+ipcMain.handle('notes:reveal', async (event, id) => {
+  if (!fromPanel(event) || !note || !note.has(id)) return { ok: false, message: 'That hidden text is no longer there.' };
+  const answer = await confirmItsYou('show');
+  if (!answer.ok) return answer;
+  try {
+    return { ok: true, text: note.reveal(id) };
+  } catch (err) {
+    console.error('TaskPop: could not decrypt hidden text', err);
+    return { ok: false, message: isMac ? 'macOS didn’t let TaskPop use its key in your keychain.' : 'Windows couldn’t decrypt it.' };
+  }
+});
+
+let clipboardClear = null;
+/** Copy hidden text without showing it; it's taken off the clipboard after a minute if still there. */
+ipcMain.handle('notes:copy', async (event, id) => {
+  if (!fromPanel(event) || !note || !note.has(id)) return { ok: false, message: 'That hidden text is no longer there.' };
+  const answer = await confirmItsYou('copy');
+  if (!answer.ok) return answer;
+  let text;
+  try {
+    text = note.reveal(id);
+  } catch (err) {
+    console.error('TaskPop: could not decrypt hidden text', err);
+    return { ok: false, message: isMac ? 'macOS didn’t let TaskPop use its key in your keychain.' : 'Windows couldn’t decrypt it.' };
+  }
+  await copyForAMinute(text);
+  return { ok: true, clearsIn: noteConfig.clipboardClearMs };
+});
+
+// …and hidden text that's showing (you've confirmed it's you already)
+ipcMain.handle('notes:copy-shown', async (event, text) => {
+  if (!fromPanel(event) || typeof text !== 'string' || !text) return { ok: false };
+  await copyForAMinute(text);
+  return { ok: true, clearsIn: noteConfig.clipboardClearMs };
+});
+
+async function copyForAMinute(text) {
+  await clipboard.writeText(text);
+  const digest = crypto.createHash('sha256').update(text).digest('hex'); // (not the text itself)
+  clearTimeout(clipboardClear);
+  clipboardClear = setTimeout(async () => {
+    try {
+      const now = await clipboard.readText();
+      if (crypto.createHash('sha256').update(now).digest('hex') === digest) await clipboard.writeText('');
+    } catch (_) {
+      // nothing to clear
+    }
+  }, noteConfig.clipboardClearMs);
+}
+
+// Right-click on hidden text in the note
+ipcMain.on('notes:secret-menu', (event, payload) => {
+  if (!fromPanel(event) || !payload || !note || !note.has(payload.id)) return;
+  const act = (action) => () => send(panel, 'notes:secret-action', { id: payload.id, action });
+  const items = payload.shown
+    ? [{ label: 'Hide', click: act('hide') }, { label: 'Copy', click: act('copy') }, { label: 'Make it ordinary text', click: act('plain') }]
+    : [{ label: 'Show…', click: act('show') }, { label: 'Copy…', click: act('copy') }];
+  Menu.buildFromTemplate([...items, { type: 'separator' }, { label: 'Delete', click: act('delete') }]).popup({ window: panel });
+});
+
+// Right-click in the note
+ipcMain.on('notes:editor-menu', (event, payload) => {
+  if (!fromPanel(event)) return;
+  const canHide = !!(payload && payload.canHide);
+  Menu.buildFromTemplate([
+    { label: 'Hide', enabled: canHide, click: () => send(panel, 'notes:editor-action', 'hide') },
+    { label: 'Add hidden text…', click: () => send(panel, 'notes:editor-action', 'add') },
+    { type: 'separator' },
+    { role: 'cut' },
+    { role: 'copy' },
+    { role: 'paste' },
+    { role: 'selectAll' },
+  ]).popup({ window: panel });
+});
+
 // v1.8: right-click on a category tag: rename, colour, order, delete. "Unsorted": sort one by one.
 const COLOR_NAMES = { blue: 'Blue', orange: 'Orange', green: 'Green', purple: 'Purple', pink: 'Pink', teal: 'Teal', yellow: 'Yellow', gray: 'Gray' };
 ipcMain.on('category:context-menu', (event, id) => {
@@ -2119,6 +2251,9 @@ if (!app.requestSingleInstanceLock()) {
     session.defaultSession.setPermissionCheckHandler(() => false);
 
     loadAll();
+    note = new QuickNote({ read: readJSON, write: writeNote, safeStorage });
+    note.load();
+    verifier = createVerifier({ systemPreferences });
     nativeTheme.themeSource = settings.theme;
     // Windows panel is solid, so it follows light/dark mode itself.
     nativeTheme.on('updated', () => {

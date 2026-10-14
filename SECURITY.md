@@ -32,6 +32,7 @@ TaskPop is small, and these are the parts where security matters most:
 - **The installers** ([`installers/`](installers)): they download the Electron runtime from GitHub and check it against checksums built into the installer.
 - **The double-tap** ([`app/doubletap.js`](app/doubletap.js)): reads the state of the modifier keys through the operating system's own functions and, on a Mac, a listen-only event tap that can't change or block events.
 - **The windows' bridges** (`app/preload*.js`): what each window's page is allowed to ask the app to do. Every window runs sandboxed, with context isolation and without Node.js.
+- **Hidden text in the quick note** ([`app/notes.js`](app/notes.js), [`app/verify.js`](app/verify.js), [`app/note.js`](app/note.js)): encrypted with Electron's `safeStorage` (the macOS keychain, Windows DPAPI) as soon as it's hidden, and never saved in plain; shown or copied only after Touch ID or the Mac password, or Windows Hello or the Windows password; taken off the clipboard after a minute.
 - **Imported files and saved data**: tasks are cleaned and checked before they're used, whether they come from disk or from **Import…**.
 
 Out of scope: problems that need someone who already controls your user account or computer, and the warnings macOS and Windows show for apps that aren't yet notarized or signed.

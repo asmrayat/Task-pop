@@ -3,7 +3,8 @@
 #
 #   tests/run.sh               unit + app (what CI runs)
 #   tests/run.sh unit          plain Node tests: date parsing, the double-tap detector, App Nap,
-#                              the Mac key-event tap, opening on the right Mac desktop (needs cc)
+#                              the Mac key-event tap, opening on the right Mac desktop, confirming
+#                              it's you before hidden text is shown (these last two need cc)
 #   tests/run.sh app           the real app on Linux, made to act as macOS and as Windows, driven
 #                              with real mouse and keyboard input (needs xvfb-run, xdotool and cc)
 #   tests/run.sh release       the update flows end to end: needs built installers
@@ -66,6 +67,13 @@ for group in $GROUPS_TO_RUN; do
         TP_FAKEOBJC="$TMP/libfakeobjc.so" node_test spaces-test
       else
         failed=$((failed + 1)); ran=$((ran + 1)); echo "FAIL  spaces-test  could not build tests/stubs/fakeobjc.c (log: $LOG/fakeobjc-build.log)"
+      fi
+      # confirming it's you before hidden text is shown: Windows Hello and the Windows password
+      # against stand-in Windows libraries, and the Mac's Touch ID path
+      if cc -shared -fPIC -o "$TMP/libfakewin.so" tests/stubs/fakewin.c 2>"$LOG/fakewin-build.log"; then
+        TP_FAKEWIN="$TMP/libfakewin.so" node_test verify-test
+      else
+        failed=$((failed + 1)); ran=$((ran + 1)); echo "FAIL  verify-test  could not build tests/stubs/fakewin.c (log: $LOG/fakewin-build.log)"
       fi ;;
     app)
       need_electron
@@ -92,6 +100,7 @@ for group in $GROUPS_TO_RUN; do
       app_test store store-app win32
       for p in darwin win32; do app_test "timers-$p" timer-app $p; done
       app_test desktops spaces-app darwin
+      for p in darwin win32; do app_test "quick-note-$p" note-app $p; done
       for p in darwin win32; do
         app_test "categories-$p" category-app $p
         app_test "categories-new-$p" category-app $p TP_MODE=fresh

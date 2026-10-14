@@ -27,6 +27,16 @@ contextBridge.exposeInMainWorld('taskpop', {
   onNewCategoryFor: on('category:new-for'),
   onCategoryAction: on('category:action'),
   sortDone: () => ipcRenderer.send('categories:sort-done'),
+  // Quick note (v1.9)
+  saveNote: (segments) => ipcRenderer.invoke('notes:save', segments),
+  hideNoteText: (text) => ipcRenderer.invoke('notes:hide', text),
+  revealNoteText: (id) => ipcRenderer.invoke('notes:reveal', id),
+  copyNoteText: (id) => ipcRenderer.invoke('notes:copy', id),
+  copyShownNoteText: (text) => ipcRenderer.invoke('notes:copy-shown', text),
+  showNoteSecretMenu: (id, shown) => ipcRenderer.send('notes:secret-menu', { id, shown }),
+  showNoteEditorMenu: (canHide) => ipcRenderer.send('notes:editor-menu', { canHide }),
+  onNoteSecretAction: on('notes:secret-action'),
+  onNoteEditorAction: on('notes:editor-action'),
   openCalendar: (event) => ipcRenderer.invoke('calendar:open', event),
   // Updates
   onUpdateState: on('update:state'),

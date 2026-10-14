@@ -30,6 +30,14 @@ TaskPop asks for as little as it can. Here is everything it may ask for, why, an
 
 **Why:** TaskPop lives in your Applications folder, which only an administrator can change. The installer asks once, like any other Mac installer. Updating asks again, in a standard macOS password prompt that says it's TaskPop, and the update is checked against the SHA-256 checksum GitHub publishes for it before it's installed.
 
+### Touch ID or your Mac password: for hidden text in the quick note
+
+**Why:** text you hide in the quick note is encrypted, and TaskPop only shows it (or copies it) after macOS confirms it's you: Touch ID, or your Mac password if you choose **Use Password…** or the Mac has no Touch ID. It's the standard macOS dialog; TaskPop never sees your fingerprint or your password, only whether macOS said yes.
+
+**The key:** macOS keeps the key that encrypts hidden text in your login keychain, under "TaskPop Safe Storage". Because TaskPop isn't signed with an Apple Developer ID yet, after an update macOS may ask once whether TaskPop may use it: enter your Mac password and click **Always Allow**. If you click **Deny**, hidden text can't be shown or added until you allow it.
+
+**If you say no:** the rest of the note, and everything else, works as usual. Hidden text stays hidden.
+
 ### Open at Login
 
 **Where:** **Open at Login** in TaskPop's menu or Settings; macOS lists it in System Settings → General → Login Items.
@@ -43,6 +51,7 @@ TaskPop needs no special permission on Windows.
 - **Installing:** the installer puts TaskPop in your own user folder (`%LOCALAPPDATA%\Programs\TaskPop`), so it never asks for administrator rights.
 - **The double-tap:** Windows lets any app check whether Ctrl, Alt, Shift or the Windows key is held down, so there's nothing to allow. As on the Mac, other keys are only checked to count presses: TaskPop keeps the count and nothing about which keys they were.
 - **Notifications:** shown by Windows. If they don't appear, check **Settings → System → Notifications** and that **Do not disturb** (Focus assist on Windows 10) is off.
+- **Hidden text in the quick note:** TaskPop asks Windows to confirm it's you before showing or copying it, with Windows Hello (PIN, fingerprint or face) or, if Windows Hello isn't set up, your Windows password in the standard "Windows Security" dialog. Windows checks it; TaskPop only learns whether it was right, and wipes the typed password from memory straight away. Hidden text is encrypted with Windows' own data protection, tied to your Windows account.
 - **Start with Windows:** TaskPop turns this on the first time it runs. Turn it off any time from its tray menu or Settings, or in **Settings → Apps → Startup**, where Windows lists it.
 - **SmartScreen:** until TaskPop is signed and in the Microsoft Store, Windows may warn before the first run. Choose **More info**, then **Run anyway**. You can check the installer first: its SHA-256 checksum is listed with each release.
 

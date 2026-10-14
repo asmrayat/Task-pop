@@ -35,6 +35,13 @@ Another app is probably using the same shortcut. Open **Settings → General →
 
 **In the wrong spot on the screen:** drag it by its top bar to where you want it, or choose **Left** or **Right** in **Settings → Panel → Position** to put it back in a corner. If the screen you put it on is unplugged, it opens on the screen you're using instead, in the same spot.
 
+## Hidden text in the quick note
+
+- **It won't show:** TaskPop asks macOS (Touch ID or your Mac password) or Windows (Windows Hello or your Windows password) first. If you cancel, it stays hidden.
+- **Mac, after an update:** macOS may ask whether TaskPop may use "TaskPop Safe Storage" in your keychain. Enter your Mac password and click **Always Allow**. If you clicked **Deny**, open **Keychain Access**, find **TaskPop Safe Storage**, and under **Access Control** allow TaskPop again.
+- **Windows without a PIN or fingerprint:** TaskPop asks for your Windows password instead. If your account has no password either, set up Windows Hello in **Settings → Accounts → Sign-in options**.
+- **On another computer:** hidden text can only be read on the computer and user account where it was hidden. The quick note isn't part of **Export**.
+
 ## Installing on a Mac
 
 - **"Apple could not verify…" or "can't be opened":** TaskPop isn't notarized by Apple yet. Open **System Settings → Privacy & Security**, scroll down, click **Open Anyway** next to the message about TaskPop and confirm with your password. You only need to do this once.

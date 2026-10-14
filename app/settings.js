@@ -184,6 +184,8 @@ function applyPlatform(p, keys) {
   kbd('tipDeleteKey', ['Delete']);
   kbd('tipUndoKeys', ['Ctrl', 'Z']);
   kbd('tipMoveKeys', ['Alt', '↑', '↓']);
+  kbd('tipNoteKeys', ['Ctrl', 'J']);
+  text('tipHideText', 'Encrypts the selected text; showing it asks for Windows Hello or your Windows password');
 }
 
 function renderDoubleTap() {

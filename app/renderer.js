@@ -1786,7 +1786,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   const active = document.activeElement;
-  const typing = ['INPUT', 'SELECT', 'TEXTAREA'].includes(active.tagName);
+  const typing = ['INPUT', 'SELECT', 'TEXTAREA'].includes(active.tagName) || active.isContentEditable; // (the quick note too)
   // Space and Return on a focused button press that button; don't also act on the selected task.
   if (active.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')) return;
   if (calendarId !== null) return; // the calendar pop-up handles its own keys

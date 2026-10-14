@@ -63,7 +63,7 @@ TaskPop is the list you don't have to remember to open. It lives in the menu bar
 - **Daily routines.** Tasks set to repeat every day un-tick themselves each morning, reminder included.
 - **Morning summary.** One notification at the time you choose, listing what's left.
 - **Reorder** by dragging, or with ⌥↑ / ⌥↓ (Alt+↑ / Alt+↓). The blue line shows exactly where a task will land.
-- **Keyboard first.** Arrows to move, Space to tick, Return to edit, Delete to remove, ⌘Z / Ctrl+Z to undo, N to start a new task, T to set a timer, G to send the selected task to Google Calendar, ← / → to switch categories.
+- **Keyboard first.** Arrows to move, Space to tick, Return to edit, Delete to remove, ⌘Z / Ctrl+Z to undo, N to start a new task, T to set a timer, G to send the selected task to Google Calendar, ← / → to switch categories, ⌘J / Ctrl+J for the quick note.
 - **Tidy by itself.** Delete completed tasks automatically after a day or a week, or clear them with one click.
 
 ### Categories
@@ -75,6 +75,14 @@ Updating from an older version? Your tasks start in no category, and a **Sort yo
 <p align="center">
   <img src="docs/assets/readme/categories.png" width="280" alt="The task list under All, with tags for All, Personal, Work and Study along the top, and each task's category shown after its name">
   <img src="docs/assets/readme/categories-sort.png" width="280" alt="The Sort your tasks card asking which category a task goes in, with Personal, Work and New, and Skip or Do the rest later">
+</p>
+
+### A quick note, with hidden text
+
+The small arrow at the end of the "Add a task" bar (or ⌘J, Ctrl+J on Windows) opens a note under your list for the things you want at hand. Select anything in it, like a password or a PIN, and click **Hide**: it's encrypted at once and shows as ••••••. To see it again, click it and confirm it's you with Touch ID or your Mac password (Windows Hello or your Windows password on Windows). It hides itself again after a minute, and right-clicking copies it without showing it. Hidden text is never saved as plain text: the key that encrypts it is kept by macOS in your keychain, or by Windows for your account.
+
+<p align="center">
+  <img src="docs/assets/readme/quick-note.png" width="280" alt="The quick note open under the task list, with a Wi-Fi name in plain text and a password and a PIN hidden as dots behind a lock">
 </p>
 
 ### Timers for what can't wait

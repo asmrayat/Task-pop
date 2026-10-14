@@ -7,6 +7,7 @@ TaskPop is a to-do list that keeps your tasks on your computer. It has no accoun
 - It never sends your tasks, notes or settings anywhere.
 - It never records what you type. The double-tap only reads whether the modifier keys (Control, Option or Alt, Command or the Windows key, Shift) are held down, plus a running count of other key presses and mouse clicks so that shortcuts like ⌘C don't count as taps. Which keys you pressed is never read or kept.
 - It never signs in to Google or any other service.
+- It never sees your fingerprint, face, PIN or account password. Before it shows hidden text from the quick note, it asks macOS or Windows to confirm it's you and is told only yes or no.
 - It has no crash reporting, usage statistics or "phone home" of any kind. The double-tap report in **Settings → Help** is only made when you click **Copy report**, and only goes to your clipboard.
 
 ## When it goes online
@@ -38,13 +39,16 @@ Everything is saved in one folder on your computer:
 | File | What's in it |
 | --- | --- |
 | `tasks.json` | Your tasks and your categories: each task's title, category, star, done, reminder, timer, repeat and when you created and completed it |
+| `notes.json` | Your quick note. Text you hide in it is stored only encrypted, with a key kept by macOS in your keychain or by Windows for your account, so the file alone can't be read; the rest of the note is plain text, like your tasks |
 | `settings.json` | Your choices in Settings |
 | `meta.json` | Small bits of bookkeeping: whether the tour has run, the last version you used, the last update check, whether to ask you to sort your tasks into categories |
 | `*.bak` | A copy of the previous good save of each file, used if a save is ever damaged |
 
 The app's own cache files (the kind every Electron app keeps) are in the same folder. While an update is being installed, the downloaded installer sits in your temporary folder and is deleted afterwards.
 
-**Export** writes your tasks to a file you choose, and **Import** reads one back. Nothing else leaves the folder.
+**Export** writes your tasks to a file you choose, and **Import** reads one back. Nothing else leaves the folder. (The quick note isn't exported.)
+
+**Hidden text** is encrypted the moment you hide it, and TaskPop then rewrites the note and its backup so that no copy of the file keeps it in plain. The note saves as you type, though, so for a password it's best not to type it into the note and hide it afterwards: use **Add hidden text** (the lock with a +), which takes it in a password box and puts it in the note already hidden. When you copy hidden text, it's taken off the clipboard after a minute if it's still there.
 
 To delete everything, quit TaskPop and delete the folder. On Windows the uninstaller offers to do it for you.
 

@@ -4,6 +4,16 @@ All notable changes to TaskPop are listed here. The format follows [Keep a Chang
 
 Installers for every version are on the [releases page](https://github.com/asmrayat/Task-pop/releases).
 
+## [1.9.0] - 2026-10-14
+
+### Added
+
+- **Quick note.** Click the small arrow at the end of the "Add a task" bar (or press ⌘J, Ctrl+J on Windows) and a note opens under it, for the things you want at hand: an address, a Wi-Fi name, a code. It's saved as you type and stays open or closed the way you left it.
+- **Hidden text in the quick note.** Select text and click **Hide**: it's encrypted straight away and shows as ••••••. Or click the lock with a + to type something (a password, say) in a password box, so it goes into the note already hidden.
+  - Click hidden text to see it: TaskPop first asks for Touch ID or your Mac password, or Windows Hello or your Windows password. It hides itself again after a minute, when you close the note and whenever the panel closes. Click it to hide it sooner.
+  - Right-click it to **Copy** it without showing it (it comes off the clipboard after a minute), **Delete** it, or, once it's showing, make it ordinary text again.
+  - Hidden text is encrypted with a key kept by macOS in your keychain, or by Windows for your account, and is never saved, backed up, copied or brought back by Undo as plain text.
+
 ## [1.8.1] - 2026-10-07
 
 ### Fixed
@@ -152,6 +162,7 @@ The first public release.
 - Export and import your tasks, and delete completed ones automatically after a day or a week.
 - Tasks saved locally the moment they change, with a backup of the previous save.
 
+[1.9.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.9.0
 [1.8.1]: https://github.com/asmrayat/Task-pop/releases/tag/v1.8.1
 [1.8.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.8.0
 [1.7.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.7.0
