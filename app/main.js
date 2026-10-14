@@ -1969,7 +1969,10 @@ ipcMain.on('notes:secret-menu', (event, payload) => {
   if (!fromPanel(event) || !payload || !note || !note.has(payload.id)) return;
   const act = (action) => () => send(panel, 'notes:secret-action', { id: payload.id, action });
   const items = payload.shown
-    ? [{ label: 'Hide', click: act('hide') }, { label: 'Copy', click: act('copy') }, { label: 'Make it ordinary text', click: act('plain') }]
+    ? [
+      ...(payload.selected ? [{ label: 'Copy Selection', click: act('copy-selection') }] : []), // v1.9.2
+      { label: 'Hide', click: act('hide') }, { label: payload.selected ? 'Copy All' : 'Copy', click: act('copy') }, { label: 'Make it ordinary text', click: act('plain') },
+    ]
     : [{ label: 'Show…', click: act('show') }, { label: 'Copy…', click: act('copy') }];
   Menu.buildFromTemplate([...items, { type: 'separator' }, { label: 'Delete', click: act('delete') }]).popup({ window: panel });
 });
@@ -1979,7 +1982,7 @@ ipcMain.on('notes:editor-menu', (event, payload) => {
   if (!fromPanel(event)) return;
   const canHide = !!(payload && payload.canHide);
   Menu.buildFromTemplate([
-    { label: 'Hide', enabled: canHide, click: () => send(panel, 'notes:editor-action', 'hide') },
+    { label: 'Hide Selected Text', enabled: canHide, click: () => send(panel, 'notes:editor-action', 'hide') },
     { label: 'Add hidden text…', click: () => send(panel, 'notes:editor-action', 'add') },
     { type: 'separator' },
     { role: 'cut' },

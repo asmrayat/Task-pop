@@ -20,13 +20,13 @@
     <section class="hero wrap" id="top">
       <div class="hero-copy">
         <h1>Your to-do list, there when you start your computer.</h1>
-        <p class="lede">TaskPop slides in from the side of your screen when you start your computer. Tick things off, set a reminder, send a task to Google Calendar, and get back to work.</p>
+        <p class="lede">TaskPop slides in when you start your computer, and comes back with a double-tap of Control from any app. Tick things off, set a timer, keep a private note, and get back to work.</p>
         <div class="hero-actions">
           <a class="btn btn-primary mac-download" href="https://github.com/asmrayat/Task-pop/releases/latest">Download for Mac</a>
           <a class="btn btn-quiet win-download" href="https://github.com/asmrayat/Task-pop/releases/latest">Download for Windows</a>
           <a class="btn btn-quiet" href="#features">See what it does</a>
         </div>
-        <p class="fineprint">For macOS 13 Ventura or later, and Windows 10 and 11.</p>
+        <p class="fineprint">Free and open source. For macOS 13 Ventura or later, and Windows 10 and 11.</p>
       </div>
 
       <div class="hero-demo">
@@ -62,7 +62,7 @@
 
         <div class="demo-controls">
           <button class="btn btn-quiet btn-small" id="replayBtn" type="button">Close and reopen the lid</button>
-          <p class="demo-hint">This is a working demo. Tick a task or add your own<span class="hint-keys">, or press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd></span>.</p>
+          <p class="demo-hint">This is a working demo: tick a task, switch tags, or open the note with the arrow<span class="hint-keys">. Double-tap <kbd class="tap-key" id="tapKeyHint">control</kbd> to hide and show it</span>.</p>
         </div>
       </div>
     </section>
@@ -72,14 +72,14 @@
       <div class="wrap features-grid">
         <div class="features-intro">
           <h2 id="features-title">A quick list that shows up on its own.</h2>
-          <p>No app to remember to open. TaskPop lives on your computer and appears the moment you start using it.</p>
+          <p>No app to remember to open. TaskPop lives on your computer, appears the moment you start using it, and comes back with a double-tap from whatever you’re doing.</p>
         </div>
 
         <ul class="spec">
           <li class="spec-row">
             <div class="spec-text">
               <h3>Pops up when you start your computer</h3>
-              <p>Wake your computer and your tasks slide in from the side. It can also appear when you unlock the screen, or stay quiet until you call it.</p>
+              <p>Open the lid or wake your computer and your tasks slide in from the side. It can also appear when you unlock the screen, or stay quiet until you call it.</p>
             </div>
             <div class="spec-visual">
               <div class="frag-setting">
@@ -93,11 +93,35 @@
 
           <li class="spec-row">
             <div class="spec-text">
-              <h3>One shortcut, from anywhere</h3>
-              <p>Press Control, Option and T in any app to open or close your list. Pick a different shortcut in Settings if you like.</p>
+              <h3>Double-tap to open it, from any app</h3>
+              <p>Tap Control twice and your list slides in, on whichever desktop you’re on and over full-screen apps too. Tap twice again and it’s gone. You can pick Option, Command or Shift instead (Alt or Shift on Windows), or use ⌃⌥T or a shortcut of your own.</p>
             </div>
-            <div class="spec-visual keys" aria-label="Control Option T">
-              <kbd class="key">⌃<small>control</small></kbd><kbd class="key">⌥<small>option</small></kbd><kbd class="key">T</kbd>
+            <div class="spec-visual double-tap" aria-label="Double-tap Control">
+              <div class="tap-keys">
+                <kbd class="key tap">⌃<small>control</small></kbd>
+                <span class="tap-times" aria-hidden="true">×2</span>
+              </div>
+              <span class="tap-alt">or press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> in any app</span>
+            </div>
+          </li>
+
+          <li class="spec-row">
+            <div class="spec-text">
+              <h3>Categories keep things apart</h3>
+              <p>Small tags along the top: All, Personal, Work and any you add. Click one to see only its tasks, and whatever you add there goes into it. Drag a task onto a tag, or type <strong>#work</strong> as you add it.</p>
+            </div>
+            <div class="spec-visual">
+              <div class="frag-tags" aria-hidden="true">
+                <span class="frag-tag on">All <small>6</small></span>
+                <span class="frag-tag"><i class="dot" style="--c:#2f7cf6"></i>Personal <small>3</small></span>
+                <span class="frag-tag"><i class="dot" style="--c:#ff9500"></i>Work <small>2</small></span>
+                <span class="frag-tag"><i class="dot" style="--c:#34c759"></i>Study <small>1</small></span>
+                <span class="frag-tag add">+</span>
+              </div>
+              <div class="frag-row">
+                <span class="frag-check"></span>
+                <span class="frag-title">Finish the Q3 deck <span class="frag-cat"><i class="dot" style="--c:#ff9500"></i>Work</span></span>
+              </div>
             </div>
           </li>
 
@@ -112,6 +136,55 @@
                 <svg class="frag-star" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg>
               </div>
               <div class="frag-typed"><span class="caret-text">!Call the bank before 5</span></div>
+            </div>
+          </li>
+
+          <li class="spec-row">
+            <div class="spec-text">
+              <h3>A timer for what can’t wait</h3>
+              <p>Give a task 15 minutes, an afternoon or a day. It jumps to the top with a countdown and a line that shrinks as the time runs out, turning orange near the end. A “Time’s up” notification arrives right on time.</p>
+            </div>
+            <div class="spec-visual">
+              <div class="frag-row timed">
+                <span class="frag-check"></span>
+                <span class="frag-col">
+                  <span class="frag-title">Submit the expense report</span>
+                  <span class="frag-timer"><span class="frag-countdown"><svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6.8" r="4.3"/><path d="M6 4.4v2.5l1.6 1M4.7 1.2h2.6M9.6 3.1l.8-.8"/></svg>23:41 left</span><span class="frag-track"><i style="width:62%"></i></span></span>
+                </span>
+              </div>
+              <div class="notif">
+                <img src="/assets/taskpop-icon.png" alt="" width="30" height="30">
+                <div class="notif-body">
+                  <span class="notif-app">Time’s up</span>
+                  <strong>Submit the expense report</strong>
+                  <div class="notif-actions"><span>Mark as done</span><span>Add 15 min</span></div>
+                </div>
+                <span class="notif-time">now</span>
+              </div>
+            </div>
+          </li>
+
+          <li class="spec-row">
+            <div class="spec-text">
+              <h3>A quick note, with hidden text</h3>
+              <p>Click the arrow under your list (or press ⌘J, Ctrl+J on Windows) for a note that’s always at hand. Select a password or a PIN and click Hide selected: it’s encrypted at once and shows as dots. Click Show, confirm with Touch ID or your password (Windows Hello on a PC), then copy all of it, one line, or just the part you select.</p>
+            </div>
+            <div class="spec-visual">
+              <div class="frag-note" aria-hidden="true">
+                <div class="frag-note-head">
+                  <span>Quick note</span>
+                  <span class="frag-hide"><svg viewBox="0 0 16 16"><rect x="3.4" y="7" width="9.2" height="6.6" rx="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>Hide selected</span>
+                </div>
+                <div class="frag-note-body">
+                  Wi-Fi: Home-5G<br>
+                  Password: <span class="frag-secret"><svg viewBox="0 0 12 12"><rect x="2.2" y="5.2" width="7.6" height="5.4" rx="1.3"/><path d="M4 5.2V3.9a2 2 0 0 1 4 0v1.3"/></svg>••••••<span class="frag-show">Show</span></span><br>
+                  Door code: <span class="frag-secret"><svg viewBox="0 0 12 12"><rect x="2.2" y="5.2" width="7.6" height="5.4" rx="1.3"/><path d="M4 5.2V3.9a2 2 0 0 1 4 0v1.3"/></svg>••••••<span class="frag-show">Show</span></span>
+                </div>
+              </div>
+              <div class="frag-auth" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>
+                <span><strong>Touch ID</strong> to show your hidden text</span>
+              </div>
             </div>
           </li>
 
@@ -136,18 +209,18 @@
           <li class="spec-row">
             <div class="spec-text">
               <h3>Send a task to Google Calendar</h3>
-              <p>Click the … on a task, pick a date and time, and Google Calendar opens in your browser with the event ready to save. The task stays on your computer.</p>
+              <p>Click the … on a task and TaskPop reads dates like “tomorrow at 3pm” from it. Set the time, length, place or a Meet link, and Google Calendar opens in your browser with the event ready to save. Nothing is connected to your Google account.</p>
             </div>
             <div class="spec-visual">
               <div class="frag-row">
                 <span class="frag-check"></span>
-                <span class="frag-title">Send the weekly report</span>
+                <span class="frag-title">Meeting with Adam tomorrow at 3pm</span>
                 <span class="frag-more" aria-hidden="true">…</span>
               </div>
               <div class="cal-card" aria-hidden="true">
                 <span class="cal-kicker">Google Calendar</span>
-                <strong>Send the weekly report</strong>
-                <span>Thursday · 4:00 PM</span>
+                <strong>Meeting with Adam</strong>
+                <span>Tomorrow · 3:00 PM · Google Meet</span>
               </div>
             </div>
           </li>
@@ -189,21 +262,38 @@
           <li class="spec-row">
             <div class="spec-text">
               <h3>Fast with the keyboard</h3>
-              <p>Move with the arrow keys, tick with Space, edit with Return, delete with Backspace, and undo with Command-Z. Drag tasks to reorder them.</p>
+              <p>Arrows to move, Space to tick, Return to edit, T for a timer, ← and → to switch categories, ⌘J for the note and ⌘Z to undo (Ctrl on Windows). Drag tasks to reorder them, or move them with ⌥↑ and ⌥↓.</p>
             </div>
             <div class="spec-visual keys small">
-              <kbd class="key">↑</kbd><kbd class="key">↓</kbd><kbd class="key wide">Space</kbd><kbd class="key wide">Return</kbd><kbd class="key">⌘Z</kbd>
+              <kbd class="key">↑</kbd><kbd class="key">↓</kbd><kbd class="key wide">Space</kbd><kbd class="key">T</kbd><kbd class="key">←</kbd><kbd class="key">→</kbd><kbd class="key">⌘J</kbd><kbd class="key">⌘Z</kbd>
             </div>
           </li>
 
           <li class="spec-row">
             <div class="spec-text">
-              <h3>Fits the way you work</h3>
-              <p>Put the panel on the left or right, make it wider, choose light or dark, and decide whether it hides when you click away.</p>
+              <h3>Put it where you want it</h3>
+              <p>Drag the panel by its top bar and it opens in that spot from then on, on the screen you left it on. Or keep it in the left or right corner. Choose light or dark, its width, and whether it hides when you click away.</p>
             </div>
             <div class="spec-visual">
-              <div class="segmented" aria-hidden="true"><span>Left</span><span class="active">Right</span></div>
+              <div class="segmented" aria-hidden="true"><span>Left</span><span>Right</span><span class="active">Custom</span></div>
               <div class="segmented" aria-hidden="true"><span>System</span><span class="active">Light</span><span>Dark</span></div>
+            </div>
+          </li>
+
+          <li class="spec-row">
+            <div class="spec-text">
+              <h3>Updates that ask first</h3>
+              <p>When a new version is out, a small pop-up says what’s new: update now, or later. TaskPop checks the download against its published checksum, installs it and reopens with your tasks and settings kept.</p>
+            </div>
+            <div class="spec-visual">
+              <div class="frag-update" aria-hidden="true">
+                <img src="/assets/taskpop-icon.png" alt="" width="34" height="34">
+                <div>
+                  <strong>New update is here</strong>
+                  <span>TaskPop <span id="updateVersion">1.9.1</span> is ready, with a list of what’s new.</span>
+                  <div class="frag-update-actions"><span>Update later</span><span class="primary">Update now</span></div>
+                </div>
+              </div>
             </div>
           </li>
         </ul>
@@ -215,16 +305,17 @@
       <div class="privacy-card">
         <div class="privacy-copy">
           <h2 id="privacy-title">Your tasks stay on your computer.</h2>
-          <p>There’s no account to create and nothing is sent to a server. TaskPop saves every change on your computer, keeps a backup of the previous save, and lets you export your list to a file whenever you want. If you send a task to Google Calendar, you save that event in Google from your browser.</p>
+          <p>There’s no account to create and nothing is sent to a server. TaskPop saves every change on your computer, keeps a backup of the previous save, and lets you export your list whenever you want. Text you hide in the quick note is encrypted with a key that macOS keeps in your keychain, or Windows keeps for your account, and TaskPop only ever learns whether Touch ID or Windows Hello said yes.</p>
         </div>
         <ul class="privacy-list">
           <li>No sign-up</li>
           <li>No cloud</li>
           <li>No tracking</li>
+          <li>Hidden text encrypted</li>
           <li>Automatic backup</li>
           <li>Export and import</li>
         </ul>
-        <p class="path">Saved locally on the computer you use</p>
+        <p class="path">Saved locally on the computer you use. <a href="/privacy.html">Read the privacy notes</a></p>
       </div>
     </section>
 
@@ -238,15 +329,15 @@
         </li>
         <li>
           <h3>Open the installer</h3>
-          <p>On a Mac, open the disk image and double-click <strong>Install TaskPop</strong>. On Windows, run the <strong>.exe</strong> and follow the steps.</p>
+          <p>On a Mac, open the disk image and double-click <strong>Install TaskPop</strong>. On Windows, run the <strong>.exe</strong>: it installs just for you, with no administrator prompt.</p>
         </li>
         <li>
-          <h3>Allow it once on a Mac</h3>
-          <p>macOS blocks apps that aren’t from the App Store. Open <strong>System Settings → Privacy &amp; Security</strong>, scroll down, click <strong>Open Anyway</strong>, then confirm.</p>
+          <h3>Allow it once</h3>
+          <p>On a Mac, open <strong>System Settings → Privacy &amp; Security</strong>, scroll down, click <strong>Open Anyway</strong> and confirm. If Windows shows SmartScreen, choose <strong>More info</strong>, then <strong>Run anyway</strong>.</p>
         </li>
         <li>
-          <h3>Start using it</h3>
-          <p>On a Mac, TaskPop appears in the menu bar. Press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> any time. On Windows it opens after setup finishes.</p>
+          <h3>Take the one-minute tour</h3>
+          <p>TaskPop opens with a short tour: pick the key you’ll double-tap and try it on a big on-screen key. On a Mac it shows you where to allow it, too.</p>
         </li>
       </ol>
     </section>
@@ -256,7 +347,7 @@
       <div class="wrap download-inner">
         <img class="download-icon" src="/assets/taskpop-icon.png" alt="TaskPop app icon" width="112" height="112">
         <h2 id="download-title">Download TaskPop</h2>
-        <p class="download-sub" id="downloadSub">One Mac installer for Apple Silicon and Intel, plus a Windows installer.</p>
+        <p class="download-sub" id="downloadSub">Free. One Mac installer for Apple Silicon and Intel, plus a Windows installer for x64 and ARM64 PCs.</p>
 
         <div class="builds">
           <a class="build mac-download" href="https://github.com/asmrayat/Task-pop/releases/latest" data-build="macos" id="build-macos">
@@ -268,7 +359,7 @@
           <a class="build win-download" href="https://github.com/asmrayat/Task-pop/releases/latest" data-build="windows" id="build-windows">
             <span class="build-badge">Recommended for this computer</span>
             <span class="build-name">Windows</span>
-            <span class="build-desc">Windows 10 and 11.</span>
+            <span class="build-desc">Windows 10 and 11. x64 and ARM64.</span>
             <span class="build-cta">Download .exe</span>
           </a>
         </div>
@@ -286,15 +377,27 @@
         </details>
         <details>
           <summary>Which computers does TaskPop work on?</summary>
-          <p>Any Mac running macOS 13 Ventura or later — Apple Silicon and Intel use the same download — and PCs running Windows 10 or 11.</p>
+          <p>Any Mac running macOS 13 Ventura or later — Apple Silicon and Intel use the same download — and PCs running Windows 10 or 11, x64 or ARM64.</p>
         </details>
         <details>
           <summary>Where are my tasks saved?</summary>
-          <p>Only on the computer you use. Every change is saved straight away with a backup of the previous version. You can export your tasks to a file from Settings.</p>
+          <p>Only on the computer you use: on a Mac in ~/Library/Application Support/TaskPop, on Windows in %APPDATA%\TaskPop. Every change is saved straight away with a backup of the previous version, and you can export your tasks and categories to a file from Settings.</p>
         </details>
         <details>
-          <summary>Can I change the keyboard shortcut?</summary>
-          <p>Yes. Open Settings from the menu bar icon, click the shortcut and press the keys you want to use.</p>
+          <summary>Can I change the double-tap key or the shortcut?</summary>
+          <p>Yes. In Settings → General, choose the key you double-tap (Control, Option, Command or Shift on a Mac; Ctrl, Alt or Shift on Windows) or turn the double-tap off. Click the keyboard shortcut to record a different one. Only a quick tap on its own counts, so shortcuts like ⌘C or Ctrl+C never open the panel.</p>
+        </details>
+        <details>
+          <summary>Why does my Mac ask for Input Monitoring?</summary>
+          <p>That’s what lets the double-tap work while you’re in another app. TaskPop only reads whether keys like Control are held down, plus a count of other key presses so shortcuts don’t count as taps. It never records what you type. If the double-tap stops working after an update, open System Settings → Privacy &amp; Security → Input Monitoring, remove TaskPop with −, add it back with + and restart TaskPop. The keyboard shortcut and the menu bar icon work without this permission.</p>
+        </details>
+        <details>
+          <summary>How private is hidden text in the quick note?</summary>
+          <p>Hidden text is encrypted the moment you hide it, with a key that macOS keeps in your keychain, or Windows keeps for your account. It’s never saved, backed up or copied as plain text. To show or copy it, TaskPop asks your Mac for Touch ID or your password (Windows Hello or your Windows password on a PC) and is only told yes or no. While it shows you can select any part of it, so an email and the password under it can be copied separately. It hides itself again after a minute, and copied text is taken off the clipboard after a minute too. For a password, click Add hidden to type it straight into a password box.</p>
+        </details>
+        <details>
+          <summary>How do categories and timers work?</summary>
+          <p>Categories are the small tags at the top of the panel. Click one to see only its tasks, drag a task onto a tag to move it, or type #work when you add it. Timers give a task a time frame: click … → Set a timer, or select the task and press T. It moves to the top with a countdown, and you get a “Time’s up” notification with Mark as done and Add 15 min.</p>
         </details>
         <details>
           <summary>Will it pop up every time I unlock my computer?</summary>
@@ -314,11 +417,11 @@
         </details>
         <details>
           <summary>How do I update TaskPop?</summary>
-          <p>TaskPop checks for a new version on its own, shortly after you open it and again every few hours. You’ll see a notification, an Update button at the top of the task panel, and an Update item in the menu bar or tray menu. On a Mac you enter your password once, then TaskPop installs and reopens. On Windows it closes, updates, and reopens with no extra prompts. Your tasks and settings stay. If your copy is older and has no updater, download the newest installer from this page once.</p>
+          <p>TaskPop checks for a new version on its own, shortly after you open it and again every few hours. When one is out, a small “New update is here” pop-up shows what’s new: choose Update now, or Update later to be asked again in a few hours. TaskPop checks the download against its published checksum, installs it and reopens. On a Mac you enter your password once; on Windows there are no extra prompts. Your tasks and settings stay. If your copy is older and has no updater, download the newest installer from this page once.</p>
         </details>
         <details>
           <summary>How do I uninstall it?</summary>
-          <p>Click the TaskPop icon in the menu bar, turn off Open at Login and choose Quit. Then drag TaskPop from Applications to the Trash. To remove your tasks too, delete the TaskPop folder in ~/Library/Application Support.</p>
+          <p>On a Mac, click the TaskPop icon in the menu bar, turn off Open at Login and choose Quit. Then drag TaskPop from Applications to the Trash. To remove your tasks too, delete the TaskPop folder in ~/Library/Application Support. On Windows, open Settings → Apps → Installed apps, find TaskPop and choose Uninstall; it asks whether to delete your tasks and settings as well.</p>
         </details>
       </div>
     </section>
@@ -361,7 +464,7 @@
         </li>
         <li>
           <strong>Finish the installer</strong>
-          Follow the remaining installer screens. TaskPop opens in the menu bar when it is done. Press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> any time.
+          Follow the remaining installer screens. TaskPop opens in the menu bar with a one-minute tour. Then double-tap <kbd>control</kbd> or press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> any time.
         </li>
       </ol>
       <button class="btn btn-primary setup-done" type="submit">Got it</button>

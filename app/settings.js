@@ -185,7 +185,7 @@ function applyPlatform(p, keys) {
   kbd('tipUndoKeys', ['Ctrl', 'Z']);
   kbd('tipMoveKeys', ['Alt', '↑', '↓']);
   kbd('tipNoteKeys', ['Ctrl', 'J']);
-  text('tipHideText', 'Encrypts the selected text; showing it asks for Windows Hello or your Windows password');
+  text('tipHideText', 'Encrypts the selected text. Click Show to see it again (Windows Hello or your Windows password), then select any part of it to copy just that');
 }
 
 function renderDoubleTap() {

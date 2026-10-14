@@ -87,12 +87,13 @@
     <section class="note-drawer" id="noteDrawer" hidden aria-label="Quick note">
       <div class="note-head">
         <span class="note-title">Quick note</span>
-        <button class="note-action icon" id="noteAddBtn" title="Add hidden text (typed out of sight)">
+        <button class="note-action quiet" id="noteAddBtn" title="Type a password or a code out of sight: it goes into the note already encrypted">
           <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.6" y="7" width="8.4" height="6.4" rx="1.5"/><path d="M4.6 7V5.2a2.2 2.2 0 0 1 4.4 0V7M13.4 2.4v4M11.4 4.4h4" stroke-linecap="round"/></svg>
+          <span>Add hidden</span>
         </button>
-        <button class="note-action" id="noteHideBtn" disabled title="Select text in the note, then click to hide it">
+        <button class="note-action" id="noteHideBtn" disabled title="Select text in the note, then click to encrypt it">
           <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.4" y="7" width="9.2" height="6.6" rx="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke-linecap="round"/></svg>
-          <span>Hide</span>
+          <span>Hide selected</span>
         </button>
       </div>
       <form class="note-add" id="noteAdd" hidden autocomplete="off">
@@ -101,8 +102,9 @@
         <button type="button" class="secondary" id="noteAddCancel">Cancel</button>
       </form>
       <div class="note-editor" id="noteEditor" contenteditable="plaintext-only" spellcheck="false" role="textbox" aria-multiline="true"
-           data-placeholder="Jot something down. Select text and click Hide to keep it private."></div>
+           data-placeholder="Jot down anything you want at hand: an address, a Wi-Fi name, a login."></div>
       <p class="note-status" id="noteStatus" aria-live="polite"></p>
+      <p class="note-hint" id="noteHint"></p>
     </section>
   </div>
 

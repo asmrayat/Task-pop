@@ -48,7 +48,7 @@ The app's own cache files (the kind every Electron app keeps) are in the same fo
 
 **Export** writes your tasks to a file you choose, and **Import** reads one back. Nothing else leaves the folder. (The quick note isn't exported.)
 
-**Hidden text** is encrypted the moment you hide it, and TaskPop then rewrites the note and its backup so that no copy of the file keeps it in plain. The note saves as you type, though, so for a password it's best not to type it into the note and hide it afterwards: use **Add hidden text** (the lock with a +), which takes it in a password box and puts it in the note already hidden. When you copy hidden text, it's taken off the clipboard after a minute if it's still there.
+**Hidden text** is encrypted the moment you hide it, and TaskPop then rewrites the note and its backup so that no copy of the file keeps it in plain. The note saves as you type, though, so for a password it's best not to type it into the note and hide it afterwards: use **Add hidden**, which takes it in a password box and puts it in the note already hidden. When you copy hidden text (all of it, one line, or a part you selected while it showed), it's taken off the clipboard after a minute if it's still there.
 
 To delete everything, quit TaskPop and delete the folder. On Windows the uninstaller offers to do it for you.
 

@@ -116,11 +116,13 @@ const state = () => js(`({
   open: !document.getElementById('noteDrawer').hidden,
   arrow: document.getElementById('noteBtn').className,
   text: noteEditor.textContent,
-  chips: [...noteEditor.querySelectorAll('.secret')].map((c) => ({ id: c.dataset.id, shown: c.classList.contains('shown'), text: c.querySelector('.secret-text').textContent })),
+  chips: [...noteEditor.querySelectorAll('.secret')].map((c) => ({ id: c.dataset.id, shown: c.classList.contains('shown'), text: [...c.querySelectorAll('.secret-text')].map((t) => t.textContent).join('\\n') })),
   segs: noteSegments(),
   focus: document.activeElement === noteEditor ? 'editor' : (document.activeElement.id || document.activeElement.className),
   hideEnabled: !document.getElementById('noteHideBtn').disabled,
   status: document.getElementById('noteStatus').textContent,
+  hint: document.getElementById('noteHint').textContent,
+  selection: getSelection().toString(),
   addOpen: !document.getElementById('noteAdd').hidden,
 })`);
 /** Select a piece of the note's text, as a drag with the mouse would. */
@@ -133,6 +135,27 @@ const select = (needle) => js(`(() => {
   }
   return false;
 })()`);
+/** Drag the mouse across characters [from, to) of the first text containing `needle` inside a hidden piece that shows. */
+const dragAcross = async (needle, from, to) => {
+  const r = await js(`(() => {
+    for (const t of document.querySelectorAll('.secret.shown .secret-text')) {
+      if (!t.firstChild || !t.textContent.includes(${JSON.stringify(needle)})) continue;
+      const rg = document.createRange(); rg.setStart(t.firstChild, ${from}); rg.setEnd(t.firstChild, ${to});
+      const rects = rg.getClientRects(); const a = rects[0]; const b = rects[rects.length - 1];
+      return { x1: a.left + 0.5, y1: (a.top + a.bottom) / 2, x2: b.right - 0.5, y2: (b.top + b.bottom) / 2 };
+    }
+    return null;
+  })()`);
+  if (!r) return false;
+  send({ type: 'mouseDown', x: Math.round(r.x1), y: Math.round(r.y1), button: 'left', clickCount: 1 });
+  for (let i = 1; i <= 8; i += 1) {
+    send({ type: 'mouseMove', x: Math.round(r.x1 + ((r.x2 - r.x1) * i) / 8), y: Math.round(r.y1 + ((r.y2 - r.y1) * i) / 8), button: 'left', modifiers: ['leftButtonDown'] });
+    await wait(15);
+  }
+  send({ type: 'mouseUp', x: Math.round(r.x2), y: Math.round(r.y2), button: 'left', clickCount: 1 });
+  await wait(150);
+  return true;
+};
 const shot = async (name) => fs.writeFileSync(`${P.SHOTS}/${name}-${tag}.png`, (await panel.webContents.capturePage()).toPNG());
 
 app.whenReady().then(async () => {
@@ -186,7 +209,8 @@ app.whenReady().then(async () => {
     check('…encrypted the moment it was hidden', enc.encrypted.includes('hunter2'));
     const file = noteFile();
     check('…saved encrypted only: neither the note nor its backup has "hunter2" in it', !file.includes('hunter2') && !noteBak().includes('hunter2') && !!savedNote().secrets[id] && savedNote().segments.some((x) => x.t === 'secret' && x.id === id), file.slice(0, 200));
-    check('…and it says how to see it', /Hidden and encrypted/.test(s.status) && (PLATFORM === 'darwin' ? /Touch ID/.test(s.status) : /Windows Hello/.test(s.status)), s.status);
+    check('…and it says how to see it', /Hidden and encrypted/.test(s.status) && /Click Show/.test(s.status) && (PLATFORM === 'darwin' ? /Touch ID/.test(s.status) : /Windows Hello/.test(s.status)), s.status);
+    check('(v1.9.2) it reads "•••••• Show", and the line under the note says what that is', (await js(`document.querySelector('.secret').textContent`)) === '••••••Show' && /encrypted text\. Click Show to see it/.test(s.hint), `${await js(`document.querySelector('.secret').textContent`)} / ${s.hint}`);
     // Undo can't bring the plain text back
     await js('noteEditor.focus()');
     for (let i = 0; i < 6; i += 1) { key('z', [PLATFORM === 'darwin' ? 'meta' : 'control']); await wait(60); }
@@ -224,11 +248,40 @@ app.whenReady().then(async () => {
     await shot('note-shown');
     await wait(700);
     check('…it isn\'t saved as plain text even while it shows', !noteFile().includes('hunter2'));
-    chip = await box('.secret');
+    // ---------- (v1.9.2) Selecting it while it shows ----------
+    s = await state();
+    check('while it shows, the line under the note says how to copy it and when it hides again', /Select any part/.test(s.hint) && /Hides again in \d+ s/.test(s.hint), s.hint);
+    chip = await box('.secret .secret-text');
     await click(chip.x, chip.y);
     await wait(150);
     s = await state();
-    check('clicking it again hides it', !s.chips[0].shown && s.chips[0].text === '••••••');
+    check('clicking the text that shows leaves it showing (it used to hide it, so it couldn\'t be selected)', s.chips[0].shown && s.chips[0].text === 'hunter2');
+    await dragAcross('hunter2', 0, 4);
+    s = await state();
+    check('dragging across part of it selects just that part', s.selection === 'hunt' && s.chips[0].shown, JSON.stringify(s.selection));
+    check('…and "Hide selected" stays off (it\'s hidden text already)', !s.hideEnabled);
+    await clipboard.writeText('before');
+    key('c', ['control']); // (the editing keys are the real system's: Ctrl on this Linux test machine)
+    await until(async () => (await clipboard.readText()) === 'hunt');
+    s = await state();
+    check(`${PLATFORM === 'darwin' ? '⌘C' : 'Ctrl+C'} copies only the selected part`, (await clipboard.readText()) === 'hunt' && /Copied/.test(s.status), `${JSON.stringify(await clipboard.readText())} ${s.status}`);
+    await wait(1900);
+    check('…and it comes off the clipboard after a while, like any copied hidden text', (await clipboard.readText()) === '');
+    key('x');
+    key('Backspace');
+    await wait(200);
+    s = await state();
+    check('typing while part of it is selected changes nothing', s.chips.length === 1 && s.chips[0].shown && s.chips[0].text === 'hunter2' && JSON.stringify(s.segs.map((x) => x.t)) === '["text","secret","text"]', JSON.stringify(s.segs));
+    const copyBtn = await box('.secret.shown .secret-btn.copy');
+    await click(copyBtn.x, copyBtn.y);
+    await until(async () => (await clipboard.readText()) === 'hunter2');
+    check('its Copy button copies all of it', (await clipboard.readText()) === 'hunter2' && (await state()).chips[0].shown);
+    const hideIt = await box('.secret.shown .secret-btn.hide');
+    await click(hideIt.x, hideIt.y);
+    await wait(150);
+    s = await state();
+    check('its Hide button hides it again', !s.chips[0].shown && s.chips[0].text === '••••••' && !(await js('document.body.innerText')).includes('hunter2'));
+    chip = await box('.secret');
     // canceled
     await click(chip.x, chip.y);
     await until(() => auth.asked.length === 2);
@@ -349,8 +402,55 @@ app.whenReady().then(async () => {
     s = await state();
     check('…and opens it, ready to type', s.open && s.focus === 'editor');
 
+    // ---------- (v1.9.2) An email over a password: each line on its own ----------
+    await js(`noteEditor.focus(); fillEditor(noteEditor, [{ t: 'text', v: 'Shop login\\nsaif@example.com\\nhunter2!\\n' }]); saveNoteNow()`);
+    await wait(200);
+    await js(`(() => { const t = noteEditor.firstChild; const r = document.createRange(); r.setStart(t, 11); r.setEnd(t, 11 + 'saif@example.com\\nhunter2!'.length); getSelection().removeAllRanges(); getSelection().addRange(r); })()`);
+    await wait(100);
+    s = await state();
+    check('select an email and the password under it: the line under the note says Hide selected encrypts it', s.hideEnabled && /Click Hide selected/.test(s.hint), s.hint);
+    await click((await box('#noteHideBtn')).x, (await box('#noteHideBtn')).y);
+    await until(async () => (await state()).chips.length === 1);
+    const pair = (await state()).chips[0].id;
+    let asked = auth.asked.length;
+    chip = await box('.secret');
+    await click(chip.x, chip.y);
+    await until(() => auth.asked.length === asked + 1);
+    auth.next = 'yes';
+    auth.release();
+    await until(async () => (await state()).chips[0].shown);
+    s = await state();
+    const lineBtns = await js(`document.querySelectorAll('.secret.shown .secret-btn.copy-line').length`);
+    check('shown, it has a Copy button for each line, then Copy all and Hide', s.chips[0].text === 'saif@example.com\nhunter2!' && lineBtns === 2 && (await js(`[...document.querySelectorAll('.secret.shown .secret-foot .secret-btn')].map((b) => b.textContent).join()`)) === 'Copy all,Hide', s.chips[0].text);
+    const firstLine = await js(`(() => { const r = document.querySelectorAll('.secret.shown .secret-btn.copy-line')[0].getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2 }; })()`);
+    await click(firstLine.x, firstLine.y);
+    await until(async () => (await clipboard.readText()) === 'saif@example.com');
+    check('the first line\'s Copy copies just the email', (await clipboard.readText()) === 'saif@example.com' && /Line 1 copied/.test((await state()).status));
+    const secondLine = await js(`(() => { const r = document.querySelectorAll('.secret.shown .secret-btn.copy-line')[1].getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2 }; })()`);
+    await click(secondLine.x, secondLine.y);
+    await until(async () => (await clipboard.readText()) === 'hunter2!');
+    check('…and the second line\'s, just the password', (await clipboard.readText()) === 'hunter2!');
+    await dragAcross('example', 5, 16);
+    s = await state();
+    check('a part of one line can be selected too', s.selection === 'example.com', JSON.stringify(s.selection));
+    lastMenu = null;
+    const sel = await js(`(() => { const r = getSelection().getRangeAt(0).getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2 }; })()`);
+    await click(sel.x, sel.y, 'right');
+    await until(() => lastMenu);
+    check('right-click on the selected part: Copy Selection first', lastMenu.filter((i) => i.label).map((i) => i.label).join() === 'Copy Selection,Hide,Copy All,Make it ordinary text,Delete', lastMenu.filter((i) => i.label).map((i) => i.label).join());
+    await clipboard.writeText('before');
+    menuItem(['Copy Selection']).click();
+    await until(async () => (await clipboard.readText()) === 'example.com');
+    check('…which copies just "example.com"', (await clipboard.readText()) === 'example.com');
+    check('nothing of it was ever saved as plain text', !noteFile().includes('hunter2!') && !noteFile().includes('saif@example.com') && !noteBak().includes('hunter2!'));
+    await shot('note-lines');
+    await js(`maskSecret(${JSON.stringify(pair)})`);
+    await wait(100);
+    s = await state();
+    check('hidden again, the selection inside it goes too', !s.chips[0].shown && s.selection === '' && !(await js('document.body.innerText')).includes('saif@example.com'));
+
     // ---------- Look ----------
-    await js(`noteEditor.blur(); fillEditor(noteEditor, [{ t: 'text', v: 'Wi-Fi: Pixmint-5G\\nPassword: ' }, { t: 'secret', id: ${JSON.stringify(id)} }, { t: 'text', v: '\\nBank PIN: ' }, { t: 'secret', id: ${JSON.stringify(id)} }]); showSecret(${JSON.stringify(id)}, 'hunter2'); maskSecret(${JSON.stringify(id)}); document.getElementById('noteStatus').textContent = ''`);
+    await js(`noteEditor.blur(); fillEditor(noteEditor, [{ t: 'text', v: 'Wi-Fi: Home-5G\\nPassword: ' }, { t: 'secret', id: ${JSON.stringify(id)} }, { t: 'text', v: '\\nBank PIN: ' }, { t: 'secret', id: ${JSON.stringify(pair)} }]); showSecret(${JSON.stringify(id)}, 'hunter2'); maskSecret(${JSON.stringify(id)}); document.getElementById('noteStatus').textContent = ''; getSelection().removeAllRanges(); updateHint()`);
     await wait(300);
     await until(() => panel.getOpacity() > 0.99);
     await shot('note');

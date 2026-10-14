@@ -4,6 +4,22 @@ All notable changes to TaskPop are listed here. The format follows [Keep a Chang
 
 Installers for every version are on the [releases page](https://github.com/asmrayat/Task-pop/releases).
 
+## [1.9.2] - 2026-10-14
+
+### Fixed
+
+- Hidden text in the quick note couldn't be selected once it was showing: clicking it hid it again straight away, so the only way to copy it was all of it at once. Now, while it shows, it's ordinary text: select any part of it with the mouse (or double-click a word) and press ⌘C (Ctrl+C on Windows) to copy just that part. Like any copied hidden text, it comes off the clipboard after a minute.
+
+### Changed
+
+- The quick note says what's going on:
+  - Hidden text reads **•••••• Show**: click it to see it.
+  - While it shows, it has its own **Copy** and **Hide** buttons. Text on several lines (an email over a password, say) has a **Copy** button on each line, plus **Copy all**, so each one can be copied on its own.
+  - Clicking text that shows no longer hides it. Use its **Hide** button, or it hides itself after a minute, as before. Selecting or copying it gives it another minute.
+  - The buttons at the top are now labelled **Add hidden** and **Hide selected**.
+  - A line under the note says what you can do next: how to hide text, how to show it, and, while it shows, how to copy it and when it hides again.
+  - Right-clicking a selected part of text that shows offers **Copy Selection**.
+
 ## [1.9.1] - 2026-10-14
 
 ### Fixed
@@ -168,6 +184,7 @@ The first public release.
 - Export and import your tasks, and delete completed ones automatically after a day or a week.
 - Tasks saved locally the moment they change, with a backup of the previous save.
 
+[1.9.2]: https://github.com/asmrayat/Task-pop/releases/tag/v1.9.2
 [1.9.1]: https://github.com/asmrayat/Task-pop/releases/tag/v1.9.1
 [1.9.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.9.0
 [1.8.1]: https://github.com/asmrayat/Task-pop/releases/tag/v1.8.1

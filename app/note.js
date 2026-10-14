@@ -1,11 +1,16 @@
 // The quick note (v1.9): a note under the task list, opened with the arrow at the end of the
 // "Add a task" bar, or ⌘J (Ctrl+J on Windows).
 //
-// Select text and click Hide to keep it private: the app encrypts it at once and it shows as
-// ••••••. Clicking it asks for Touch ID or your Mac password (Windows Hello or your Windows
-// password on Windows) before it's shown. Shown text hides itself again after a minute, when you
-// close the note and whenever the panel closes. Hidden text is never saved in plain, and this
-// page only ever has it while it's showing.
+// Select text and click "Hide selected" to keep it private: the app encrypts it at once and it
+// shows as •••••• with a "Show" label. Clicking it asks for Touch ID or your Mac password
+// (Windows Hello or your Windows password on Windows) before it's shown. Shown text hides itself
+// again after a minute, when you click its Hide button, close the note or the panel closes.
+// Hidden text is never saved in plain, and this page only ever has it while it's showing.
+//
+// v1.9.2: while it shows, it's ordinary selectable text: select any part and press ⌘C (or use
+// a line's Copy button) to copy just that, e.g. the email without the password under it. It
+// no longer hides when you click it (that made selecting it impossible), and a line under the
+// note says what you can do next.
 //
 // The note is a run of plain text and hidden pieces ({ t: 'secret', id }); this page edits it
 // in a plain-text editable box in which each hidden piece is one uneditable chip.
@@ -14,6 +19,7 @@ const noteEls = {
   btn: document.getElementById('noteBtn'),
   drawer: document.getElementById('noteDrawer'),
   status: document.getElementById('noteStatus'),
+  hint: document.getElementById('noteHint'),
   hide: document.getElementById('noteHideBtn'),
   add: document.getElementById('noteAddBtn'),
   addForm: document.getElementById('noteAdd'),
@@ -29,6 +35,7 @@ const NOTE_MAX = 20000;
 const NOTE_ICONS = {
   locked: '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.2" y="5.2" width="7.6" height="5.4" rx="1.3"/><path d="M4 5.2V3.9a2 2 0 0 1 4 0v1.3"/></svg>',
   open: '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.2" y="5.2" width="7.6" height="5.4" rx="1.3"/><path d="M4 5.2V3.9a2 2 0 0 1 3.9-.6"/></svg>',
+  copy: '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="3.8" y="3.8" width="6.4" height="6.6" rx="1.3"/><path d="M8.2 3.8V2.9a1.1 1.1 0 0 0-1.1-1.1H2.9a1.1 1.1 0 0 0-1.1 1.1v4.3a1.1 1.1 0 0 0 1.1 1.1h.9"/></svg>',
 };
 
 let noteIsOpen = false;
@@ -36,8 +43,20 @@ let noteSaveTimer = null;
 let noteStatusTimer = null;
 let noteRange = null; // the last selection (or caret) in the note
 const shownTimers = new Map(); // hidden piece showing -> its timer to hide it again
+const shownTexts = new Map(); // hidden piece showing -> its text (only while it shows)
+const shownUntil = new Map(); // hidden piece showing -> when it hides again
+let hintTicker = null; // counts down "Hides again in …" while something shows
 let menuChip = null; // the hidden piece last right-clicked (a pasted copy shares its id)
+let menuSelection = ''; // …and the part of it that was selected then, if it was showing
 const unlockWords = () => (platform === 'win32' ? 'Windows Hello or your Windows password' : 'Touch ID or your Mac password');
+const copyKeys = () => (platform === 'darwin' ? '⌘C' : 'Ctrl+C');
+
+function noteEl(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
 
 // ---------- The note as segments ----------
 
@@ -46,14 +65,62 @@ function secretChip(id) {
   chip.className = 'secret';
   chip.contentEditable = 'false';
   chip.dataset.id = id;
-  chip.innerHTML = NOTE_ICONS.locked;
-  const text = document.createElement('span');
-  text.className = 'secret-text';
-  text.textContent = MASK;
-  chip.append(text);
-  chip.title = `Hidden — click to show it (${unlockWords()})`;
-  chip.setAttribute('aria-label', 'Hidden text');
+  renderChip(chip);
   return chip;
+}
+
+/** A small button inside a hidden piece that's showing (Copy, Hide). */
+function chipButton(act, label, title, line) {
+  const b = noteEl('button', `secret-btn ${act}`);
+  b.type = 'button';
+  b.tabIndex = -1;
+  b.dataset.act = act;
+  if (line !== undefined) b.dataset.line = String(line);
+  b.innerHTML = act === 'hide' ? NOTE_ICONS.locked : NOTE_ICONS.copy;
+  b.append(noteEl('span', null, label));
+  b.title = title;
+  return b;
+}
+
+/**
+ * Draw a hidden piece: "🔒 •••••• Show" while it's hidden. While it shows: its text, which you
+ * can select like any text, with Copy and Hide buttons; one Copy per line when it has several
+ * lines (an email over a password, say), so each can be copied on its own.
+ */
+function renderChip(chip) {
+  const text = shownTexts.get(chip.dataset.id);
+  chip.replaceChildren();
+  chip.classList.remove('checking');
+  if (text === undefined) {
+    chip.classList.remove('shown', 'lines');
+    chip.innerHTML = NOTE_ICONS.locked;
+    chip.append(noteEl('span', 'secret-text', MASK), noteEl('span', 'secret-show', 'Show'));
+    chip.title = `Hidden and encrypted. Click to show it (${unlockWords()})`;
+    chip.setAttribute('role', 'button');
+    chip.setAttribute('aria-label', 'Hidden text. Click to show it.');
+    return;
+  }
+  const lines = text.split('\n');
+  const many = lines.length > 1;
+  chip.classList.add('shown');
+  chip.classList.toggle('lines', many);
+  chip.title = '';
+  chip.removeAttribute('role');
+  chip.setAttribute('aria-label', 'Hidden text, showing');
+  lines.forEach((line, i) => {
+    const row = noteEl('span', 'secret-line');
+    const t = noteEl('span', 'secret-text', line);
+    t.title = `Select any part to copy just that (${copyKeys()})`;
+    row.append(t);
+    if (many) row.append(chipButton('copy-line', 'Copy', 'Copy this line', i));
+    else row.append(chipButton('copy', 'Copy', 'Copy it'), chipButton('hide', 'Hide', 'Hide it again'));
+    chip.append(row);
+  });
+  if (many) {
+    const foot = noteEl('span', 'secret-foot');
+    foot.append(chipButton('copy', 'Copy all', 'Copy all of it'), chipButton('hide', 'Hide', 'Hide it again'));
+    chip.append(foot);
+  }
 }
 
 /** Plain text and hidden pieces, from any part of the note (a <br> or a new block is a line break). */
@@ -199,20 +266,77 @@ function hideableRange() {
   if (!sel.rangeCount) return null;
   const range = sel.getRangeAt(0);
   if (range.collapsed || !noteEditor.contains(range.commonAncestorContainer)) return null;
+  if (inChip(range.startContainer) || inChip(range.endContainer)) return null;
   const frag = range.cloneContents();
   if (frag.querySelector && frag.querySelector('.secret')) return null;
   const text = segmentsOf(frag).map((s) => s.v).join('');
   return text.trim() ? { range, text } : null;
 }
 
+/** The hidden piece a node is in, if any. */
+function inChip(node, shownOnly = false) {
+  const elt = node && (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement);
+  return (elt && elt.closest(shownOnly ? '.secret.shown' : '.secret')) || null;
+}
+
+/**
+ * The selected part of a hidden piece that's showing, as text (lines joined with line breaks),
+ * or null when the selection isn't all inside one.
+ */
+function selectedShownText() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return null;
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) return null;
+  const chip = inChip(range.startContainer, true);
+  if (!chip || chip !== inChip(range.endContainer, true) || !noteEditor.contains(chip)) return null;
+  const parts = [];
+  for (const t of chip.querySelectorAll('.secret-text')) {
+    if (!range.intersectsNode(t)) continue;
+    const part = document.createRange();
+    part.selectNodeContents(t);
+    if (range.compareBoundaryPoints(Range.START_TO_START, part) > 0) part.setStart(range.startContainer, range.startOffset);
+    if (range.compareBoundaryPoints(Range.END_TO_END, part) < 0) part.setEnd(range.endContainer, range.endOffset);
+    parts.push(part.toString());
+  }
+  return parts.join('\n');
+}
+
 function updateHideButton() {
   noteEls.hide.disabled = !hideableRange();
+}
+
+/** The line under the note: what you can do from here (unless a message is showing). */
+function updateHint() {
+  let hint;
+  if (!noteEls.addForm.hidden) {
+    hint = 'Type it in the box and press Return. It goes into the note already encrypted, never as plain text.';
+  } else if (shownTexts.size) {
+    const left = Math.max(1, Math.ceil((Math.min(...shownUntil.values()) - Date.now()) / 1000));
+    hint = `Showing. Select any part and press ${copyKeys()} to copy just that, or click Copy. Hides again in ${left} s.`;
+  } else if (hideableRange()) {
+    hint = 'Click Hide selected to encrypt this text. It will show as ••••••.';
+  } else if (noteEditor.querySelector('.secret')) {
+    hint = `•••••• is encrypted text. Click Show to see it (${unlockWords()}).`;
+  } else {
+    hint = 'To keep a password or a code private, select it and click Hide selected, or click Add hidden.';
+  }
+  if (noteEls.hint.textContent !== hint) noteEls.hint.textContent = hint;
+  if (shownTexts.size && !hintTicker) hintTicker = setInterval(updateHint, 1000);
+  if (!shownTexts.size && hintTicker) {
+    clearInterval(hintTicker);
+    hintTicker = null;
+  }
 }
 
 document.addEventListener('selectionchange', () => {
   const sel = window.getSelection();
   if (sel.rangeCount && noteEditor.contains(sel.anchorNode)) noteRange = sel.getRangeAt(0).cloneRange();
+  // Selecting text that shows: it stays a minute from now, so it doesn't hide while you copy it
+  const shown = sel.rangeCount && !sel.isCollapsed && inChip(sel.anchorNode, true);
+  if (shown) keepShowing(shown.dataset.id);
   updateHideButton();
+  updateHint();
 });
 
 // ---------- Hiding ----------
@@ -240,7 +364,7 @@ async function hideSelection() {
   pick.range.insertNode(secretChip(result.id));
   freshEditor(at + 1);
   await saveNoteNow();
-  sayInNote(`Hidden and encrypted. Click it to see it (${unlockWords()}).`, 7000);
+  sayInNote(`Hidden and encrypted. Click Show to see it (${unlockWords()}).`, 7000);
 }
 
 /** "Add hidden text": typed in a password box, so it's never in the note as plain text. */
@@ -251,11 +375,13 @@ function openAddHidden() {
   noteEls.addForm.hidden = false;
   noteEls.addInput.value = '';
   noteEls.addInput.focus();
+  updateHint();
 }
 
 function closeAddHidden() {
   noteEls.addInput.value = '';
   noteEls.addForm.hidden = true;
+  updateHint();
 }
 
 async function addHidden() {
@@ -281,7 +407,7 @@ async function addHidden() {
   if (!chip.nextSibling) chip.after(document.createTextNode(' ')); // somewhere to type after it
   freshEditor(caret + 1);
   await saveNoteNow();
-  sayInNote(`Added, hidden and encrypted. Click it to see it (${unlockWords()}).`, 7000);
+  sayInNote(`Added, hidden and encrypted. Click Show to see it (${unlockWords()}).`, 7000);
 }
 
 // ---------- Showing, copying, making it plain ----------
@@ -299,39 +425,67 @@ async function revealSecret(id) {
 }
 
 function showSecret(id, text) {
-  for (const chip of chipsFor(id)) {
-    chip.classList.add('shown');
-    chip.firstElementChild.outerHTML = NOTE_ICONS.open;
-    chip.querySelector('.secret-text').textContent = text;
-    chip.title = 'Showing — click to hide it again';
-  }
+  shownTexts.set(id, String(text));
+  chipsFor(id).forEach(renderChip);
+  keepShowing(id);
+  updateHideButton();
+  updateHint();
+}
+
+/** It shows for another minute from now. */
+function keepShowing(id) {
+  if (!shownTexts.has(id)) return;
   clearTimeout(shownTimers.get(id));
   shownTimers.set(id, setTimeout(() => maskSecret(id), SHOW_FOR_MS));
+  shownUntil.set(id, Date.now() + SHOW_FOR_MS);
 }
 
 function maskSecret(id) {
   clearTimeout(shownTimers.get(id));
   shownTimers.delete(id);
-  for (const chip of chipsFor(id)) {
-    chip.classList.remove('shown');
-    chip.firstElementChild.outerHTML = NOTE_ICONS.locked;
-    chip.querySelector('.secret-text').textContent = MASK;
-    chip.title = `Hidden — click to show it (${unlockWords()})`;
+  shownUntil.delete(id);
+  const wasShown = shownTexts.delete(id);
+  if (wasShown) {
+    // (a selection inside it would be left pointing at text that's gone)
+    const sel = window.getSelection();
+    if (sel.rangeCount && chipsFor(id).some((c) => c.contains(sel.anchorNode) || c.contains(sel.focusNode))) sel.removeAllRanges();
   }
+  chipsFor(id).forEach(renderChip);
+  updateHideButton();
+  updateHint();
 }
 
 function maskAllSecrets() {
-  [...shownTimers.keys()].forEach(maskSecret);
+  [...new Set([...shownTimers.keys(), ...shownTexts.keys()])].forEach(maskSecret);
+}
+
+/** Copy text that shows (all of it, a line or a selected part); off the clipboard in a minute. */
+async function copyShown(id, text, what = 'Copied') {
+  if (!text) return;
+  keepShowing(id);
+  const result = await window.taskpop.copyShownNoteText(text);
+  if (result && result.ok) sayInNote(`${what}. It comes off the clipboard in ${Math.round(result.clearsIn / 1000)} seconds.`, 6000);
 }
 
 async function copySecret(id) {
-  const chip = chipsFor(id)[0];
-  if (!chip) return;
-  const result = chip.classList.contains('shown')
-    ? await window.taskpop.copyShownNoteText(chip.querySelector('.secret-text').textContent)
-    : await window.taskpop.copyNoteText(id);
+  if (!chipsFor(id).length) return;
+  if (shownTexts.has(id)) {
+    copyShown(id, shownTexts.get(id));
+    return;
+  }
+  const result = await window.taskpop.copyNoteText(id);
   if (result && result.ok) sayInNote(`Copied. It comes off the clipboard in ${Math.round(result.clearsIn / 1000)} seconds.`, 6000);
   else if (result && result.message) sayInNote(result.message, 6000);
+}
+
+/** The Copy and Hide buttons on a hidden piece that's showing. */
+function chipAction(chip, act, line) {
+  const id = chip.dataset.id;
+  const text = shownTexts.get(id);
+  if (text === undefined) return;
+  if (act === 'hide') maskSecret(id);
+  else if (act === 'copy') copyShown(id, text);
+  else if (act === 'copy-line') copyShown(id, text.split('\n')[line] || '', `Line ${line + 1} copied`);
 }
 
 /** The chip a menu action is for: the one right-clicked (or the first with that id). */
@@ -340,8 +494,8 @@ const chipForMenu = (id) => (menuChip && menuChip.isConnected && menuChip.datase
 /** A piece that's showing becomes ordinary text again (no longer encrypted). */
 function makePlain(id) {
   const chip = chipForMenu(id);
-  if (!chip || !chip.classList.contains('shown')) return;
-  const text = chip.querySelector('.secret-text').textContent;
+  if (!chip || !shownTexts.has(id)) return;
+  const text = shownTexts.get(id);
   chip.replaceWith(document.createTextNode(text));
   if (!chipsFor(id).length) maskSecret(id);
   freshEditor();
@@ -367,6 +521,7 @@ function setNoteOpen(open, { remember = true, focus = false } = {}) {
   noteEls.btn.classList.toggle('open', noteIsOpen);
   noteEls.btn.setAttribute('aria-expanded', String(noteIsOpen));
   noteEls.btn.title = noteIsOpen ? `Close the quick note (${platform === 'darwin' ? '⌘J' : 'Ctrl+J'})` : `Quick note (${platform === 'darwin' ? '⌘J' : 'Ctrl+J'})`;
+  updateHint();
   if (!noteIsOpen) {
     maskAllSecrets();
     closeAddHidden();
@@ -395,6 +550,7 @@ noteEls.drawer.addEventListener('input', (e) => {
   if (e.target !== noteEditor) return;
   updateEmpty();
   saveNoteSoon();
+  updateHint();
 });
 
 noteEls.drawer.addEventListener('beforeinput', (e) => {
@@ -410,23 +566,31 @@ noteEls.drawer.addEventListener('focusout', (e) => {
   if (e.target === noteEditor && noteSaveTimer) saveNoteNow();
 });
 
-// Hidden pieces: click to show (or hide again); right-click for more
+// Hidden pieces: click one to show it; while it shows, select any of it, or use its buttons.
+// Right-click for more.
 noteEls.drawer.addEventListener('mousedown', (e) => {
-  if (e.target.closest('.secret')) e.preventDefault(); // no caret inside a chip
+  if (e.target.closest('.secret-btn')) e.preventDefault(); // a button: keep the selection
+  else if (e.target.closest('.secret:not(.shown)')) e.preventDefault(); // no caret inside a hidden piece
   if (e.target.closest('#noteHideBtn')) e.preventDefault(); // keep the selection
 });
 noteEls.drawer.addEventListener('click', (e) => {
+  const btn = e.target.closest('.secret-btn');
+  if (btn) {
+    chipAction(btn.closest('.secret'), btn.dataset.act, Number(btn.dataset.line));
+    return;
+  }
   const chip = e.target.closest('.secret');
-  if (!chip) return;
-  if (chip.classList.contains('shown')) maskSecret(chip.dataset.id);
-  else revealSecret(chip.dataset.id);
+  if (chip && !chip.classList.contains('shown')) revealSecret(chip.dataset.id);
+  // (one that shows stays put when clicked, so it can be selected)
 });
 noteEls.drawer.addEventListener('contextmenu', (e) => {
   if (!noteEditor.contains(e.target)) return;
   e.preventDefault();
   const chip = e.target.closest('.secret');
   menuChip = chip;
-  if (chip) window.taskpop.showNoteSecretMenu(chip.dataset.id, chip.classList.contains('shown'));
+  const part = chip ? selectedShownText() : null;
+  menuSelection = part && inChip(window.getSelection().anchorNode) === chip ? part : '';
+  if (chip) window.taskpop.showNoteSecretMenu(chip.dataset.id, shownTexts.has(chip.dataset.id), !!menuSelection);
   else window.taskpop.showNoteEditorMenu(!!hideableRange());
 });
 
@@ -434,15 +598,19 @@ noteEls.drawer.addEventListener('contextmenu', (e) => {
 function copyOut(e, cut) {
   const sel = window.getSelection();
   if (!sel.rangeCount || !noteEditor.contains(sel.anchorNode)) return;
+  // Part of a hidden piece that shows: just that part, and off the clipboard in a minute
+  const part = selectedShownText();
+  if (part !== null) {
+    e.preventDefault();
+    copyShown(inChip(sel.anchorNode, true).dataset.id, part);
+    return;
+  }
   const range = sel.getRangeAt(0);
   const frag = range.cloneContents();
   if (!frag.querySelector('.secret')) return; // plain text: the usual copy
   e.preventDefault();
   const segs = segmentsOf(frag);
-  const shownText = (id) => {
-    const chip = chipsFor(id)[0];
-    return chip && chip.classList.contains('shown') ? chip.querySelector('.secret-text').textContent : MASK;
-  };
+  const shownText = (id) => (shownTexts.has(id) ? shownTexts.get(id) : MASK);
   e.clipboardData.setData('text/plain', segs.map((s) => (s.t === 'text' ? s.v : shownText(s.id))).join(''));
   e.clipboardData.setData(NOTE_MIME, JSON.stringify(segs));
   if (cut) {
@@ -497,7 +665,8 @@ noteEls.addForm.addEventListener('keydown', (e) => {
 });
 
 window.taskpop.onNoteSecretAction(({ id, action }) => {
-  if (action === 'show') revealSecret(id);
+  if (action === 'copy-selection') copyShown(id, menuSelection);
+  else if (action === 'show') revealSecret(id);
   else if (action === 'hide') maskSecret(id);
   else if (action === 'copy') copySecret(id);
   else if (action === 'plain') makePlain(id);
@@ -518,4 +687,5 @@ window.taskpop.onHidden(() => {
 window.taskpop.getState().then((state) => {
   fillEditor(noteEditor, (state.note && state.note.segments) || []);
   setNoteOpen(!!(state.settings && state.settings.noteOpen), { remember: false });
+  updateHint();
 });

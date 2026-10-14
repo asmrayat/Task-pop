@@ -33,16 +33,16 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/readme/panel-light.png" width="196" alt="The task panel on a Mac, with a starred task, a Google Calendar event, a reminder and a daily task">
+  <img src="docs/assets/readme/panel-light.png" width="196" alt="The task panel on a Mac, with category tags along the top, a task with a timer counting down, a Google Calendar event, a reminder and a daily task">
   <img src="docs/assets/readme/panel-dark.png" width="196" alt="The same panel in dark mode">
   <img src="docs/assets/readme/panel-calendar.png" width="196" alt="Adding a task to Google Calendar, with date, time, length, location and a Meet link">
-  <img src="docs/assets/readme/panel-windows.png" width="196" alt="The task panel on Windows">
+  <img src="docs/assets/readme/panel-windows.png" width="196" alt="The task panel on Windows, with the same categories and timer">
 </p>
 
-TaskPop is the list you don't have to remember to open. It lives in the menu bar on a Mac and next to the clock on Windows, slides in when you open your laptop, and comes and goes with a double-tap of Control (or a key you pick). Tick things off, set a reminder, send a task to Google Calendar, and get back to work. No account, no cloud, no tracking.
+TaskPop is the list you don't have to remember to open. It lives in the menu bar on a Mac and next to the clock on Windows, slides in when you open your laptop, and comes and goes with a double-tap of Control (or a key you pick). Sort tasks into categories, give the urgent ones a timer, set a reminder, send a task to Google Calendar, and keep passwords and codes in a quick note where they stay encrypted. No account, no cloud, no tracking.
 
 <p align="center">
-  <img src="docs/assets/readme/demo.gif" width="600" alt="Double-tapping Control opens TaskPop from the side of the screen, a task is typed and added, another is ticked off, and a double-tap puts it away">
+  <img src="docs/assets/readme/demo.gif" width="600" alt="Double-tapping Control opens TaskPop from the side of the screen; a task is typed with #personal and lands in Personal, another is ticked off, the Work tag shows only work tasks, the quick note opens with hidden text shown as dots, and a double-tap puts it away">
 </p>
 
 ## Everything it does
@@ -79,10 +79,14 @@ Updating from an older version? Your tasks start in no category, and a **Sort yo
 
 ### A quick note, with hidden text
 
-The small arrow at the end of the "Add a task" bar (or ⌘J, Ctrl+J on Windows) opens a note under your list for the things you want at hand. Select anything in it, like a password or a PIN, and click **Hide**: it's encrypted at once and shows as ••••••. To see it again, click it and confirm it's you with Touch ID or your Mac password (Windows Hello or your Windows password on Windows). It hides itself again after a minute, and right-clicking copies it without showing it. Hidden text is never saved as plain text: the key that encrypts it is kept by macOS in your keychain, or by Windows for your account.
+The small arrow at the end of the "Add a task" bar (or ⌘J, Ctrl+J on Windows) opens a note under your list for the things you want at hand. Select anything in it, like a password or a PIN, and click **Hide selected**: it's encrypted at once and shows as **•••••• Show**. Or click **Add hidden** to type a password straight into a password box, so it's never in the note as plain text.
+
+To see it again, click **Show** and confirm it's you with Touch ID or your Mac password (Windows Hello or your Windows password on Windows). While it shows, it's ordinary text: select any part of it and press ⌘C (Ctrl+C) to copy just that, or use its **Copy** buttons. Text on several lines, like an email over a password, has a **Copy** button on each line. It hides itself again after a minute or when you click **Hide**, and anything you copy comes off the clipboard after a minute. Right-clicking hidden text copies it without showing it. A line under the note always says what you can do next.
+
+Hidden text is never saved as plain text: the key that encrypts it is kept by macOS in your keychain, or by Windows for your account.
 
 <p align="center">
-  <img src="docs/assets/readme/quick-note.png" width="280" alt="The quick note open under the task list, with a Wi-Fi name in plain text and a password and a PIN hidden as dots behind a lock">
+  <img src="docs/assets/readme/quick-note.png" width="280" alt="The quick note open under the task list: a Wi-Fi name in plain text, a shop login shown after Touch ID with a Copy button for the email and one for the password, and a door code still hidden as dots with a Show label">
 </p>
 
 ### Timers for what can't wait

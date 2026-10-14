@@ -33,7 +33,7 @@ contextBridge.exposeInMainWorld('taskpop', {
   revealNoteText: (id) => ipcRenderer.invoke('notes:reveal', id),
   copyNoteText: (id) => ipcRenderer.invoke('notes:copy', id),
   copyShownNoteText: (text) => ipcRenderer.invoke('notes:copy-shown', text),
-  showNoteSecretMenu: (id, shown) => ipcRenderer.send('notes:secret-menu', { id, shown }),
+  showNoteSecretMenu: (id, shown, selected) => ipcRenderer.send('notes:secret-menu', { id, shown, selected }),
   showNoteEditorMenu: (canHide) => ipcRenderer.send('notes:editor-menu', { canHide }),
   onNoteSecretAction: on('notes:secret-action'),
   onNoteEditorAction: on('notes:editor-action'),
