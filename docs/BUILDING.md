@@ -13,8 +13,9 @@ app/                  TaskPop itself (an Electron app, plain JavaScript)
   preload*.js         what each window's page may ask the app to do
   doubletap.js        reads the modifier keys (macOS: CoreGraphics, Windows: user32) via koffi
   spaces.js           macOS: opens windows on the desktop (Space) you're on, via koffi
-  note.js             the quick note in the panel: editing, hiding, showing
-  notes.js            the quick note on disk: hidden text encrypted with safeStorage
+  secrets-panel.js    Secrets in the panel: the list, New and Edit, Show, Copy
+  secrets.js          secrets on disk: their fields encrypted with safeStorage; a 1.9 quick note becomes secrets
+  ffi.js              koffi (the native bridge), set up once with stacks big enough for the system's dialogs
   verify.js           "is it you?": Touch ID or the Mac password; Windows Hello or the Windows password (koffi)
   winfocus.js         brings the panel to the front on Windows
   updater.js          finds, downloads, checks and installs new versions from GitHub releases
@@ -129,7 +130,8 @@ The **app tests** start the real TaskPop on Linux under a virtual screen (`xvfb`
 | | `win-source-test` | the Windows key-state reader under the detector |
 | | `appnap-test` | the Mac App Nap opt-out the double-tap relies on |
 | | `eventtap-test` | the Mac key-event tap: the macOS calls it makes, detecting from events alone, falling back to checks when events stop |
-| | `verify-test` | confirming it's you before hidden text is shown: Touch ID or the Mac password (Electron's `promptTouchID`), and Windows Hello then the Windows password through the real koffi against stand-in Windows libraries built from `tests/stubs/fakewin.c` (interface IDs, the async operation, the dialog, LogonUser, wiping the typed password, releasing everything) |
+| | `verify-test` | confirming it's you before a secret is shown: Touch ID or the Mac password (Electron's `promptTouchID`), and Windows Hello then the Windows password through the real koffi against stand-in Windows libraries built from `tests/stubs/fakewin.c` (interface IDs, the async operation, the dialog, LogonUser, wiping the typed password, releasing everything). The stand-in dialog uses 2 MB of stack, as the real one can: it must work with TaskPop's koffi setup (`app/ffi.js`), and the test shows it crashing on koffi's default 128 KB, the 1.9 Windows crash |
+| | `secrets-test` | secrets on disk: adding, changing, deleting and showing them, never saved as typed, and turning a 1.9 quick note into secrets without decrypting anything |
 | | `spaces-test` | opening on the Mac desktop (Space) you're on, through the real koffi against a stand-in Objective-C runtime built from `tests/stubs/fakeobjc.c`: the window is marked to move to your desktop while it's shown, never with the marking AppKit refuses alongside it, and put back after |
 | app | `regress` | the app as macOS: quick-add and stars, reminders and their notifications, daily tasks and the morning summary, the keyboard, undo, saving and import |
 | | `win-app` | the app as Windows: tray, panel placement and style, focus, Ctrl and Alt double-tap, Windows wording |
@@ -143,7 +145,8 @@ The **app tests** start the real TaskPop on Linux under a virtual screen (`xvfb`
 | | `store` | the Microsoft Store copy: no self-updates, its start-up task |
 | | `timers-*` | task timers: the menu and **T**, the countdown, the highlight, orange and red, **Time's up** on time, adding time, finishing early or late, undo |
 | | `desktops` | the panel opens on the desktop you're on: each opening, a panel left open on another desktop coming to you, a new panel window when macOS keeps it elsewhere (once, never in a loop), Settings, the report line |
-| | `quick-note-*` | the quick note with real typing: the arrow, ⌘J, hiding (encrypted at once, never saved plain, not even in the backup, not back through Undo), showing and copying only after confirming it's you, selecting part of it with the mouse and copying just that, a Copy button per line, hiding again, the clipboard cleared, copy and paste keeping hidden text hidden, **Add hidden text**, the right-click menus, a reload |
+| | `secrets-*` | Secrets with real typing and clicks: the lock, ⌘J, **New** (encrypted at once, never saved as typed, not even in the backup), keys in the form never acting on tasks, Esc, **Show** only after confirming it's you, the panel staying open through the system's dialog, **Copy** for each field, selecting part with the mouse and copying just that, the clipboard cleared, **Hide**, **Edit…** asking first, **Delete…**, when it can't be encrypted, a reload |
+| | `secrets-from-note-*` | a 1.9 quick note becoming secrets: names from the words before each hidden piece, the rest as **Notes**, the old file deleted, a two-line piece shown and copied line by line, editing it |
 | | `categories-*` | categories after updating from 1.7: **Sort your tasks** one by one, the tags and what each shows, adding into a category and with **#name**, **Move to**, dragging onto a tag, renaming, colours, order, deleting with Undo, the sideways scroll, export and import |
 | | `categories-new-*` | categories on a first install: Personal and Work, nothing to sort, **Unsorted** only when needed |
 | release | `updater` | the updater against a local stand-in for GitHub: version numbers, picking the right file, release notes, errors, downloading and checking installers |

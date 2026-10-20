@@ -1,7 +1,7 @@
 // TaskPop - a tiny side-panel task list for macOS and Windows.
 // Data lives on this computer (macOS: ~/Library/Application Support/TaskPop/, Windows: %APPDATA%\\TaskPop\\)
 //   tasks.json     - your tasks
-//   notes.json     - the quick note (hidden text in it is encrypted)
+//   secrets.json   - your secrets (v1.10; their usernames and passwords are encrypted)
 //   settings.json  - your preferences
 //   *.bak          - automatic backup of the previous good save
 
@@ -18,7 +18,7 @@ const { createWinFocus } = require('./winfocus');
 const { createUpdater, Updater, compareVersions } = require('./updater');
 const calendar = require('./calendar');
 const { createSpaces } = require('./spaces');
-const { QuickNote, config: noteConfig } = require('./notes');
+const { Secrets, config: secretConfig } = require('./secrets');
 const { createVerifier } = require('./verify');
 
 const isMac = process.platform === 'darwin';
@@ -48,7 +48,7 @@ const DEFAULT_SETTINGS = {
   autoCheckUpdates: true,
   calendarDuration: 60, // minutes, default length of a Google Calendar event
   googleAccount: '', // optional: which Google account opens (for people signed in to several)
-  noteOpen: false, // v1.9: the quick note under the list is open
+  noteOpen: false, // v1.9: the quick note (v1.10: Secrets) under the list is open
 };
 
 const AUTO_CLEAR_MS = { never: 0, '1d': 24 * 3600 * 1000, '7d': 7 * 24 * 3600 * 1000 };
@@ -98,8 +98,9 @@ let registeredShortcut = null;
 let holdPanel = false; // true while the reminder picker is open in the panel
 let holdUntil = 0; // v1.9.1: until then, losing the focus doesn't close the panel (a system dialog just closed)
 let spaces = null; // macOS (v1.8.1): opens windows on the desktop you're on (see spaces.js)
-let note = null; // v1.9: the quick note (see notes.js)
-let verifier = null; // …and "is it really you?" before hidden text in it is shown (see verify.js)
+let secrets = null; // v1.10: your secrets, under the task list (see secrets.js; the quick note before)
+let verifier = null; // …and "is it really you?" before one is shown (see verify.js)
+const unlocked = new Map(); // secret id -> until when it may be changed (after you confirmed it's you)
 // …and how that went, for the double-tap report
 const desktopStats = { shown: 0, notHere: 0, newWindow: 0, newWindowFailed: false };
 const liveNotifications = new Set();
@@ -197,8 +198,8 @@ function writeJSON(name, data) {
 }
 
 /**
- * The quick note: like writeJSON, and the backup becomes this same save. So once you hide text,
- * no file keeps the earlier copy of the note in which it was still plain.
+ * Secrets: like writeJSON, and the backup becomes this same save. So once you change or delete
+ * a secret, no file keeps the earlier copy of it.
  */
 function writeNote(name, data) {
   writeJSON(name, data);
@@ -206,6 +207,17 @@ function writeNote(name, data) {
     fs.copyFileSync(dataFile(name), dataFile(`${name}.bak`));
   } catch (err) {
     console.error(`TaskPop: failed to back up ${name}`, err);
+  }
+}
+
+/** Delete one of TaskPop's files with its backup (v1.10: the old quick note, once it's secrets). */
+function removeData(name) {
+  for (const file of [dataFile(name), dataFile(`${name}.bak`)]) {
+    try {
+      fs.rmSync(file, { force: true });
+    } catch (err) {
+      console.error(`TaskPop: could not delete ${path.basename(file)}`, err);
+    }
   }
 }
 
@@ -1727,7 +1739,8 @@ ipcMain.handle('panel:get-state', () => ({
   platform: process.platform,
   update: updater ? updater.publicState() : null,
   sortPrompt: !!meta.sortPrompt,
-  note: note ? note.forPanel() : { segments: [] },
+  secrets: secrets ? secrets.forPanel() : [],
+  secretsMigrated: secrets ? secrets.migrated : 0, // (v1.10) the quick note just became secrets
 }));
 
 // The panel showed "Sort your tasks" and you finished it or chose "Do the rest later"
@@ -1868,40 +1881,59 @@ ipcMain.on('task:context-menu', (event, id) => {
     { label: 'Delete', click: () => send(panel, 'task:delete', id) },
   ]).popup({ window: panel });
 });
-// ---------- IPC: the quick note (v1.9) ----------
+// ---------- IPC: secrets (v1.10; the quick note in 1.9) ----------
 
-ipcMain.handle('notes:save', (event, segments) => {
-  if (!fromPanel(event) || !note) return false;
-  note.save(segments);
-  return true;
-});
+const secretsResult = () => ({ ok: true, items: secrets.forPanel() });
+const keyError = () => (isMac ? 'macOS didn’t let TaskPop use its key in your keychain.' : 'Windows couldn’t decrypt it.');
 
-// Hide a piece of text: it's encrypted now, and the panel gets back only its id
-ipcMain.handle('notes:hide', (event, text) => {
-  if (!fromPanel(event) || !note) return { ok: false };
+// A new secret: its fields are encrypted now, and the panel gets back names and labels only
+ipcMain.handle('secrets:add', (event, payload) => {
+  if (!fromPanel(event) || !secrets) return { ok: false };
   try {
-    return { ok: true, id: note.hide(text) };
+    const id = secrets.add(payload || {});
+    return { ...secretsResult(), id };
   } catch (err) {
-    console.error('TaskPop: could not hide text', err);
+    console.error('TaskPop: could not save a secret', err);
     return { ok: false, message: err.message };
   }
 });
 
+// Changing one: only after you've confirmed it's you for it (secrets:reveal with 'edit')
+ipcMain.handle('secrets:update', (event, id, payload) => {
+  if (!fromPanel(event) || !secrets || !secrets.has(id)) return { ok: false, message: 'That secret is no longer there.' };
+  if (!(unlocked.get(id) > Date.now())) return { ok: false, message: 'Confirm it’s you first.' };
+  try {
+    secrets.update(id, payload || {});
+    unlocked.delete(id);
+    return secretsResult();
+  } catch (err) {
+    console.error('TaskPop: could not change a secret', err);
+    return { ok: false, message: err.message };
+  }
+});
+
+ipcMain.handle('secrets:delete', (event, id) => {
+  if (!fromPanel(event) || !secrets) return { ok: false };
+  secrets.delete(id);
+  unlocked.delete(id);
+  return secretsResult();
+});
+
 let confirming = false;
 /** Touch ID / your Mac password, or Windows Hello / your Windows password. One at a time. */
-async function confirmItsYou(action) {
+async function confirmItsYou(action, name) {
   if (confirming || !verifier) return { ok: false, canceled: true };
   confirming = true;
   const wasHeld = holdPanel;
   holdPanel = true; // the system's dialog takes the focus: the panel stays open meanwhile
   try {
-    return await verifier.verify(panel, action);
+    return await verifier.verify(panel, action, name);
   } finally {
     confirming = false;
     holdPanel = wasHeld;
     // macOS answers while its dialog is still closing. Once it's gone, the focus goes back to the
     // app in front and the panel hears that it lost the focus: that isn't you leaving, so the
-    // panel stays (and the text you just unlocked with it), and takes the focus back.
+    // panel stays (and the secret you just unlocked with it), and takes the focus back.
     holdUntil = Date.now() + 1500;
     if (isShown && alive(panel)) {
       focusPanel();
@@ -1914,40 +1946,29 @@ async function confirmItsYou(action) {
   }
 }
 
-ipcMain.handle('notes:reveal', async (event, id) => {
-  if (!fromPanel(event) || !note || !note.has(id)) return { ok: false, message: 'That hidden text is no longer there.' };
-  const answer = await confirmItsYou('show');
+// Show a secret (action 'show'), or open it to be changed ('edit'): asks first
+ipcMain.handle('secrets:reveal', async (event, id, action) => {
+  if (!fromPanel(event) || !secrets || !secrets.has(id)) return { ok: false, message: 'That secret is no longer there.' };
+  const item = secrets.get(id);
+  const answer = await confirmItsYou(action === 'edit' ? 'edit' : 'show', item.name);
   if (!answer.ok) return answer;
   try {
-    return { ok: true, text: note.reveal(id) };
+    const fields = secrets.reveal(id);
+    if (action === 'edit') unlocked.set(id, Date.now() + 10 * 60 * 1000);
+    return { ok: true, fields };
   } catch (err) {
-    console.error('TaskPop: could not decrypt hidden text', err);
-    return { ok: false, message: isMac ? 'macOS didn’t let TaskPop use its key in your keychain.' : 'Windows couldn’t decrypt it.' };
+    console.error('TaskPop: could not decrypt a secret', err);
+    return { ok: false, message: keyError() };
   }
 });
 
 let clipboardClear = null;
-/** Copy hidden text without showing it; it's taken off the clipboard after a minute if still there. */
-ipcMain.handle('notes:copy', async (event, id) => {
-  if (!fromPanel(event) || !note || !note.has(id)) return { ok: false, message: 'That hidden text is no longer there.' };
-  const answer = await confirmItsYou('copy');
-  if (!answer.ok) return answer;
-  let text;
-  try {
-    text = note.reveal(id);
-  } catch (err) {
-    console.error('TaskPop: could not decrypt hidden text', err);
-    return { ok: false, message: isMac ? 'macOS didn’t let TaskPop use its key in your keychain.' : 'Windows couldn’t decrypt it.' };
-  }
-  await copyForAMinute(text);
-  return { ok: true, clearsIn: noteConfig.clipboardClearMs };
-});
-
-// …and hidden text that's showing (you've confirmed it's you already)
-ipcMain.handle('notes:copy-shown', async (event, text) => {
+// Copy part of a secret that's showing (you've confirmed it's you already); it's taken off the
+// clipboard after a minute if it's still there
+ipcMain.handle('secrets:copy', async (event, text) => {
   if (!fromPanel(event) || typeof text !== 'string' || !text) return { ok: false };
   await copyForAMinute(text);
-  return { ok: true, clearsIn: noteConfig.clipboardClearMs };
+  return { ok: true, clearsIn: secretConfig.clipboardClearMs };
 });
 
 async function copyForAMinute(text) {
@@ -1961,34 +1982,20 @@ async function copyForAMinute(text) {
     } catch (_) {
       // nothing to clear
     }
-  }, noteConfig.clipboardClearMs);
+  }, secretConfig.clipboardClearMs);
 }
 
-// Right-click on hidden text in the note
-ipcMain.on('notes:secret-menu', (event, payload) => {
-  if (!fromPanel(event) || !payload || !note || !note.has(payload.id)) return;
-  const act = (action) => () => send(panel, 'notes:secret-action', { id: payload.id, action });
-  const items = payload.shown
-    ? [
-      ...(payload.selected ? [{ label: 'Copy Selection', click: act('copy-selection') }] : []), // v1.9.2
-      { label: 'Hide', click: act('hide') }, { label: payload.selected ? 'Copy All' : 'Copy', click: act('copy') }, { label: 'Make it ordinary text', click: act('plain') },
-    ]
-    : [{ label: 'Show…', click: act('show') }, { label: 'Copy…', click: act('copy') }];
-  Menu.buildFromTemplate([...items, { type: 'separator' }, { label: 'Delete', click: act('delete') }]).popup({ window: panel });
-});
-
-// Right-click in the note
-ipcMain.on('notes:editor-menu', (event, payload) => {
-  if (!fromPanel(event)) return;
-  const canHide = !!(payload && payload.canHide);
+// Right-click on a secret
+ipcMain.on('secrets:menu', (event, payload) => {
+  if (!fromPanel(event) || !payload || !secrets || !secrets.has(payload.id)) return;
+  const act = (action) => () => send(panel, 'secrets:action', { id: payload.id, action });
+  const item = secrets.get(payload.id);
+  const hasHidden = item.fields.some((f) => f.enc);
   Menu.buildFromTemplate([
-    { label: 'Hide Selected Text', enabled: canHide, click: () => send(panel, 'notes:editor-action', 'hide') },
-    { label: 'Add hidden text…', click: () => send(panel, 'notes:editor-action', 'add') },
+    ...(hasHidden ? [payload.shown ? { label: 'Hide', click: act('hide') } : { label: 'Show…', click: act('show') }] : []),
+    { label: 'Edit…', click: act('edit') },
     { type: 'separator' },
-    { role: 'cut' },
-    { role: 'copy' },
-    { role: 'paste' },
-    { role: 'selectAll' },
+    { label: 'Delete…', click: act('delete') },
   ]).popup({ window: panel });
 });
 
@@ -2266,8 +2273,8 @@ if (!app.requestSingleInstanceLock()) {
     session.defaultSession.setPermissionCheckHandler(() => false);
 
     loadAll();
-    note = new QuickNote({ read: readJSON, write: writeNote, safeStorage });
-    note.load();
+    secrets = new Secrets({ read: readJSON, write: writeNote, remove: removeData, safeStorage });
+    secrets.load();
     verifier = createVerifier({ systemPreferences });
     nativeTheme.themeSource = settings.theme;
     // Windows panel is solid, so it follows light/dark mode itself.

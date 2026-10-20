@@ -10,18 +10,19 @@
 
   <main class="wrap policy" id="main">
     <h1>Privacy</h1>
-    <p class="updated">Last updated 14 October 2026</p>
+    <p class="updated">Last updated 20 October 2026</p>
 
     <div class="short">
-      <p><strong>In short:</strong> your tasks and notes stay on your computer. TaskPop has no account, no analytics, no ads and no tracking, and it doesn’t send your tasks, notes or settings anywhere.</p>
+      <p><strong>In short:</strong> your tasks and secrets stay on your computer. TaskPop has no account, no analytics, no ads and no tracking, and it doesn’t send your tasks, secrets or settings anywhere.</p>
     </div>
 
     <h2>What TaskPop stores</h2>
-    <p>Your tasks, categories, reminders, timers, quick note and settings are saved in a folder on your own computer (on a Mac in ~/Library/Application Support/TaskPop, on Windows in %APPDATA%\TaskPop), along with a backup copy. You can export your tasks and categories to a file, or delete them at any time. Uninstalling TaskPop on Windows offers to remove them too; on a Mac, delete that folder.</p>
+    <p>Your tasks, categories, reminders, timers, secrets and settings are saved in a folder on your own computer (on a Mac in ~/Library/Application Support/TaskPop, on Windows in %APPDATA%\TaskPop), along with a backup copy. You can export your tasks and categories to a file, or delete them at any time. Uninstalling TaskPop on Windows offers to remove them too; on a Mac, delete that folder.</p>
 
-    <h2>Hidden text in the quick note</h2>
-    <p>Text you hide in the quick note is encrypted the moment you hide it, with a key that macOS keeps in your login keychain (“TaskPop Safe Storage”), or that Windows keeps for your user account. It’s never saved, backed up or copied as plain text, and it isn’t included when you export your tasks. The rest of the note is saved as ordinary text, like your tasks.</p>
-    <p>Before it shows or copies hidden text, TaskPop asks macOS for Touch ID or your Mac password, or Windows for Windows Hello or your Windows password. These are the system’s own dialogs: TaskPop never sees your fingerprint, face, PIN or password, only whether the system said yes. Shown text hides itself again after a minute, and copied text is taken off the clipboard after a minute if it’s still there.</p>
+    <h2>Secrets</h2>
+    <p>The usernames and passwords you keep in Secrets are encrypted as soon as you save them, with a key that macOS keeps in your login keychain (“TaskPop Safe Storage”), or that Windows keeps for your user account. They’re never saved, backed up or exported as plain text. The name you give each secret, like “Uni login”, is saved as ordinary text, like your tasks.</p>
+    <p>Before it shows a secret, TaskPop asks macOS for Touch ID or your Mac password, or Windows for Windows Hello or your Windows password. These are the system’s own dialogs: TaskPop never sees your fingerprint, face, PIN or password, only whether the system said yes. A secret that shows hides itself again after a minute, and anything you copy is taken off the clipboard after a minute if it’s still there.</p>
+    <p>TaskPop 1.9 had a “quick note” with hidden text in it instead. Version 1.10 turns that note into secrets on your computer, without decrypting anything, and then deletes the old note.</p>
 
     <h2>What TaskPop sends over the internet</h2>
     <ul>

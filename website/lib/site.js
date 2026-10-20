@@ -31,7 +31,10 @@ export function startSite() {
     sliders: '<svg viewBox="0 0 16 16"><path d="M2 4.5h7M12.6 4.5H14M2 11.5h1.6M7.4 11.5H14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="10.8" cy="4.5" r="1.8" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.5" cy="11.5" r="1.8" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>',
     close: '<svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
     plus: '<svg class="tp-plus" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#2459e0"/><path d="M10 5.5v9M5.5 10h9" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>',
-    chevron: '<svg viewBox="0 0 16 16"><path d="M4 6.2l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    lock: '<svg viewBox="0 0 16 16"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.4 7.2V5.3a2.6 2.6 0 0 1 5.2 0v1.9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    open: '<svg viewBox="0 0 16 16"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.4 7.2V5.3a2.6 2.6 0 0 1 5.1-.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    eye: '<svg viewBox="0 0 16 16"><path d="M1.6 8s2.4-4.4 6.4-4.4S14.4 8 14.4 8s-2.4 4.4-6.4 4.4S1.6 8 1.6 8z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>',
+    copy: '<svg viewBox="0 0 12 12"><rect x="3.8" y="3.8" width="6.4" height="6.6" rx="1.3" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8.2 3.8V2.9a1.1 1.1 0 0 0-1.1-1.1H2.9a1.1 1.1 0 0 0-1.1 1.1v4.3a1.1 1.1 0 0 0 1.1 1.1h.9" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>',
     hide: '<svg viewBox="0 0 16 16"><rect x="3.4" y="7" width="9.2" height="6.6" rx="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke-linecap="round"/></svg>',
     locked: '<svg viewBox="0 0 12 12"><rect x="2.2" y="5.2" width="7.6" height="5.4" rx="1.3"/><path d="M4 5.2V3.9a2 2 0 0 1 4 0v1.3"/></svg>',
     unlocked: '<svg viewBox="0 0 12 12"><rect x="2.2" y="5.2" width="7.6" height="5.4" rx="1.3"/><path d="M4 5.2V3.9a2 2 0 0 1 3.9-.6"/></svg>',
@@ -44,8 +47,7 @@ export function startSite() {
   ];
   const catOf = (task) => CATS.find((c) => c.id === task.cat) || null;
 
-  const MASK = '••••••';
-  const SHOW_FOR_MS = 15000; // the app hides it again after a minute; the demo is quicker
+  const SHOW_FOR_MS = 20000; // the app hides a secret again after a minute; the demo is quicker
   const startedAt = Date.now();
   let nextId = 10;
   let view = 'all';
@@ -59,10 +61,14 @@ export function startSite() {
     { id: 5, title: 'Morning workout', done: true, repeat: true, cat: 'personal' },
   ];
 
-  // Hidden text in the demo note. In TaskPop it's encrypted the moment you hide it.
+  // Secrets in the demo. In TaskPop their usernames and passwords are encrypted when saved.
   let nextSecret = 3;
-  const secrets = new Map([['s1', 'sunflower-42'], ['s2', '4071']]);
+  const secrets = [
+    { id: 's1', name: 'Uni login', fields: [{ label: 'Username', value: 'saif@uni.ac.uk' }, { label: 'Password', value: 'm4ngo-Tree!' }] },
+    { id: 's2', name: 'Home Wi-Fi', fields: [{ label: 'Password', value: 'sunflower-42' }] },
+  ];
   const shownUntil = new Map();
+  let secretFormOpen = false;
 
   const panels = [document.getElementById('devicePanel'), document.getElementById('mobilePanel')];
   const trayCount = document.getElementById('trayCount');
@@ -152,8 +158,8 @@ export function startSite() {
       addTask(input.value);
       input.value = '';
     });
-    const noteBtn = button('tp-note-btn', ICONS.chevron, 'Quick note');
-    noteBtn.title = 'Quick note';
+    const noteBtn = button('tp-note-btn', ICONS.lock, 'Secrets');
+    noteBtn.title = 'Secrets: your passwords and codes';
     noteBtn.setAttribute('aria-expanded', 'false');
     noteBtn.addEventListener('click', () => setNoteOpen(!noteOpen));
     inputBar.append(input, noteBtn);
@@ -314,97 +320,151 @@ export function startSite() {
     });
   }, 1000);
 
-  /* ----- The quick note, with hidden text ----- */
-  function secretChip(id) {
-    const chip = el('span', 'tp-secret');
-    chip.contentEditable = 'false';
-    chip.dataset.id = id;
-    chip.tabIndex = 0;
-    chip.setAttribute('role', 'button');
-    paintSecret(chip);
-    return chip;
-  }
+  /* ----- Secrets: your passwords, at hand ----- */
+  const isShown = (id) => (shownUntil.get(id) || 0) > Date.now();
 
-  // Hidden: "🔒 •••••• Show". Showing: the text, which can be selected, with Copy and Hide.
-  function paintSecret(chip) {
-    const shown = (shownUntil.get(chip.dataset.id) || 0) > Date.now();
-    chip.classList.toggle('shown', shown);
-    if (!shown) {
-      chip.innerHTML = ICONS.locked;
-      chip.append(el('span', 'tp-secret-text', MASK), el('span', 'tp-secret-show', 'Show'));
-      chip.setAttribute('role', 'button');
-      chip.tabIndex = 0;
-      chip.setAttribute('aria-label', 'Hidden text. Click to show it.');
-      return;
+  function secretRow(item) {
+    const row = el('div', `tp-secret-item${isShown(item.id) ? ' shown' : ''}`);
+    row.dataset.id = item.id;
+    const head = el('div', 'tp-secret-head');
+    const icon = el('span', 'tp-secret-icon', isShown(item.id) ? ICONS.open : ICONS.lock);
+    const name = el('span', 'tp-secret-name');
+    name.append(el('b', null, item.name));
+    if (!isShown(item.id)) name.append(el('small', null, item.fields.map((f) => f.label).join(' · ')));
+    const toggle = button(`tp-secret-toggle${isShown(item.id) ? ' quiet' : ''}`, isShown(item.id) ? 'Hide' : `${ICONS.eye}Show`, isShown(item.id) ? `Hide ${item.name}` : `Show ${item.name}`);
+    toggle.dataset.act = isShown(item.id) ? 'hide' : 'show';
+    head.append(icon, name, toggle);
+    row.append(head);
+    if (isShown(item.id)) {
+      const fields = el('div', 'tp-secret-fields');
+      item.fields.forEach((f, i) => {
+        const field = el('div', 'tp-secret-field');
+        const text = el('span', 'tp-secret-text');
+        text.append(el('small', null, f.label), el('span', 'tp-secret-value', f.value));
+        const copy = button('tp-secret-copy', `${ICONS.copy}Copy`, `Copy ${f.label.toLowerCase()}`);
+        copy.dataset.act = 'copy';
+        copy.dataset.field = String(i);
+        field.append(text, copy);
+        fields.append(field);
+      });
+      row.append(fields);
     }
-    chip.replaceChildren(el('span', 'tp-secret-text', secrets.get(chip.dataset.id)));
-    const copy = button('tp-secret-btn', 'Copy', 'Copy it');
-    copy.dataset.act = 'copy';
-    copy.tabIndex = -1;
-    const hide = button('tp-secret-btn hide', `${ICONS.locked}Hide`, 'Hide it again');
-    hide.dataset.act = 'hide';
-    hide.tabIndex = -1;
-    chip.append(copy, hide);
-    chip.removeAttribute('role');
-    chip.removeAttribute('tabindex');
-    chip.setAttribute('aria-label', 'Hidden text, showing');
+    return row;
   }
 
-  function paintAllSecrets() {
-    panels.forEach((panel) => panel.querySelectorAll('.tp-secret').forEach(paintSecret));
+  function renderSecrets() {
+    panels.forEach((panel) => {
+      const list = panel.querySelector('.tp-secrets-list');
+      const form = panel.querySelector('.tp-secret-form');
+      list.replaceChildren(...secrets.map(secretRow));
+      list.hidden = secretFormOpen;
+      form.hidden = !secretFormOpen;
+      panel.querySelector('.tp-secrets-new').hidden = secretFormOpen;
+    });
   }
 
   function buildNote(panel) {
     const drawer = el('section', 'tp-note');
     drawer.hidden = true;
-    drawer.setAttribute('aria-label', 'Quick note');
+    drawer.setAttribute('aria-label', 'Secrets');
     const head = el('div', 'tp-note-head');
-    const hide = button('tp-note-hide', `${ICONS.hide}<span>Hide selected</span>`);
-    hide.disabled = true;
-    hide.title = 'Select text in the note, then click to encrypt it';
-    hide.addEventListener('mousedown', (e) => e.preventDefault()); // keep the selection
-    hide.addEventListener('click', () => hideSelection(panel));
-    head.append(el('span', 'tp-note-title', 'Quick note'), hide);
+    const add = button('tp-secrets-new', '+ New', 'New secret');
+    add.addEventListener('click', () => {
+      secretFormOpen = true;
+      shownUntil.clear();
+      renderSecrets();
+      setStatus(panel, 'In TaskPop, the username and password are encrypted as soon as you save.');
+      setTimeout(() => panel.querySelector('.tp-secret-form input').focus({ preventScroll: true }), 30);
+    });
+    head.append(el('span', 'tp-note-title', 'Secrets'), add);
 
-    const editor = el('div', 'tp-note-editor');
-    editor.contentEditable = 'true';
-    editor.spellcheck = false;
-    editor.setAttribute('role', 'textbox');
-    editor.setAttribute('aria-multiline', 'true');
-    editor.setAttribute('aria-label', 'Quick note');
-    editor.append(
-      document.createTextNode('Wi-Fi: Home-5G'), el('br'),
-      document.createTextNode('Password: '), secretChip('s1'), el('br'),
-      document.createTextNode('Door code: '), secretChip('s2'),
-    );
-    editor.addEventListener('mousedown', (e) => {
-      // (buttons keep the selection; a hidden piece takes no caret; text that shows can be selected)
-      if (e.target.closest('.tp-secret-btn') || e.target.closest('.tp-secret:not(.shown)')) e.preventDefault();
+    const list = el('div', 'tp-secrets-list');
+    list.setAttribute('role', 'list');
+    list.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button')) e.preventDefault(); // (keeps a selection while clicking Copy)
     });
-    editor.addEventListener('click', (e) => {
-      const btn = e.target.closest('.tp-secret-btn');
-      const chip = e.target.closest('.tp-secret');
-      if (btn && chip) secretAction(panel, chip, btn.dataset.act);
-      else if (chip && !chip.classList.contains('shown')) askToShow(panel, chip);
-    });
-    editor.addEventListener('keydown', (e) => {
-      const chip = e.target.closest && e.target.closest('.tp-secret:not(.shown)');
-      if (chip && (e.key === 'Enter' || e.key === ' ')) {
-        e.preventDefault();
-        askToShow(panel, chip);
+    list.addEventListener('click', (e) => {
+      const row = e.target.closest('.tp-secret-item');
+      if (!row) return;
+      const item = secrets.find((x) => x.id === row.dataset.id);
+      const btn = e.target.closest('button');
+      const act = btn ? btn.dataset.act : !isShown(item.id) && e.target.closest('.tp-secret-head') ? 'show' : null;
+      if (act === 'show') askToShow(panel, item.id);
+      else if (act === 'hide') {
+        shownUntil.delete(item.id);
+        renderSecrets();
+        setStatus(panel, 'Hidden again.');
+      } else if (act === 'copy') {
+        const f = item.fields[Number(btn.dataset.field)];
+        const done = () => setStatus(panel, `${f.label} copied. In TaskPop it comes off the clipboard after a minute.`);
+        if (navigator.clipboard) navigator.clipboard.writeText(f.value).then(done, () => setStatus(panel, 'Your browser didn’t allow copying here.'));
       }
     });
-    // Paste as plain text only
-    editor.addEventListener('paste', (e) => {
+
+    // New: a name, a username, a password
+    const form = el('form', 'tp-secret-form');
+    form.hidden = true;
+    form.autocomplete = 'off';
+    const input = (label, type) => {
+      const wrap = el('label', 'tp-secret-input');
+      const box = document.createElement('input');
+      box.type = type;
+      box.maxLength = 60;
+      box.spellcheck = false;
+      box.autocomplete = 'off';
+      wrap.append(el('span', null, label), box);
+      return [wrap, box];
+    };
+    const [nameWrap, nameBox] = input('Name', 'text');
+    nameBox.placeholder = 'e.g. Netflix';
+    const [userWrap, userBox] = input('Username or email', 'text');
+    userBox.placeholder = 'Optional';
+    const [passWrap, passBox] = input('Password', 'password');
+    const buttons = el('div', 'tp-secret-buttons');
+    const cancel = button('tp-secret-cancel', 'Cancel');
+    const save = el('button', 'tp-secret-save', 'Save');
+    save.type = 'submit';
+    buttons.append(cancel, save);
+    form.append(nameWrap, userWrap, passWrap, buttons);
+    const closeForm = () => {
+      [nameBox, userBox, passBox].forEach((b) => { b.value = ''; });
+      secretFormOpen = false;
+      renderSecrets();
+    };
+    cancel.addEventListener('click', () => {
+      closeForm();
+      setStatus(panel, '');
+    });
+    form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const text = (e.clipboardData && e.clipboardData.getData('text/plain')) || '';
-      document.execCommand('insertText', false, text);
+      const fields = [];
+      if (userBox.value.trim()) fields.push({ label: 'Username', value: userBox.value.trim() });
+      if (passBox.value) fields.push({ label: 'Password', value: passBox.value });
+      if (!fields.length) {
+        setStatus(panel, 'Type a username or a password first.');
+        passBox.focus();
+        return;
+      }
+      const name = nameBox.value.trim() || 'Secret';
+      secrets.push({ id: `s${nextSecret++}`, name, fields });
+      closeForm();
+      setStatus(panel, `Saved “${name}”. In TaskPop it’s encrypted on your computer.`);
+    });
+    form.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeForm();
+      }
     });
 
-    const status = el('p', 'tp-note-status', '•••••• is encrypted text. Click Show to see it. To hide more, select text and click Hide selected.');
+    const status = el('p', 'tp-note-status', 'Click Show to see a secret. TaskPop asks for Touch ID or your password first.');
     status.setAttribute('aria-live', 'polite');
-    drawer.append(head, editor, status, buildAuth(panel));
+    drawer.append(head, list, form, status, buildAuth(panel));
     return drawer;
+  }
+
+  function paintAllSecrets() {
+    renderSecrets();
   }
 
   function setNoteOpen(open) {
@@ -416,58 +476,19 @@ export function startSite() {
       btn.setAttribute('aria-expanded', String(open));
     });
     if (!open) {
-      shownUntil.clear(); // closing the note hides everything again, as in the app
-      paintAllSecrets();
+      shownUntil.clear(); // closing Secrets hides everything again, as in the app
+      secretFormOpen = false;
       panels.forEach((panel) => closeAuth(panel));
     }
+    renderSecrets();
   }
 
   function setStatus(panel, text) {
     panel.querySelector('.tp-note-status').textContent = text;
   }
 
-  function hideSelection(panel) {
-    const editor = panel.querySelector('.tp-note-editor');
-    const sel = window.getSelection();
-    if (!sel.rangeCount) return;
-    const range = sel.getRangeAt(0);
-    if (range.collapsed || !editor.contains(range.commonAncestorContainer)) return;
-    const inSecret = (n) => (n.nodeType === 1 ? n : n.parentElement).closest('.tp-secret');
-    if (inSecret(range.startContainer) || inSecret(range.endContainer) || range.cloneContents().querySelector('.tp-secret')) {
-      setStatus(panel, 'Select only ordinary text to hide it.');
-      return;
-    }
-    const text = range.toString();
-    if (!text.trim()) return;
-    const id = `s${nextSecret++}`;
-    secrets.set(id, text);
-    const chip = secretChip(id);
-    range.deleteContents();
-    range.insertNode(chip);
-    sel.removeAllRanges();
-    const after = document.createRange();
-    after.setStartAfter(chip);
-    after.collapse(true);
-    sel.addRange(after);
-    updateHideButtons();
-    setStatus(panel, 'Hidden. In TaskPop it’s encrypted the moment you hide it.');
-  }
-
-  function updateHideButtons() {
-    const sel = window.getSelection();
-    panels.forEach((panel) => {
-      const editor = panel.querySelector('.tp-note-editor');
-      const hide = panel.querySelector('.tp-note-hide');
-      const range = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
-      const inSecret = (n) => (n.nodeType === 1 ? n : n.parentElement).closest('.tp-secret');
-      hide.disabled = !(range && !range.collapsed && editor.contains(range.commonAncestorContainer) && range.toString().trim()
-        && !inSecret(range.startContainer) && !inSecret(range.endContainer));
-    });
-  }
-  document.addEventListener('selectionchange', updateHideButtons);
-
-  // Showing hidden text asks for Touch ID (or Windows Hello) first
-  let pendingChip = null;
+  // Showing a secret asks for Touch ID (or Windows Hello) first
+  let pendingId = null;
   function buildAuth(panel) {
     const sheet = el('div', 'tp-auth');
     sheet.hidden = true;
@@ -479,23 +500,22 @@ export function startSite() {
     icon.alt = '';
     icon.width = 38;
     icon.height = 38;
-    const what = el('strong', null, isWindows ? 'Windows Security' : 'TaskPop is trying to show your hidden text.');
-    const how = el('p', null, isWindows ? 'Show your hidden text in TaskPop. Use Windows Hello or your PIN.' : 'Touch ID or enter your password to allow this.');
+    const what = el('strong', 'tp-auth-what', '');
+    const how = el('p', null, isWindows ? 'Use Windows Hello or your PIN.' : 'Touch ID or enter your password to allow this.');
     const finger = button('tp-finger', ICONS.finger, isWindows ? 'Confirm with Windows Hello' : 'Confirm with Touch ID');
     finger.addEventListener('click', () => {
       finger.classList.add('ok');
       setTimeout(() => {
         finger.classList.remove('ok');
-        const chip = pendingChip;
+        const id = pendingId;
         closeAuth(panel);
-        if (!chip) return;
-        const id = chip.dataset.id;
+        if (!id) return;
         shownUntil.set(id, Date.now() + SHOW_FOR_MS);
-        paintAllSecrets();
-        setStatus(panel, 'Showing. Select any part of it to copy just that, or click Copy. It hides again by itself.');
+        renderSecrets();
+        setStatus(panel, 'Click Copy next to the username or the password. It hides again by itself.');
         setTimeout(() => {
-          if ((shownUntil.get(id) || 0) <= Date.now()) {
-            paintAllSecrets();
+          if (!isShown(id)) {
+            renderSecrets();
             setStatus(panel, 'Hidden again. In TaskPop that happens after a minute, or when the panel closes.');
           }
         }, SHOW_FOR_MS + 50);
@@ -506,7 +526,7 @@ export function startSite() {
     const cancel = button('tp-auth-cancel', 'Cancel');
     cancel.addEventListener('click', () => {
       closeAuth(panel);
-      setStatus(panel, 'Canceled. The text stays hidden.');
+      setStatus(panel, 'Canceled. It stays hidden.');
     });
     card.append(icon, what, how, finger, tip, cancel);
     sheet.append(card);
@@ -516,30 +536,21 @@ export function startSite() {
   function closeAuth(panel) {
     const sheet = panel.querySelector('.tp-auth');
     if (sheet) sheet.hidden = true;
-    pendingChip = null;
+    pendingId = null;
   }
 
-  function secretAction(panel, chip, act) {
-    const id = chip.dataset.id;
-    if (act === 'hide') {
-      shownUntil.delete(id);
-      paintAllSecrets();
-      setStatus(panel, 'Hidden again.');
-    } else if (act === 'copy') {
-      const done = () => setStatus(panel, 'Copied. In TaskPop it comes off the clipboard after a minute.');
-      if (navigator.clipboard) navigator.clipboard.writeText(secrets.get(id)).then(done, () => setStatus(panel, 'Your browser didn’t allow copying here.'));
-    }
-  }
-
-  function askToShow(panel, chip) {
-    pendingChip = chip;
+  function askToShow(panel, id) {
+    const item = secrets.find((x) => x.id === id);
+    pendingId = id;
     const sheet = panel.querySelector('.tp-auth');
+    sheet.querySelector('.tp-auth-what').textContent = isWindows ? `Windows Security: show “${item.name}” in TaskPop` : `TaskPop is trying to show “${item.name}”.`;
     sheet.hidden = false;
     sheet.querySelector('.tp-finger').focus({ preventScroll: true });
   }
 
   panels.forEach(buildShell);
   renderAll();
+  renderSecrets();
 
   // Menu bar clock
   const clock = document.getElementById('clock');
@@ -571,7 +582,7 @@ export function startSite() {
   function setPanelShown(shown) {
     devicePanel.classList.toggle('shown', shown);
     if (!shown) {
-      // Hidden text hides itself again whenever the panel closes, as in the app
+      // Secrets hide again whenever the panel closes, as in the app
       shownUntil.clear();
       paintAllSecrets();
       closeAuth(devicePanel);

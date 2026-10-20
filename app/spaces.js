@@ -115,7 +115,7 @@ function createMacSpaces(koffi, libPath = '/usr/lib/libobjc.A.dylib') {
 function createSpaces() {
   if (process.platform !== 'darwin') return null;
   try {
-    return createMacSpaces(require('koffi'));
+    return createMacSpaces(require('./ffi').getKoffi());
   } catch (err) {
     console.error('TaskPop: desktop handling unavailable', err);
     return null;

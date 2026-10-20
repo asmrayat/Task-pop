@@ -1,9 +1,9 @@
 // First-run tour: welcome → how to open TaskPop (with a live try-it) → opening by itself →
-// using the list → done. Settings chosen here are saved straight away.
+// using the list → secrets (v1.10) → done. Settings chosen here are saved straight away.
 const api = window.taskpopTour;
 const $ = (id) => document.getElementById(id);
 
-const STEPS = ['step-welcome', 'step-open', 'step-auto', 'step-use', 'step-done'];
+const STEPS = ['step-welcome', 'step-open', 'step-auto', 'step-use', 'step-secrets', 'step-done'];
 const MAC_KEYS = {
   control: { symbol: '⌃', name: 'Control', word: 'control' },
   option: { symbol: '⌥', name: 'Option', word: 'option' },
@@ -66,6 +66,11 @@ function renderStatic() {
   $('trayHint').textContent = mac()
     ? 'Or click the TaskPop icon in the menu bar'
     : 'Or click the TaskPop icon next to the clock (if it isn’t there, click ^ to find it)';
+  $('secretsLead').textContent = `Secrets keeps logins, PINs and Wi-Fi codes under your list, encrypted on this ${computer}.`;
+  $('secretsOpenHow').textContent = `Click the lock at the end of “Add a task” to open Secrets (or press ${mac() ? '⌘J' : 'Ctrl+J'})`;
+  $('secretsShowHow').textContent = mac()
+    ? 'Click Show and confirm it’s you with Touch ID or your Mac password'
+    : 'Click Show and confirm it’s you with Windows Hello or your Windows password';
   $('shortcutKeys').replaceChildren(...shortcutParts(info.settings.shortcut).map(kbd));
   if (!info.settings.shortcut) $('shortcutKeys').closest('li').hidden = true;
 }

@@ -119,7 +119,36 @@
       </div>
     </section>
 
-    <!-- 5. Done -->
+    <!-- 5. Secrets (v1.10) -->
+    <section class="step" id="step-secrets" aria-labelledby="secretsTitle">
+      <div class="copy">
+        <h1 id="secretsTitle">Keep your passwords at hand</h1>
+        <p class="lead" id="secretsLead">Secrets keeps logins, PINs and Wi-Fi codes under your list, encrypted on this Mac.</p>
+        <ul class="howto">
+          <li><span class="glyph-lock" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.7"/><path d="M5.4 7.2V5.3a2.6 2.6 0 0 1 5.2 0v1.9"/></svg></span><span id="secretsOpenHow">Click the lock at the end of “Add a task” to open Secrets (or press ⌘J)</span></li>
+          <li><kbd>+ New</kbd><span>Give it a name, then type the username and the password</span></li>
+          <li><kbd>Show</kbd><span id="secretsShowHow">Click Show and confirm it’s you with Touch ID or your Mac password</span></li>
+          <li><kbd>Copy</kbd><span>Copy the username or the password. It comes off the clipboard after a minute.</span></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <div class="mini-panel large secrets-mock" data-scene="secrets">
+          <div class="mp-row"><i class="mp-check"></i><span>Send the proposal</span></div>
+          <div class="mp-add with-lock">Add a task…<i class="mp-lock"><svg viewBox="0 0 16 16"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.7"/><path d="M5.4 7.2V5.3a2.6 2.6 0 0 1 5.2 0v1.9"/></svg></i></div>
+          <div class="ms-head"><b>Secrets</b><em>+ New</em></div>
+          <div class="ms-item shown">
+            <div class="ms-name"><i class="ms-icon"></i><b>Uni login</b><em class="ms-hide">Hide</em></div>
+            <div class="ms-field"><span><small>Username</small>saif@uni.ac.uk</span><em>Copy</em></div>
+            <div class="ms-field"><span><small>Password</small>m4ngo-Tree!</span><em>Copy</em></div>
+          </div>
+          <div class="ms-item">
+            <div class="ms-name"><i class="ms-icon"></i><b>Home Wi-Fi<small>Password</small></b><em class="ms-show">Show</em></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Done -->
     <section class="step" id="step-done" aria-labelledby="doneTitle">
       <div class="copy">
         <img class="app-icon" src="assets/icon-128.png" alt="" width="64" height="64">

@@ -4,13 +4,13 @@ import Boot from "../boot";
 
 export const metadata = {
   title: "Privacy – TaskPop",
-  description: "TaskPop keeps your tasks and notes on your computer, and hidden text in the quick note stays encrypted. No account, no tracking, no ads.",
+  description: "TaskPop keeps your tasks and secrets on your computer, and your secrets stay encrypted. No account, no tracking, no ads.",
   alternates: { canonical: "https://taskpop.asmlab.agency/privacy.html" },
   openGraph: {
     title: "Privacy – TaskPop",
-    description: "TaskPop keeps your tasks and notes on your computer, and hidden text in the quick note stays encrypted. No account, no tracking, no ads.",
+    description: "TaskPop keeps your tasks and secrets on your computer, and your secrets stay encrypted. No account, no tracking, no ads.",
     url: "https://taskpop.asmlab.agency/privacy.html",
-    images: ["https://taskpop.asmlab.agency/assets/og-image.png?v=1.9"],
+    images: ["https://taskpop.asmlab.agency/assets/og-image.png?v=1.10"],
   },
 };
 

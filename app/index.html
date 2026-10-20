@@ -78,31 +78,31 @@
         </svg>
       </span>
       <input id="newTask" type="text" placeholder="Add a task…" autocomplete="off" spellcheck="false" maxlength="500">
-      <button class="note-btn" id="noteBtn" title="Quick note" aria-expanded="false" aria-controls="noteDrawer">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6.2l4 4 4-4" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <button class="note-btn" id="noteBtn" title="Secrets" aria-expanded="false" aria-controls="noteDrawer">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.7"/><path d="M5.4 7.2V5.3a2.6 2.6 0 0 1 5.2 0v1.9" stroke-linecap="round"/></svg>
       </button>
     </div>
 
-    <!-- v1.9: the quick note, under the bar -->
-    <section class="note-drawer" id="noteDrawer" hidden aria-label="Quick note">
-      <div class="note-head">
-        <span class="note-title">Quick note</span>
-        <button class="note-action quiet" id="noteAddBtn" title="Type a password or a code out of sight: it goes into the note already encrypted">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.6" y="7" width="8.4" height="6.4" rx="1.5"/><path d="M4.6 7V5.2a2.2 2.2 0 0 1 4.4 0V7M13.4 2.4v4M11.4 4.4h4" stroke-linecap="round"/></svg>
-          <span>Add hidden</span>
-        </button>
-        <button class="note-action" id="noteHideBtn" disabled title="Select text in the note, then click to encrypt it">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.4" y="7" width="9.2" height="6.6" rx="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke-linecap="round"/></svg>
-          <span>Hide selected</span>
+    <!-- v1.10: Secrets, under the bar (the "quick note" in 1.9) -->
+    <section class="note-drawer secrets" id="noteDrawer" hidden aria-labelledby="secretsTitle">
+      <div class="secrets-head">
+        <h2 class="secrets-title" id="secretsTitle">Secrets</h2>
+        <button class="secrets-new" id="secretNewBtn" type="button" title="Keep a new login, password or code">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9" stroke-linecap="round"/></svg>
+          <span>New</span>
         </button>
       </div>
-      <form class="note-add" id="noteAdd" hidden autocomplete="off">
-        <input type="password" id="noteAddInput" placeholder="Text to hide, like a password" maxlength="2000" autocomplete="off" spellcheck="false">
-        <button type="submit" id="noteAddOk">Add</button>
-        <button type="button" class="secondary" id="noteAddCancel">Cancel</button>
+      <div class="secrets-list" id="secretsList" role="list" aria-label="Your secrets"></div>
+      <form class="secret-form" id="secretForm" hidden autocomplete="off" aria-labelledby="secretFormTitle">
+        <p class="secret-form-title" id="secretFormTitle">New secret</p>
+        <label class="secret-input"><span>Name</span><input id="secretName" type="text" maxlength="60" placeholder="e.g. Uni login" spellcheck="false" autocomplete="off"></label>
+        <div id="secretFormFields"></div>
+        <p class="secret-form-note" id="secretFormNote"></p>
+        <div class="secret-form-buttons">
+          <button type="button" class="secondary" id="secretCancel">Cancel</button>
+          <button type="submit" id="secretSave">Save</button>
+        </div>
       </form>
-      <div class="note-editor" id="noteEditor" contenteditable="plaintext-only" spellcheck="false" role="textbox" aria-multiline="true"
-           data-placeholder="Jot down anything you want at hand: an address, a Wi-Fi name, a login."></div>
       <p class="note-status" id="noteStatus" aria-live="polite"></p>
       <p class="note-hint" id="noteHint"></p>
     </section>
@@ -141,6 +141,6 @@
 
   <script src="when.js"></script>
   <script src="renderer.js"></script>
-  <script src="note.js"></script>
+  <script src="secrets-panel.js"></script>
 </body>
 </html>

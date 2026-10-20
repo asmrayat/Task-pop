@@ -35,13 +35,15 @@ Another app is probably using the same shortcut. Open **Settings → General →
 
 **In the wrong spot on the screen:** drag it by its top bar to where you want it, or choose **Left** or **Right** in **Settings → Panel → Position** to put it back in a corner. If the screen you put it on is unplugged, it opens on the screen you're using instead, in the same spot.
 
-## Hidden text in the quick note
+## Secrets
 
-- **It won't show:** click **Show** on it. TaskPop asks macOS (Touch ID or your Mac password) or Windows (Windows Hello or your Windows password) first. If you cancel, it stays hidden.
-- **Copying only part of it** (the email but not the password under it): show it, then select that part and press ⌘C (Ctrl+C on Windows), or use the **Copy** button at the end of its line. Before TaskPop 1.9.2, clicking text that showed hid it again, so it couldn't be selected.
+- **Where are they?** Click the lock at the end of the "Add a task" bar, or press ⌘J (Ctrl+J on Windows). In TaskPop 1.9 this was the quick note; 1.10 turned each hidden piece of it into a secret, and the rest of the note into one called **Notes**.
+- **A secret won't show:** click **Show** on it. TaskPop asks macOS (Touch ID or your Mac password) or Windows (Windows Hello or your Windows password) first. If you cancel, it stays hidden.
+- **Copying only the username or only the password:** show it, then click **Copy** next to the one you want. You can also select any part of it and press ⌘C (Ctrl+C on Windows). It comes off the clipboard after a minute.
+- **Windows: TaskPop closed when it asked for your password:** update to TaskPop 1.10 or newer. Before that, the "Windows Security" password dialog crashed TaskPop on PCs without Windows Hello.
 - **Mac, after an update:** macOS may ask whether TaskPop may use "TaskPop Safe Storage" in your keychain. Enter your Mac password and click **Always Allow**. If you clicked **Deny**, open **Keychain Access**, find **TaskPop Safe Storage**, and under **Access Control** allow TaskPop again.
 - **Windows without a PIN or fingerprint:** TaskPop asks for your Windows password instead. If your account has no password either, set up Windows Hello in **Settings → Accounts → Sign-in options**.
-- **On another computer:** hidden text can only be read on the computer and user account where it was hidden. The quick note isn't part of **Export**.
+- **On another computer:** secrets can only be read on the computer and user account where they were saved. They aren't part of **Export**.
 
 ## Installing on a Mac
 

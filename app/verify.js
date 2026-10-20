@@ -1,24 +1,50 @@
-// "Is it really you?" before TaskPop shows or copies hidden text from the quick note (v1.9).
+// "Is it really you?" before TaskPop shows one of your secrets (v1.9; the quick note until 1.10).
 //
 // Mac: Touch ID, or your Mac password (systemPreferences.promptTouchID asks macOS for "user
 // presence", which offers the password when Touch ID isn't there or isn't used).
 // Windows: Windows Hello (PIN, fingerprint or face), shown over TaskPop's panel. Without Windows
 // Hello, your Windows password, checked by Windows itself.
 //
-// verify(win, action) resolves to { ok: true }, { ok: false, canceled: true } or
-// { ok: false, message }. It never throws.
+// verify(win, action, name) resolves to { ok: true }, { ok: false, canceled: true } or
+// { ok: false, message }. It never throws. name is the secret's name, for the dialog's text.
+
+const ffi = require('./ffi');
 
 const REASONS = {
   // macOS shows "TaskPop is trying to <reason>."
-  show: 'show your hidden text',
-  copy: 'copy your hidden text',
+  show: 'show your secret',
+  edit: 'change your secret',
+  copy: 'copy your secret',
 };
 const WIN_MESSAGES = {
-  show: 'Show your hidden text in TaskPop',
-  copy: 'Copy your hidden text in TaskPop',
+  show: 'Show your secret in TaskPop',
+  edit: 'Change your secret in TaskPop',
+  copy: 'Copy your secret in TaskPop',
 };
 
-function createVerifier({ platform = process.platform, systemPreferences, getKoffi = () => require('koffi'), winLibs } = {}) {
+/** A secret's name, safe to put in the system's dialog: one line, no quotes, not too long. */
+function shortName(name) {
+  const s = String(name || '').replace(/[\s"“”]+/g, ' ').trim();
+  return s.length > 40 ? `${s.slice(0, 39)}…` : s;
+}
+/** What the Mac's dialog says TaskPop is trying to do: "show “Uni login”". */
+function macReason(action, name) {
+  const n = shortName(name);
+  if (!n) return REASONS[action] || REASONS.show;
+  if (action === 'edit') return `change “${n}”`;
+  if (action === 'copy') return `copy “${n}”`;
+  return `show “${n}”`;
+}
+/** …and Windows': "Show “Uni login” in TaskPop". */
+function winMessage(action, name) {
+  const n = shortName(name);
+  if (!n) return WIN_MESSAGES[action] || WIN_MESSAGES.show;
+  if (action === 'edit') return `Change “${n}” in TaskPop`;
+  if (action === 'copy') return `Copy “${n}” in TaskPop`;
+  return `Show “${n}” in TaskPop`;
+}
+
+function createVerifier({ platform = process.platform, systemPreferences, getKoffi = ffi.getKoffi, winLibs } = {}) {
   if (platform === 'darwin') return createMacVerifier(systemPreferences);
   if (platform === 'win32') return createWinVerifier(getKoffi, winLibs);
   return { verify: async () => ({ ok: false, message: 'Hidden text can only be shown on a Mac or Windows PC.' }) };
@@ -28,12 +54,12 @@ function createVerifier({ platform = process.platform, systemPreferences, getKof
 
 function createMacVerifier(systemPreferences) {
   return {
-    async verify(_win, action) {
+    async verify(_win, action, name) {
       if (!systemPreferences || typeof systemPreferences.promptTouchID !== 'function') {
         return { ok: false, message: 'This Mac can’t confirm it’s you.' };
       }
       try {
-        await systemPreferences.promptTouchID(REASONS[action] || REASONS.show);
+        await systemPreferences.promptTouchID(macReason(action, name));
         return { ok: true };
       } catch (err) {
         const text = String((err && err.message) || '');
@@ -217,6 +243,7 @@ function createWinHello(koffi, libs = {}) {
  * Returns ask(hwnd, caption, message) → Promise<'verified' | 'canceled' | 'failed'>.
  */
 function createWinPassword(koffi, libs = {}) {
+  ffi.prepare(koffi); // (v1.10) the prompt needs a big stack: see ffi.js
   const credui = koffi.load(libs.credui || 'credui.dll');
   const advapi = koffi.load(libs.advapi32 || 'advapi32.dll');
   const kernel = koffi.load(libs.kernel32 || 'kernel32.dll');
@@ -286,6 +313,11 @@ function createWinPassword(koffi, libs = {}) {
   };
 
   return async function ask(hwnd, caption, message) {
+    // (v1.10) Without a big enough stack, the prompt would crash TaskPop: don't show it then.
+    if (!ffi.hasPromptStack(koffi)) {
+      console.error('TaskPop: not showing the Windows Security prompt: native calls have too little stack');
+      return 'failed';
+    }
     let lastError = 0;
     for (let tries = 0; tries < 5; tries += 1) {
       const { code, buffer, size } = await promptOnce(hwnd, caption, message, lastError);
@@ -307,7 +339,7 @@ function createWinVerifier(getKoffi, libs) {
     if (!password) password = createWinPassword(koffi, libs);
   };
   return {
-    async verify(win, action) {
+    async verify(win, action, name) {
       try {
         load();
       } catch (err) {
@@ -315,7 +347,7 @@ function createWinVerifier(getKoffi, libs) {
         return { ok: false, message: 'Windows couldn’t be asked to confirm it’s you.' };
       }
       const hwnd = handleOf(win);
-      const message = WIN_MESSAGES[action] || WIN_MESSAGES.show;
+      const message = winMessage(action, name);
       const result = await hello(hwnd, message);
       if (result === 'verified') return { ok: true };
       if (result === 'canceled') return { ok: false, canceled: true };
@@ -337,6 +369,6 @@ function createWinVerifier(getKoffi, libs) {
 }
 
 module.exports = {
-  createVerifier, createWinHello, createWinPassword, guidBytes,
+  createVerifier, createWinHello, createWinPassword, guidBytes, macReason, winMessage,
   IID_USER_CONSENT_VERIFIER_INTEROP, IID_ASYNC_OPERATION_OF_RESULT, IID_ASYNC_INFO, REASONS, WIN_MESSAGES,
 };

@@ -216,7 +216,7 @@ function createMacKeySource() {
   if (process.platform !== 'darwin') return null;
   let koffi;
   try {
-    koffi = require('koffi');
+    koffi = require('./ffi').getKoffi();
   } catch (err) {
     console.error('TaskPop: double-tap unavailable (native bridge failed to load)', err);
     return null;
@@ -289,7 +289,7 @@ function createWinKeySource(user32Override) {
     if (user32Override) {
       getKey = user32Override;
     } else {
-      const koffi = require('koffi');
+      const koffi = require('./ffi').getKoffi();
       const user32 = koffi.load('user32.dll');
       getKey = user32.func('int16_t __stdcall GetAsyncKeyState(int32_t vKey)');
     }

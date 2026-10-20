@@ -6,7 +6,7 @@
 function createWinFocus() {
   if (process.platform !== 'win32') return null;
   try {
-    const koffi = require('koffi');
+    const koffi = require('./ffi').getKoffi();
     const user32 = koffi.load('user32.dll');
     const kernel32 = koffi.load('kernel32.dll');
     const GetForegroundWindow = user32.func('intptr_t __stdcall GetForegroundWindow()');

@@ -797,14 +797,15 @@ body.reordering .row:hover { background: transparent; }
   font-weight: 600;
 }
 
-/* ---------- v1.9: the quick note ---------- */
-/* An arrow at the end of the "Add a task" bar opens a note under it. Hidden text is a chip:
-   ••••••, until you confirm it's you; then it shows, tinted, until it hides itself again. */
+/* ---------- v1.10: Secrets (the quick note in 1.9) ---------- */
+/* A lock at the end of the "Add a task" bar opens Secrets under it: named logins, passwords and
+   codes. Each shows its name; Show (after Touch ID or Windows Hello) shows its fields, each with
+   Copy. ⋯ has Edit and Delete. */
 .note-btn {
   flex: none;
-  width: 24px;
-  height: 24px;
-  margin-right: -4px;
+  width: 26px;
+  height: 26px;
+  margin-right: -5px;
   border: none;
   border-radius: 50%;
   background: transparent;
@@ -814,196 +815,207 @@ body.reordering .row:hover { background: transparent; }
   transition: background 0.15s, color 0.15s;
 }
 .note-btn:hover { background: var(--hover); color: var(--text); }
-.note-btn svg { width: 14px; height: 14px; stroke: currentColor; transition: transform 0.2s ease; }
-.note-btn.open { color: var(--accent); }
-.note-btn.open svg { transform: rotate(180deg); }
+.note-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.note-btn.open { color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, transparent); }
 
 .note-drawer {
   flex: none;
   display: flex;
   flex-direction: column;
-  height: min(230px, 40vh);
+  height: min(280px, 48vh);
   border-top: 1px solid var(--line);
   animation: row-in 0.18s ease;
 }
 .note-drawer[hidden] { display: none; }
-.note-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px 4px 16px;
-}
-.note-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 600; color: var(--text-2); }
-.note-status {
-  flex: none;
-  margin: -6px 16px 8px;
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--text-2);
-}
-.note-status:empty { display: none; }
-/* v1.9.2: what you can do from here, under the note (a message takes its place for a moment) */
-.note-hint {
-  flex: none;
-  margin: -6px 16px 8px;
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--text-2);
-}
-.note-hint:empty, .note-status:not(:empty) + .note-hint { display: none; }
-.note-action {
+
+.secrets-head { display: flex; align-items: center; gap: 6px; padding: 9px 12px 5px 16px; }
+.secrets-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 650; color: var(--text); }
+.secrets-new, .secrets-first {
   flex: none;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 22px;
-  padding: 0 9px 0 7px;
+  height: 24px;
+  padding: 0 10px 0 7px;
   border: none;
-  border-radius: 11px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--accent) 14%, transparent);
   color: var(--accent);
   font: inherit;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
 }
-.note-action:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 22%, transparent); }
-.note-action:disabled { background: var(--chip); color: var(--text-2); opacity: 0.7; }
-.note-action { white-space: nowrap; }
-.note-action.quiet { background: transparent; color: var(--text-2); font-weight: 500; }
-.note-action.quiet:hover { background: var(--hover); color: var(--text); }
-.note-action svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; }
+.secrets-new:hover, .secrets-first:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.secrets-new svg, .secrets-first svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.secrets-new[hidden] { display: none; }
 
-.note-add { display: flex; gap: 6px; align-items: center; padding: 2px 12px 6px 16px; }
-.note-add[hidden] { display: none; }
-.note-add input {
-  flex: 1;
-  min-width: 0;
-  height: 26px;
-  padding: 0 8px;
-  border: 1px solid var(--accent);
-  border-radius: 7px;
-  outline: none;
-  background: var(--sheet-bg);
-  color: var(--text);
-  font: inherit;
-  font-size: 12.5px;
-  user-select: text;
-  cursor: text;
+.secrets-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 6px; }
+.secrets-list[hidden] { display: none; }
+.secrets-list::-webkit-scrollbar { width: 0; }
+.secrets-empty { padding: 6px 8px 4px; font-size: 12px; line-height: 1.45; color: var(--text-2); }
+.secrets-empty b { color: var(--text); font-weight: 600; }
+.secrets-first { margin-top: 10px; height: 28px; padding: 0 12px 0 9px; font-size: 12.5px; }
+
+.secret-item { border-radius: 9px; padding: 1px 0; }
+.secret-item + .secret-item { margin-top: 2px; }
+.secret-item.shown {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent);
+  margin: 3px 0;
 }
-.note-add button {
+.secret-head { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 3px 4px 3px 8px; border-radius: 9px; }
+.secret-item:not(.shown):not(.plain) .secret-head { cursor: pointer; }
+.secret-item:not(.shown):not(.plain) .secret-head:hover { background: var(--hover); }
+.secret-icon { flex: none; width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; background: var(--chip); color: var(--text-2); }
+.secret-icon svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+.secret-item.shown .secret-icon { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+.secret-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.secret-title { font-size: 13px; font-weight: 550; line-height: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.secret-summary { font-size: 10.5px; line-height: 14px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.secret-ask { font-size: 11.5px; color: var(--text-2); white-space: nowrap; }
+
+.secret-btn {
   flex: none;
-  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
   padding: 0 10px;
   border: none;
-  border-radius: 7px;
+  border-radius: 12px;
   background: var(--accent);
   color: #fff;
   font: inherit;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
-.note-add button.secondary { background: transparent; color: var(--text-2); font-weight: 500; }
-
-.note-editor {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  margin: 2px 8px 10px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  outline: none;
-  font-size: 13px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-  user-select: text;
-  cursor: text;
-}
-.note-editor::-webkit-scrollbar { width: 0; }
-.note-editor:focus { background: var(--hover); }
-.note-editor.empty::before { content: attr(data-placeholder); color: var(--text-2); pointer-events: none; }
-
-/* A hidden piece: "🔒 •••••• Show". Click it to show it. */
-.secret {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  max-width: 100%;
-  padding: 0 6px 0 5px;
-  margin: 0 1px;
-  border-radius: 6px;
-  vertical-align: 0.5px;
-  line-height: 18px;
-  background: var(--chip);
+.secret-btn.show { padding-left: 8px; }
+.secret-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.secret-btn:disabled { opacity: 0.6; cursor: progress; }
+.secret-btn.quiet { background: var(--chip); color: var(--text); }
+.secret-btn.quiet:hover { background: color-mix(in srgb, var(--text) 13%, transparent); }
+.secret-btn.danger { background: #ff3b30; color: #fff; }
+.secret-more {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
   color: var(--text-2);
-  font-size: 12px;
-  white-space: pre-wrap;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  display: grid;
+  place-items: center;
 }
-.secret svg { flex: none; width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; }
-.secret:not(.shown) .secret-text { letter-spacing: 1px; }
-.secret-show {
-  margin-left: 2px;
-  padding-left: 6px;
-  border-left: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: normal;
-}
-.secret:not(.shown):hover { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--text); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
-.secret.checking { opacity: 0.55; cursor: progress; }
+.secret-more:hover { background: var(--hover); color: var(--text); }
+.secret-more svg { width: 15px; height: 15px; fill: currentColor; }
 
-/* …while it shows: plain text you can select (any part of it), with Copy and Hide */
-.secret.shown {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 1px;
-  padding: 2px 3px 2px 8px;
-  border-radius: 7px;
-  vertical-align: top;
-  background: color-mix(in srgb, var(--accent) 11%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 32%, transparent);
-  color: var(--text);
+.secret-fields { display: flex; flex-direction: column; gap: 2px; padding: 0 6px 6px 42px; }
+.secret-item.plain .secret-fields { padding-top: 0; }
+.secret-field { display: flex; align-items: center; gap: 6px; min-height: 30px; padding: 3px 4px 3px 8px; border-radius: 7px; background: var(--sheet-bg); }
+.secret-field.plain { background: transparent; padding-left: 0; }
+.secret-field-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.secret-label { font-size: 10px; line-height: 13px; font-weight: 600; color: var(--text-2); letter-spacing: 0.02em; text-transform: uppercase; }
+.secret-value {
   font-size: 13px;
-  line-height: 20px;
-  cursor: auto;
-}
-.secret-line { display: flex; align-items: center; gap: 1px; min-width: 0; }
-.secret.shown .secret-text {
-  flex: 1;
-  min-width: 0;
-  min-height: 20px;
-  margin-right: 5px;
+  line-height: 18px;
+  color: var(--text);
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
   user-select: text;
   cursor: text;
 }
-.secret.shown .secret-text::selection { background: color-mix(in srgb, var(--accent) 38%, transparent); }
-.secret.lines .secret-line + .secret-line { border-top: 1px solid color-mix(in srgb, var(--accent) 16%, transparent); }
-.secret-foot { display: flex; justify-content: flex-end; gap: 2px; margin-top: 1px; }
-.secret-btn {
+.secret-value::selection { background: color-mix(in srgb, var(--accent) 38%, transparent); }
+.secret-copy {
   flex: none;
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  height: 20px;
-  padding: 0 6px;
+  height: 22px;
+  padding: 0 8px 0 6px;
   border: none;
-  border-radius: 6px;
-  background: transparent;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
   color: var(--accent);
   font: inherit;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
-  line-height: 1;
-  white-space: nowrap;
-  user-select: none;
-  cursor: pointer;
 }
-.secret-btn:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
-.secret-btn svg { width: 11px; height: 11px; }
-.secret-btn.hide { color: var(--text-2); }
-.secret-btn.hide:hover { color: var(--text); background: var(--hover); }
+.secret-copy:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.secret-copy svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; }
+
+.secret-form { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 16px 10px; }
+.secret-form[hidden] { display: none; }
+.secret-form::-webkit-scrollbar { width: 0; }
+.secret-form-title { font-size: 12px; font-weight: 600; color: var(--text-2); }
+#secretFormFields { display: flex; flex-direction: column; gap: 8px; }
+.secret-input { display: flex; flex-direction: column; gap: 3px; }
+.secret-input > span { font-size: 11px; font-weight: 600; color: var(--text-2); }
+.secret-input input, .secret-input textarea {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  outline: none;
+  background: var(--sheet-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  user-select: text;
+  cursor: text;
+}
+.secret-input textarea { height: auto; padding: 6px 9px; resize: none; line-height: 1.4; }
+.secret-input input:focus, .secret-input textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.secret-input-box { position: relative; display: block; }
+.secret-input-box input { padding-right: 32px; }
+.secret-eye {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 24px;
+  height: 22px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-2);
+  display: grid;
+  place-items: center;
+}
+.secret-eye:hover, .secret-eye.on { color: var(--accent); }
+.secret-eye svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.4; }
+.secret-form-note { font-size: 11px; color: #ff3b30; }
+.secret-form-note:empty { display: none; }
+.secret-form-buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
+.secret-form-buttons button {
+  height: 28px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 7px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.secret-form-buttons button.secondary { background: var(--chip); color: var(--text); font-weight: 500; }
+.secret-form-buttons button:disabled { opacity: 0.6; }
+
+.note-status {
+  flex: none;
+  margin: 0 16px 8px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-2);
+}
+.note-status:empty { display: none; }
+/* what you can do from here (a message takes its place for a moment) */
+.note-hint {
+  flex: none;
+  margin: 0 16px 8px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-2);
+}
+.note-hint:empty, .note-status:not(:empty) + .note-hint { display: none; }

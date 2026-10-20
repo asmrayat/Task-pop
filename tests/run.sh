@@ -61,7 +61,7 @@ app_test() { # name file platform [VAR=value ...]
 for group in $GROUPS_TO_RUN; do
   case $group in
     unit)
-      for t in when-test doubletap-test win-source-test appnap-test eventtap-test; do node_test "$t"; done
+      for t in when-test doubletap-test win-source-test appnap-test eventtap-test secrets-test; do node_test "$t"; done
       # the desktop (Spaces) handling against a stand-in Objective-C runtime (needs cc and app/node_modules)
       if cc -shared -fPIC -o "$TMP/libfakeobjc.so" tests/stubs/fakeobjc.c 2>"$LOG/fakeobjc-build.log"; then
         TP_FAKEOBJC="$TMP/libfakeobjc.so" node_test spaces-test
@@ -100,7 +100,10 @@ for group in $GROUPS_TO_RUN; do
       app_test store store-app win32
       for p in darwin win32; do app_test "timers-$p" timer-app $p; done
       app_test desktops spaces-app darwin
-      for p in darwin win32; do app_test "quick-note-$p" note-app $p; done
+      for p in darwin win32; do
+        app_test "secrets-$p" secrets-app $p
+        app_test "secrets-from-note-$p" secrets-app $p TP_MODE=migrate
+      done
       for p in darwin win32; do
         app_test "categories-$p" category-app $p
         app_test "categories-new-$p" category-app $p TP_MODE=fresh

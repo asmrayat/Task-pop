@@ -20,7 +20,7 @@
     <section class="hero wrap" id="top">
       <div class="hero-copy">
         <h1>Your to-do list, there when you start your computer.</h1>
-        <p class="lede">TaskPop slides in when you start your computer, and comes back with a double-tap of Control from any app. Tick things off, set a timer, keep a private note, and get back to work.</p>
+        <p class="lede">TaskPop slides in when you start your computer, and comes back with a double-tap of Control from any app. Tick things off, set a timer, keep your passwords at hand, and get back to work.</p>
         <div class="hero-actions">
           <a class="btn btn-primary mac-download" href="https://github.com/asmrayat/Task-pop/releases/latest">Download for Mac</a>
           <a class="btn btn-quiet win-download" href="https://github.com/asmrayat/Task-pop/releases/latest">Download for Windows</a>
@@ -62,7 +62,7 @@
 
         <div class="demo-controls">
           <button class="btn btn-quiet btn-small" id="replayBtn" type="button">Close and reopen the lid</button>
-          <p class="demo-hint">This is a working demo: tick a task, switch tags, or open the note with the arrow<span class="hint-keys">. Double-tap <kbd class="tap-key" id="tapKeyHint">control</kbd> to hide and show it</span>.</p>
+          <p class="demo-hint">This is a working demo: tick a task, switch tags, or open Secrets with the lock<span class="hint-keys">. Double-tap <kbd class="tap-key" id="tapKeyHint">control</kbd> to hide and show it</span>.</p>
         </div>
       </div>
     </section>
@@ -166,24 +166,24 @@
 
           <li class="spec-row">
             <div class="spec-text">
-              <h3>A quick note, with hidden text</h3>
-              <p>Click the arrow under your list (or press ⌘J, Ctrl+J on Windows) for a note that’s always at hand. Select a password or a PIN and click Hide selected: it’s encrypted at once and shows as dots. Click Show, confirm with Touch ID or your password (Windows Hello on a PC), then copy all of it, one line, or just the part you select.</p>
+              <h3>Secrets: your passwords, at hand</h3>
+              <p>Click the lock under your list (or press ⌘J, Ctrl+J on Windows) for your logins, PINs and Wi-Fi codes, each with a name. New asks for a username and a password and encrypts them as soon as you save. Click Show, confirm with Touch ID or your password (Windows Hello on a PC), and copy the username or the password with one click.</p>
             </div>
             <div class="spec-visual">
-              <div class="frag-note" aria-hidden="true">
-                <div class="frag-note-head">
-                  <span>Quick note</span>
-                  <span class="frag-hide"><svg viewBox="0 0 16 16"><rect x="3.4" y="7" width="9.2" height="6.6" rx="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>Hide selected</span>
+              <div class="frag-secrets" aria-hidden="true">
+                <div class="frag-secrets-head"><span>Secrets</span><span class="frag-new">+ New</span></div>
+                <div class="frag-secret-item shown">
+                  <div class="frag-secret-row"><i class="frag-lock open"></i><b>Uni login</b><span class="frag-btn quiet">Hide</span></div>
+                  <div class="frag-field"><span><small>Username</small>saif@uni.ac.uk</span><span class="frag-copy">Copy</span></div>
+                  <div class="frag-field"><span><small>Password</small>m4ngo-Tree!</span><span class="frag-copy">Copy</span></div>
                 </div>
-                <div class="frag-note-body">
-                  Wi-Fi: Home-5G<br>
-                  Password: <span class="frag-secret"><svg viewBox="0 0 12 12"><rect x="2.2" y="5.2" width="7.6" height="5.4" rx="1.3"/><path d="M4 5.2V3.9a2 2 0 0 1 4 0v1.3"/></svg>••••••<span class="frag-show">Show</span></span><br>
-                  Door code: <span class="frag-secret"><svg viewBox="0 0 12 12"><rect x="2.2" y="5.2" width="7.6" height="5.4" rx="1.3"/><path d="M4 5.2V3.9a2 2 0 0 1 4 0v1.3"/></svg>••••••<span class="frag-show">Show</span></span>
+                <div class="frag-secret-item">
+                  <div class="frag-secret-row"><i class="frag-lock"></i><b>Home Wi-Fi<small>Password</small></b><span class="frag-btn">Show</span></div>
                 </div>
               </div>
               <div class="frag-auth" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>
-                <span><strong>Touch ID</strong> to show your hidden text</span>
+                <span><strong>Touch ID</strong> to show “Home Wi-Fi”</span>
               </div>
             </div>
           </li>
@@ -262,7 +262,7 @@
           <li class="spec-row">
             <div class="spec-text">
               <h3>Fast with the keyboard</h3>
-              <p>Arrows to move, Space to tick, Return to edit, T for a timer, ← and → to switch categories, ⌘J for the note and ⌘Z to undo (Ctrl on Windows). Drag tasks to reorder them, or move them with ⌥↑ and ⌥↓.</p>
+              <p>Arrows to move, Space to tick, Return to edit, T for a timer, ← and → to switch categories, ⌘J for Secrets and ⌘Z to undo (Ctrl on Windows). Drag tasks to reorder them, or move them with ⌥↑ and ⌥↓.</p>
             </div>
             <div class="spec-visual keys small">
               <kbd class="key">↑</kbd><kbd class="key">↓</kbd><kbd class="key wide">Space</kbd><kbd class="key">T</kbd><kbd class="key">←</kbd><kbd class="key">→</kbd><kbd class="key">⌘J</kbd><kbd class="key">⌘Z</kbd>
@@ -290,7 +290,7 @@
                 <img src="/assets/taskpop-icon.png" alt="" width="34" height="34">
                 <div>
                   <strong>New update is here</strong>
-                  <span>TaskPop <span id="updateVersion">1.9.1</span> is ready, with a list of what’s new.</span>
+                  <span>TaskPop <span id="updateVersion">1.10.0</span> is ready, with a list of what’s new.</span>
                   <div class="frag-update-actions"><span>Update later</span><span class="primary">Update now</span></div>
                 </div>
               </div>
@@ -305,13 +305,13 @@
       <div class="privacy-card">
         <div class="privacy-copy">
           <h2 id="privacy-title">Your tasks stay on your computer.</h2>
-          <p>There’s no account to create and nothing is sent to a server. TaskPop saves every change on your computer, keeps a backup of the previous save, and lets you export your list whenever you want. Text you hide in the quick note is encrypted with a key that macOS keeps in your keychain, or Windows keeps for your account, and TaskPop only ever learns whether Touch ID or Windows Hello said yes.</p>
+          <p>There’s no account to create and nothing is sent to a server. TaskPop saves every change on your computer, keeps a backup of the previous save, and lets you export your list whenever you want. Your secrets are encrypted with a key that macOS keeps in your keychain, or Windows keeps for your account, and TaskPop only ever learns whether Touch ID or Windows Hello said yes.</p>
         </div>
         <ul class="privacy-list">
           <li>No sign-up</li>
           <li>No cloud</li>
           <li>No tracking</li>
-          <li>Hidden text encrypted</li>
+          <li>Secrets encrypted</li>
           <li>Automatic backup</li>
           <li>Export and import</li>
         </ul>
@@ -392,8 +392,8 @@
           <p>That’s what lets the double-tap work while you’re in another app. TaskPop only reads whether keys like Control are held down, plus a count of other key presses so shortcuts don’t count as taps. It never records what you type. If the double-tap stops working after an update, open System Settings → Privacy &amp; Security → Input Monitoring, remove TaskPop with −, add it back with + and restart TaskPop. The keyboard shortcut and the menu bar icon work without this permission.</p>
         </details>
         <details>
-          <summary>How private is hidden text in the quick note?</summary>
-          <p>Hidden text is encrypted the moment you hide it, with a key that macOS keeps in your keychain, or Windows keeps for your account. It’s never saved, backed up or copied as plain text. To show or copy it, TaskPop asks your Mac for Touch ID or your password (Windows Hello or your Windows password on a PC) and is only told yes or no. While it shows you can select any part of it, so an email and the password under it can be copied separately. It hides itself again after a minute, and copied text is taken off the clipboard after a minute too. For a password, click Add hidden to type it straight into a password box.</p>
+          <summary>How private are Secrets?</summary>
+          <p>A secret’s username and password are encrypted as soon as you save it, with a key that macOS keeps in your keychain, or Windows keeps for your account. They’re never saved, backed up or exported as plain text; only the name you give a secret is. To show one, TaskPop asks your Mac for Touch ID or your password (Windows Hello or your Windows password on a PC) and is only told yes or no. It hides itself again after a minute, and anything you copy is taken off the clipboard after a minute too. Used the quick note in TaskPop 1.9? Version 1.10 turns it into secrets for you.</p>
         </details>
         <details>
           <summary>How do categories and timers work?</summary>

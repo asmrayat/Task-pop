@@ -110,8 +110,21 @@ HRESULT RoGetActivationFactory(void *class_id, const uint8_t *iid, void **out) {
 
 // ---------- the password dialog and LogonUser ----------
 struct credui_info { uint32_t cbSize; uint64_t hwndParent; const uint16_t *message; const uint16_t *caption; void *banner; };
+// The real dialog (credential providers, its window, a message loop) needs a lot of stack: the
+// stand-in can be made to use as much (v1.10: koffi's default 128 KiB for worker-thread calls was
+// far too little, and the real dialog crashed TaskPop).
+static int g_prompt_stack_kib = 0;
+void fake_prompt_stack(int kib) { g_prompt_stack_kib = kib; }
+static __attribute__((noinline)) int use_stack(int kib) {
+  if (kib <= 0) return 0;
+  volatile char frame[16 * 1024];
+  for (int i = 0; i < (int)sizeof frame; i += 256) frame[i] = (char)i;
+  return frame[256] + use_stack(kib - 16);
+}
+
 uint32_t CredUIPromptForWindowsCredentialsW(struct credui_info *info, uint32_t auth_error, uint32_t *pkg, const void *in, uint32_t in_size,
                                             void **out, uint32_t *out_size, int32_t *save, uint32_t flags) {
+  if (g_prompt_stack_kib) use_stack(g_prompt_stack_kib);
   if (!info || info->cbSize != sizeof *info) bad("CREDUI_INFOW: wrong cbSize");
   if (info && info->hwndParent != g_expect_hwnd) bad("CREDUI_INFOW: wrong parent window");
   if (flags != 0x200) bad("CredUIPromptForWindowsCredentialsW: not CREDUIWIN_ENUMERATE_CURRENT_USER");

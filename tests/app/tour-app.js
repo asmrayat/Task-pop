@@ -115,7 +115,7 @@ const state = (win = tourWin()) => win.webContents.executeJavaScript(`(() => {
     tray: document.getElementById('trayHint').textContent,
     toggles: [...document.querySelectorAll('.toggle')].filter(vis).map((t) => ({ label: t.querySelector('b').textContent, on: t.querySelector('input').checked, ...box(t.querySelector('i')) })),
     storeNote: vis(document.getElementById('storeLogin')),
-    howto: [...document.querySelectorAll('.howto li')].map((li) => li.textContent.trim()),
+    howto: active ? [...active.querySelectorAll('.howto li')].map((li) => li.textContent.trim()) : [],
     focused: document.activeElement && document.activeElement.id,
   };
 })()`, true);
@@ -236,27 +236,35 @@ async function run() {
   check('step 4: “Using your list”, eight basics (categories and moving the panel too)', s.step === 'step-use' && s.howto.length === 8 && /^WorkClick a category at the top/.test(s.howto[4]) && /Drag the top of the panel/.test(s.howto[6]) && s.howto[0].endsWith(`Type a task and press ${mac ? 'Return' : 'Enter'} to add it`), s.howto[0]);
   await shot(tourWin(), `${tag}-4-use.png`);
 
-  // Step 5: done
+  // Step 5 (v1.10): Secrets
   await clickButton('nextBtn');
   s = await state();
-  check('step 5: “You’re all set”, with the key you picked', s.step === 'step-done' && s.lead === `Double-tap ${mac ? '⇧ Shift' : 'Shift'} any time to open TaskPop. Your tasks stay on this ${mac ? 'Mac' : 'PC'}.`, s.lead);
+  check('step 5 (v1.10): “Keep your passwords at hand”: where Secrets is, and New, Show, Copy', s.step === 'step-secrets' && s.title === 'Keep your passwords at hand'
+    && new RegExp(`encrypted on this ${mac ? 'Mac' : 'PC'}`).test(s.lead) && s.howto.length === 4
+    && s.howto[0].includes(`Click the lock at the end of “Add a task” to open Secrets (or press ${mac ? '⌘J' : 'Ctrl+J'})`)
+    && /^\+ NewGive it a name/.test(s.howto[1]) && (mac ? /Touch ID or your Mac password/ : /Windows Hello or your Windows password/).test(s.howto[2]) && /^CopyCopy the username or the password/.test(s.howto[3]), s.howto.join(' | '));
+  await shot(tourWin(), `${tag}-5-secrets.png`);
+
+  // Step 6: done
+  await clickButton('nextBtn');
+  s = await state();
+  check('step 6: “You’re all set”, with the key you picked', s.step === 'step-done' && s.lead === `Double-tap ${mac ? '⇧ Shift' : 'Shift'} any time to open TaskPop. Your tasks stay on this ${mac ? 'Mac' : 'PC'}.`, s.lead);
   check('… and Back, Open Settings, Open TaskPop', s.buttons.backBtn && s.buttons.settingsBtn && s.buttons.nextBtn.text === 'Open TaskPop');
-  await shot(tourWin(), `${tag}-5-done.png`);
+  await shot(tourWin(), `${tag}-6-done.png`);
   nativeTheme.themeSource = 'dark';
   await wait(400);
-  await shot(tourWin(), `${tag}-5-done-dark.png`);
+  await shot(tourWin(), `${tag}-6-done-dark.png`);
   await clickButton('backBtn');
-  check('Back goes back a step', (await state()).step === 'step-use');
+  check('Back goes back a step', (await state()).step === 'step-secrets');
   nativeTheme.themeSource = 'dark';
+  await shot(tourWin(), `${tag}-5-secrets-dark.png`);
+  await clickButton('backBtn');
   await shot(tourWin(), `${tag}-4-use-dark.png`);
   await clickButton('backBtn');
   await clickButton('backBtn');
   await shot(tourWin(), `${tag}-2-open-dark.png`);
   nativeTheme.themeSource = 'system';
-  await clickButton('nextBtn');
-  await clickButton('nextBtn');
-  await clickButton('nextBtn');
-  await clickButton('nextBtn');
+  for (let i = 0; i < 5; i += 1) await clickButton('nextBtn');
   await wait(700);
   check('“Open TaskPop” closes the tour and opens the panel, ready to type', !tourWin() && panelOpen()
     && (await panelWin().webContents.executeJavaScript('document.activeElement && document.activeElement.id', true)) === 'newTask');

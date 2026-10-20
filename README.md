@@ -39,10 +39,10 @@
   <img src="docs/assets/readme/panel-windows.png" width="196" alt="The task panel on Windows, with the same categories and timer">
 </p>
 
-TaskPop is the list you don't have to remember to open. It lives in the menu bar on a Mac and next to the clock on Windows, slides in when you open your laptop, and comes and goes with a double-tap of Control (or a key you pick). Sort tasks into categories, give the urgent ones a timer, set a reminder, send a task to Google Calendar, and keep passwords and codes in a quick note where they stay encrypted. No account, no cloud, no tracking.
+TaskPop is the list you don't have to remember to open. It lives in the menu bar on a Mac and next to the clock on Windows, slides in when you open your laptop, and comes and goes with a double-tap of Control (or a key you pick). Sort tasks into categories, give the urgent ones a timer, set a reminder, send a task to Google Calendar, and keep your passwords and codes in Secrets, where they stay encrypted. No account, no cloud, no tracking.
 
 <p align="center">
-  <img src="docs/assets/readme/demo.gif" width="600" alt="Double-tapping Control opens TaskPop from the side of the screen; a task is typed with #personal and lands in Personal, another is ticked off, the Work tag shows only work tasks, the quick note opens with hidden text shown as dots, and a double-tap puts it away">
+  <img src="docs/assets/readme/demo.gif" width="600" alt="Double-tapping Control opens TaskPop from the side of the screen; a task is typed with #personal and lands in Personal, another is ticked off, the Work tag shows only work tasks, Secrets opens and a login is shown with Copy buttons for its username and password, and a double-tap puts it away">
 </p>
 
 ## Everything it does
@@ -63,7 +63,7 @@ TaskPop is the list you don't have to remember to open. It lives in the menu bar
 - **Daily routines.** Tasks set to repeat every day un-tick themselves each morning, reminder included.
 - **Morning summary.** One notification at the time you choose, listing what's left.
 - **Reorder** by dragging, or with ⌥↑ / ⌥↓ (Alt+↑ / Alt+↓). The blue line shows exactly where a task will land.
-- **Keyboard first.** Arrows to move, Space to tick, Return to edit, Delete to remove, ⌘Z / Ctrl+Z to undo, N to start a new task, T to set a timer, G to send the selected task to Google Calendar, ← / → to switch categories, ⌘J / Ctrl+J for the quick note.
+- **Keyboard first.** Arrows to move, Space to tick, Return to edit, Delete to remove, ⌘Z / Ctrl+Z to undo, N to start a new task, T to set a timer, G to send the selected task to Google Calendar, ← / → to switch categories, ⌘J / Ctrl+J for Secrets.
 - **Tidy by itself.** Delete completed tasks automatically after a day or a week, or clear them with one click.
 
 ### Categories
@@ -77,16 +77,19 @@ Updating from an older version? Your tasks start in no category, and a **Sort yo
   <img src="docs/assets/readme/categories-sort.png" width="280" alt="The Sort your tasks card asking which category a task goes in, with Personal, Work and New, and Skip or Do the rest later">
 </p>
 
-### A quick note, with hidden text
+### Secrets: your passwords, at hand
 
-The small arrow at the end of the "Add a task" bar (or ⌘J, Ctrl+J on Windows) opens a note under your list for the things you want at hand. Select anything in it, like a password or a PIN, and click **Hide selected**: it's encrypted at once and shows as **•••••• Show**. Or click **Add hidden** to type a password straight into a password box, so it's never in the note as plain text.
+Click the lock at the end of the "Add a task" bar (or press ⌘J, Ctrl+J on Windows) for **Secrets**: your logins, PINs and Wi-Fi codes, each with a name you can see.
 
-To see it again, click **Show** and confirm it's you with Touch ID or your Mac password (Windows Hello or your Windows password on Windows). While it shows, it's ordinary text: select any part of it and press ⌘C (Ctrl+C) to copy just that, or use its **Copy** buttons. Text on several lines, like an email over a password, has a **Copy** button on each line. It hides itself again after a minute or when you click **Hide**, and anything you copy comes off the clipboard after a minute. Right-clicking hidden text copies it without showing it. A line under the note always says what you can do next.
+- **New** asks for a name, a username or email, and a password. Both are encrypted as soon as you click **Save**.
+- **Show** asks for Touch ID or your Mac password (Windows Hello or your Windows password on Windows), then shows the username and the password, each with its own **Copy**. Anything you copy comes off the clipboard after a minute.
+- It hides itself again after a minute, when you click **Hide**, and whenever the panel closes.
+- **⋯** has **Edit…** and **Delete…**.
 
-Hidden text is never saved as plain text: the key that encrypts it is kept by macOS in your keychain, or by Windows for your account.
+Secrets are never saved as plain text: the key that encrypts them is kept by macOS in your keychain, or by Windows for your account. If you used the quick note in TaskPop 1.9, 1.10 turns it into secrets for you.
 
 <p align="center">
-  <img src="docs/assets/readme/quick-note.png" width="280" alt="The quick note open under the task list: a Wi-Fi name in plain text, a shop login shown after Touch ID with a Copy button for the email and one for the password, and a door code still hidden as dots with a Show label">
+  <img src="docs/assets/readme/secrets.png" width="280" alt="Secrets open under the task list: Uni login shown after Touch ID, with a Copy button for the username and one for the password, and Home Wi-Fi and Bank PIN still hidden, each with a Show button">
 </p>
 
 ### Timers for what can't wait
@@ -111,7 +114,7 @@ When a new version is out, TaskPop asks with a small pop-up: **Update now**, or 
 
 ### A guided start
 
-The first time it runs, a one-minute tour shows how to open TaskPop. You pick your double-tap key and try it on a big on-screen key that presses down with yours. If macOS needs your permission first, the tour says so and opens the right page in System Settings. You can take it again any time from Settings.
+The first time it runs, a one-minute tour shows how to open TaskPop. You pick your double-tap key and try it on a big on-screen key that presses down with yours. If macOS needs your permission first, the tour says so and opens the right page in System Settings. It also shows where your Secrets are and how to use them. You can take it again any time from Settings.
 
 <p align="center">
   <img src="docs/assets/readme/tour.png" width="720" alt="The welcome tour: choose a key, double-tap it, and the on-screen key confirms it worked">

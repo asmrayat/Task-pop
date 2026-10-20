@@ -4,6 +4,27 @@ All notable changes to TaskPop are listed here. The format follows [Keep a Chang
 
 Installers for every version are on the [releases page](https://github.com/asmrayat/Task-pop/releases).
 
+## [1.10.0] - 2026-10-20
+
+### Changed
+
+- **The quick note is now Secrets**, and much simpler: a list of your logins, passwords and codes, each with a name you can see.
+  - Click the lock at the end of the "Add a task" bar (or ⌘J, Ctrl+J on Windows) to open it.
+  - **New** asks for a name, a username or email, and a password. Both are encrypted as soon as you click **Save**, with the eye to check what you typed.
+  - **Show** asks for Touch ID or your Mac password (Windows Hello or your Windows password on Windows), then shows the username and the password, each with its own **Copy** button. Anything you copy comes off the clipboard after a minute. **Hide** hides it again; it also hides itself after a minute, and whenever the panel closes.
+  - **⋯** (or a right-click) has **Edit…** (which asks first, too) and **Delete…**.
+  - The system's dialog names the secret: "TaskPop is trying to show “Uni login”".
+- Your quick note becomes secrets the first time 1.10 runs, with nothing decrypted to do it: each hidden piece becomes a secret named after the words before it (or the line above it), a piece with an email and a password on two lines shows each line with its own **Copy**, and the rest of the note is kept, unhidden, under **Notes**. The old note is then deleted.
+
+### Added
+
+- The welcome tour has a step on Secrets: where they are, and New, Show and Copy.
+
+### Fixed
+
+- Windows: TaskPop closed as soon as it asked for your Windows password (on PCs without Windows Hello, or when Windows Hello couldn't be used). The "Windows Security" dialog runs on a background thread so TaskPop keeps drawing, and that thread had far too small a stack for it (128 KB): the dialog ran off its end and Windows closed TaskPop. Native calls now get stacks big enough (8 MB in the background, 4 MB otherwise), and if that ever couldn't be set up, TaskPop says so instead of showing the dialog.
+- Keys pressed after clicking in Secrets (Space, Delete, the arrows) no longer act on the selected task.
+
 ## [1.9.2] - 2026-10-14
 
 ### Fixed
@@ -184,6 +205,7 @@ The first public release.
 - Export and import your tasks, and delete completed ones automatically after a day or a week.
 - Tasks saved locally the moment they change, with a backup of the previous save.
 
+[1.10.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.10.0
 [1.9.2]: https://github.com/asmrayat/Task-pop/releases/tag/v1.9.2
 [1.9.1]: https://github.com/asmrayat/Task-pop/releases/tag/v1.9.1
 [1.9.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.9.0
