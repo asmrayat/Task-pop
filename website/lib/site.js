@@ -501,7 +501,7 @@ export function startSite() {
     icon.width = 38;
     icon.height = 38;
     const what = el('strong', 'tp-auth-what', '');
-    const how = el('p', null, isWindows ? 'Use Windows Hello or your PIN.' : 'Touch ID or enter your password to allow this.');
+    const how = el('p', null, isWindows ? 'Use your Windows Hello PIN, fingerprint or face.' : 'Touch ID or enter your password to allow this.');
     const finger = button('tp-finger', ICONS.finger, isWindows ? 'Confirm with Windows Hello' : 'Confirm with Touch ID');
     finger.addEventListener('click', () => {
       finger.classList.add('ok');

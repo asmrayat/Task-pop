@@ -82,7 +82,7 @@ Updating from an older version? Your tasks start in no category, and a **Sort yo
 Click the lock at the end of the "Add a task" bar (or press ⌘J, Ctrl+J on Windows) for **Secrets**: your logins, PINs and Wi-Fi codes, each with a name you can see.
 
 - **New** asks for a name, a username or email, and a password. Both are encrypted as soon as you click **Save**.
-- **Show** asks for Touch ID or your Mac password (Windows Hello or your Windows password on Windows), then shows the username and the password, each with its own **Copy**. Anything you copy comes off the clipboard after a minute.
+- **Show** asks for Touch ID or your Mac password (Windows Hello on Windows: a PIN, fingerprint or face), then shows the username and the password, each with its own **Copy**. Anything you copy comes off the clipboard after a minute.
 - It hides itself again after a minute, when you click **Hide**, and whenever the panel closes.
 - **⋯** has **Edit…** and **Delete…**.
 

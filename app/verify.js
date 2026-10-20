@@ -3,7 +3,11 @@
 // Mac: Touch ID, or your Mac password (systemPreferences.promptTouchID asks macOS for "user
 // presence", which offers the password when Touch ID isn't there or isn't used).
 // Windows: Windows Hello (PIN, fingerprint or face), shown over TaskPop's panel. Without Windows
-// Hello, your Windows password, checked by Windows itself.
+// Hello, TaskPop says how to set it up (a PIN is enough).
+//
+// v1.10.1: TaskPop used to fall back to its own "Windows Security" password dialog when Windows
+// Hello wasn't set up. That dialog crashed TaskPop on some PCs, so it's gone: Windows Hello is
+// the one way to confirm it's you on Windows, and Windows itself handles it from start to end.
 //
 // verify(win, action, name) resolves to { ok: true }, { ok: false, canceled: true } or
 // { ok: false, message }. It never throws. name is the secret's name, for the dialog's text.
@@ -85,17 +89,8 @@ const SLOT = { queryInterface: 0, release: 2, requestForWindow: 6, getResults: 8
 const ASYNC = { started: 0, completed: 1, canceled: 2, error: 3 };
 // UserConsentVerificationResult
 const HELLO = ['verified', 'deviceNotPresent', 'notConfiguredForUser', 'disabledByPolicy', 'deviceBusy', 'retriesExhausted', 'canceled'];
-const NO_HELLO = ['deviceNotPresent', 'notConfiguredForUser', 'disabledByPolicy'];
 
-const CREDUIWIN_ENUMERATE_CURRENT_USER = 0x200;
-const CRED_PACK_PROTECTED_CREDENTIALS = 0x1;
-const ERROR_CANCELLED = 1223;
-const ERROR_LOGON_FAILURE = 1326;
-const LOGON32_LOGON_INTERACTIVE = 2;
-const LOGON32_PROVIDER_DEFAULT = 0;
-const NAME_CHARS = 1024;
 const RO_INIT_SINGLETHREADED = 0; // the apartment Electron's main thread already is (so this changes nothing there)
-let CredUiInfo = null; // koffi struct type, made once per process
 
 /** A GUID's 16 bytes, as Windows lays them out. */
 function guidBytes(text) {
@@ -238,137 +233,40 @@ function createWinHello(koffi, libs = {}) {
   };
 }
 
-/**
- * Your Windows password, in Windows' own "Windows Security" dialog, checked by Windows (LogonUser).
- * Returns ask(hwnd, caption, message) → Promise<'verified' | 'canceled' | 'failed'>.
- */
-function createWinPassword(koffi, libs = {}) {
-  ffi.prepare(koffi); // (v1.10) the prompt needs a big stack: see ffi.js
-  const credui = koffi.load(libs.credui || 'credui.dll');
-  const advapi = koffi.load(libs.advapi32 || 'advapi32.dll');
-  const kernel = koffi.load(libs.kernel32 || 'kernel32.dll');
-  const ole = koffi.load(libs.ole32 || 'ole32.dll');
-  const unpack = credui.func('CredUnPackAuthenticationBufferW', 'int32_t',
-    ['uint32_t', 'void *', 'uint32_t', 'void *', 'void *', 'void *', 'void *', 'void *', 'void *']);
-  const parseName = credui.func('CredUIParseUserNameW', 'uint32_t', ['void *', 'void *', 'uint32_t', 'void *', 'uint32_t']);
-  const logon = advapi.func('LogonUserW', 'int32_t', ['void *', 'void *', 'void *', 'uint32_t', 'uint32_t', 'void *']);
-  const closeHandle = kernel.func('CloseHandle', 'int32_t', ['void *']);
-  const free = ole.func('CoTaskMemFree', 'void', ['void *']);
-  if (!CredUiInfo) {
-    CredUiInfo = koffi.struct('TaskPopCredUiInfo', {
-      cbSize: 'uint32_t', hwndParent: 'void *', pszMessageText: 'const char16_t *', pszCaptionText: 'const char16_t *', hbmBanner: 'void *',
-    });
-  }
-  const promptInfo = koffi.pointer(CredUiInfo);
-  const prompt = credui.func('CredUIPromptForWindowsCredentialsW', 'uint32_t',
-    [promptInfo, 'uint32_t', 'void *', 'void *', 'uint32_t', 'void *', 'void *', 'void *', 'uint32_t']);
-
-  /** One "Windows Security" prompt (run off the main thread, so TaskPop keeps drawing). */
-  const promptOnce = (hwnd, caption, message, lastError) => new Promise((resolve) => {
-    // CREDUI_INFOW { DWORD cbSize; HWND hwndParent; PCWSTR pszMessageText; PCWSTR pszCaptionText; HBITMAP hbmBanner; }
-    const info = { cbSize: koffi.sizeof(CredUiInfo), hwndParent: hwnd, pszMessageText: message, pszCaptionText: caption, hbmBanner: null };
-    const pkg = Buffer.alloc(4);
-    const outBuffer = Buffer.alloc(8);
-    const outSize = Buffer.alloc(4);
-    const save = Buffer.alloc(4);
-    prompt.async(info, lastError, pkg, null, 0, outBuffer, outSize, save, CREDUIWIN_ENUMERATE_CURRENT_USER, (err, code) => {
-      if (err) resolve({ code: -1 });
-      else resolve({ code, buffer: outBuffer.readBigUInt64LE(0), size: outSize.readUInt32LE(0) });
-    });
-  });
-
-  /** Is that the password of an account on this PC? The typed password is wiped right after. */
-  const check = (buffer, size) => {
-    const user = Buffer.alloc(NAME_CHARS * 2);
-    const domain = Buffer.alloc(NAME_CHARS * 2);
-    const password = Buffer.alloc(NAME_CHARS * 2);
-    const lengths = [user, domain, password].map(() => {
-      const b = Buffer.alloc(4);
-      b.writeUInt32LE(NAME_CHARS, 0);
-      return b;
-    });
-    try {
-      if (!unpack(CRED_PACK_PROTECTED_CREDENTIALS, buffer, size, user, lengths[0], domain, lengths[1], password, lengths[2])) return false;
-      let name = user;
-      let place = readWide(domain) ? domain : null;
-      if (!place) {
-        // "PC\\name" or "MicrosoftAccount\\you@example.com": split it
-        const justName = Buffer.alloc(NAME_CHARS * 2);
-        const justDomain = Buffer.alloc(NAME_CHARS * 2);
-        if (parseName(user, justName, NAME_CHARS, justDomain, NAME_CHARS) === 0) {
-          name = justName;
-          place = readWide(justDomain) ? justDomain : null;
-        }
-      }
-      const token = Buffer.alloc(8);
-      const ok = !!logon(name, place, password, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, token);
-      if (ok) closeHandle(token.readBigUInt64LE(0));
-      return ok;
-    } finally {
-      password.fill(0);
-      // the dialog's own buffer holds the password too: wipe it before handing it back
-      new Uint8Array(koffi.view(buffer, size)).fill(0);
-      free(buffer);
-    }
-  };
-
-  return async function ask(hwnd, caption, message) {
-    // (v1.10) Without a big enough stack, the prompt would crash TaskPop: don't show it then.
-    if (!ffi.hasPromptStack(koffi)) {
-      console.error('TaskPop: not showing the Windows Security prompt: native calls have too little stack');
-      return 'failed';
-    }
-    let lastError = 0;
-    for (let tries = 0; tries < 5; tries += 1) {
-      const { code, buffer, size } = await promptOnce(hwnd, caption, message, lastError);
-      if (code === ERROR_CANCELLED) return 'canceled';
-      if (code !== 0 || !buffer) return 'failed';
-      if (check(buffer, size)) return 'verified';
-      lastError = ERROR_LOGON_FAILURE; // the dialog then says the password was wrong
-    }
-    return 'failed';
-  };
-}
+/** Where Windows lets you set up Windows Hello (Settings → Accounts → Sign-in options). */
+const HELLO_SETTINGS = 'ms-settings:signinoptions';
 
 function createWinVerifier(getKoffi, libs) {
   let hello = null;
-  let password = null;
-  const load = () => {
-    const koffi = getKoffi();
-    if (!hello) hello = createWinHello(koffi, libs);
-    if (!password) password = createWinPassword(koffi, libs);
-  };
   return {
     async verify(win, action, name) {
       try {
-        load();
+        if (!hello) hello = createWinHello(getKoffi(), libs);
       } catch (err) {
-        console.error('TaskPop: Windows sign-in check unavailable', err);
+        console.error('TaskPop: Windows Hello unavailable', err);
         return { ok: false, message: 'Windows couldn’t be asked to confirm it’s you.' };
       }
-      const hwnd = handleOf(win);
-      const message = winMessage(action, name);
-      const result = await hello(hwnd, message);
+      const result = await hello(handleOf(win), winMessage(action, name));
       if (result === 'verified') return { ok: true };
       if (result === 'canceled') return { ok: false, canceled: true };
       if (result === 'deviceBusy') return { ok: false, message: 'Windows Hello is busy. Please try again.' };
       if (result === 'retriesExhausted') return { ok: false, message: 'Too many tries. Please try again later.' };
-      if (result !== 'unavailable' && !NO_HELLO.includes(result)) return { ok: false, message: 'Windows didn’t confirm it’s you.' };
-      // No Windows Hello on this PC: your Windows password instead
-      try {
-        const answer = await password(hwnd, 'TaskPop', `${message}: enter your Windows password.`);
-        if (answer === 'verified') return { ok: true };
-        if (answer === 'canceled') return { ok: false, canceled: true };
-        return { ok: false, message: 'Windows didn’t confirm it’s you.' };
-      } catch (err) {
-        console.error('TaskPop: Windows password check failed', err);
-        return { ok: false, message: 'Windows couldn’t be asked to confirm it’s you.' };
+      if (result === 'disabledByPolicy') {
+        return { ok: false, message: 'Windows Hello is turned off on this PC by your organization, so secrets can’t be shown here.' };
       }
+      if (result === 'deviceNotPresent' || result === 'notConfiguredForUser' || result === 'unavailable') {
+        return {
+          ok: false,
+          setupHello: true,
+          message: 'To show secrets, set up Windows Hello first: a PIN is enough. It’s in Windows Settings → Accounts → Sign-in options.',
+        };
+      }
+      return { ok: false, message: 'Windows didn’t confirm it’s you.' };
     },
   };
 }
 
 module.exports = {
-  createVerifier, createWinHello, createWinPassword, guidBytes, macReason, winMessage,
+  createVerifier, createWinHello, guidBytes, macReason, winMessage, HELLO_SETTINGS,
   IID_USER_CONSENT_VERIFIER_INTEROP, IID_ASYNC_OPERATION_OF_RESULT, IID_ASYNC_INFO, REASONS, WIN_MESSAGES,
 };

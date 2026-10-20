@@ -1010,6 +1010,21 @@ body.reordering .row:hover { background: transparent; }
   color: var(--text-2);
 }
 .note-status:empty { display: none; }
+.secrets-status-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  margin-top: 4px;
+  padding: 0 9px;
+  border: none;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+.secrets-status-btn:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 /* what you can do from here (a message takes its place for a moment) */
 .note-hint {
   flex: none;

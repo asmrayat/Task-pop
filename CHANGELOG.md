@@ -4,6 +4,14 @@ All notable changes to TaskPop are listed here. The format follows [Keep a Chang
 
 Installers for every version are on the [releases page](https://github.com/asmrayat/Task-pop/releases).
 
+## [1.10.1] - 2026-10-20
+
+### Fixed
+
+- Windows: TaskPop still closed when you clicked **Show** on a secret and confirmed with your Windows password. On PCs without Windows Hello, TaskPop showed a "Windows Security" password dialog of its own, and that dialog crashed it. The dialog is gone: secrets are shown after Windows Hello (your PIN, fingerprint or face), which Windows handles from start to end.
+- Windows without Windows Hello: **Show** says to set it up (a PIN is enough), with **Open Sign-in options**, which opens that page of Windows Settings.
+- Opening **New** or **Edit** clears an earlier message, so it no longer pushes the form's **Save** out of sight.
+
 ## [1.10.0] - 2026-10-20
 
 ### Changed
@@ -205,6 +213,7 @@ The first public release.
 - Export and import your tasks, and delete completed ones automatically after a day or a week.
 - Tasks saved locally the moment they change, with a backup of the previous save.
 
+[1.10.1]: https://github.com/asmrayat/Task-pop/releases/tag/v1.10.1
 [1.10.0]: https://github.com/asmrayat/Task-pop/releases/tag/v1.10.0
 [1.9.2]: https://github.com/asmrayat/Task-pop/releases/tag/v1.9.2
 [1.9.1]: https://github.com/asmrayat/Task-pop/releases/tag/v1.9.1

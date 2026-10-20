@@ -185,7 +185,7 @@ function applyPlatform(p, keys) {
   kbd('tipUndoKeys', ['Ctrl', 'Z']);
   kbd('tipMoveKeys', ['Alt', '↑', '↓']);
   kbd('tipNoteKeys', ['Ctrl', 'J']);
-  text('tipHideText', 'Shows a secret after Windows Hello or your Windows password. Copy puts it on the clipboard for a minute');
+  text('tipHideText', 'Shows a secret after Windows Hello (a PIN, fingerprint or face). Copy puts it on the clipboard for a minute');
 }
 
 function renderDoubleTap() {

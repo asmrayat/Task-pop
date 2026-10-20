@@ -70,7 +70,7 @@ function renderStatic() {
   $('secretsOpenHow').textContent = `Click the lock at the end of “Add a task” to open Secrets (or press ${mac() ? '⌘J' : 'Ctrl+J'})`;
   $('secretsShowHow').textContent = mac()
     ? 'Click Show and confirm it’s you with Touch ID or your Mac password'
-    : 'Click Show and confirm it’s you with Windows Hello or your Windows password';
+    : 'Click Show and confirm it’s you with Windows Hello (a PIN is enough)';
   $('shortcutKeys').replaceChildren(...shortcutParts(info.settings.shortcut).map(kbd));
   if (!info.settings.shortcut) $('shortcutKeys').closest('li').hidden = true;
 }

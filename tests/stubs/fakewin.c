@@ -1,8 +1,9 @@
-// Linux stand-ins for the Windows calls TaskPop makes to confirm it's you before showing hidden
-// text (app/verify.js, tested by tests/unit/verify-test.js): WinRT strings and activation, Windows
-// Hello's IUserConsentVerifierInterop with its async operation (polled), the "Windows Security"
-// password dialog, and LogonUser. Each COM object counts its references, each string and buffer
-// is tracked, and the password buffer must come back wiped.
+// Linux stand-ins for the Windows calls TaskPop makes to confirm it's you before showing a secret
+// (app/verify.js, tested by tests/unit/verify-test.js): WinRT strings and activation, and Windows
+// Hello's IUserConsentVerifierInterop with its async operation (polled). Each COM object counts
+// its references and each string is tracked. (Until 1.10.1 TaskPop also had a password dialog of
+// its own for PCs without Windows Hello; it's gone, and so are its stand-ins. g_prompts stays at
+// 0, which the test checks.)
 // Built by tests/run.sh:  cc -shared -fPIC -o libfakewin.so tests/stubs/fakewin.c
 #include <stdint.h>
 #include <stdlib.h>
@@ -108,74 +109,6 @@ HRESULT RoGetActivationFactory(void *class_id, const uint8_t *iid, void **out) {
   *out = new_obj(interop_vtbl, 1); return S_OK;
 }
 
-// ---------- the password dialog and LogonUser ----------
-struct credui_info { uint32_t cbSize; uint64_t hwndParent; const uint16_t *message; const uint16_t *caption; void *banner; };
-// The real dialog (credential providers, its window, a message loop) needs a lot of stack: the
-// stand-in can be made to use as much (v1.10: koffi's default 128 KiB for worker-thread calls was
-// far too little, and the real dialog crashed TaskPop).
-static int g_prompt_stack_kib = 0;
-void fake_prompt_stack(int kib) { g_prompt_stack_kib = kib; }
-static __attribute__((noinline)) int use_stack(int kib) {
-  if (kib <= 0) return 0;
-  volatile char frame[16 * 1024];
-  for (int i = 0; i < (int)sizeof frame; i += 256) frame[i] = (char)i;
-  return frame[256] + use_stack(kib - 16);
-}
-
-uint32_t CredUIPromptForWindowsCredentialsW(struct credui_info *info, uint32_t auth_error, uint32_t *pkg, const void *in, uint32_t in_size,
-                                            void **out, uint32_t *out_size, int32_t *save, uint32_t flags) {
-  if (g_prompt_stack_kib) use_stack(g_prompt_stack_kib);
-  if (!info || info->cbSize != sizeof *info) bad("CREDUI_INFOW: wrong cbSize");
-  if (info && info->hwndParent != g_expect_hwnd) bad("CREDUI_INFOW: wrong parent window");
-  if (flags != 0x200) bad("CredUIPromptForWindowsCredentialsW: not CREDUIWIN_ENUMERATE_CURRENT_USER");
-  if (!pkg || !out || !out_size) bad("CredUIPromptForWindowsCredentialsW: missing out parameter");
-  if (info) { narrow(info->caption, g_caption, sizeof g_caption); narrow(info->message, g_prompt_message, sizeof g_prompt_message); }
-  if (g_prompts < 8) g_last_errors[g_prompts] = (int)auth_error;
-  int n = g_prompts++;
-  if (n == g_prompt_cancel_at || n >= g_n_passwords) return 1223; // ERROR_CANCELLED
-  char *buf = calloc(1, 64);
-  strncpy(buf, g_passwords[n], 63);
-  *out = buf; *out_size = 64; return 0;
-}
-int32_t CredUnPackAuthenticationBufferW(uint32_t flags, void *buf, uint32_t size, uint16_t *user, uint32_t *ulen, uint16_t *domain, uint32_t *dlen, uint16_t *pass, uint32_t *plen) {
-  if (flags != 1) bad("CredUnPackAuthenticationBufferW: not CRED_PACK_PROTECTED_CREDENTIALS");
-  if (*ulen < 64 || *dlen < 64 || *plen < 64) bad("CredUnPackAuthenticationBufferW: buffers too small");
-  const char *u = "MicrosoftAccount\\saif@example.com";
-  int i = 0;
-  for (; u[i]; i++) user[i] = (uint16_t)u[i];
-  user[i] = 0; *ulen = i + 1;
-  domain[0] = 0; *dlen = 1;
-  const char *p = buf;
-  for (i = 0; p[i] && i < 60; i++) pass[i] = (uint16_t)p[i];
-  pass[i] = 0; *plen = i + 1;
-  return 1;
-}
-uint32_t CredUIParseUserNameW(const uint16_t *full, uint16_t *user, uint32_t ulen, uint16_t *domain, uint32_t dlen) {
-  int slash = -1, n = 0;
-  for (; full[n]; n++) if (full[n] == '\\' && slash < 0) slash = n;
-  if (slash < 0) return 1315;
-  for (int i = 0; i < slash; i++) domain[i] = full[i];
-  domain[slash] = 0;
-  for (int i = slash + 1; i <= n; i++) user[i - slash - 1] = full[i];
-  return 0;
-}
-int32_t LogonUserW(const uint16_t *user, const uint16_t *domain, const uint16_t *pass, uint32_t type, uint32_t provider, void **token) {
-  if (type != 2 || provider != 0) bad("LogonUserW: not an interactive logon with the default provider");
-  char p[64];
-  narrow(user, g_logon_user, sizeof g_logon_user);
-  narrow(domain, g_logon_domain, sizeof g_logon_domain);
-  narrow(pass, p, sizeof p);
-  if (strcmp(g_logon_user, "saif@example.com") || strcmp(g_logon_domain, "MicrosoftAccount") || strcmp(p, "right")) return 0;
-  *token = (void *)0x77; return 1;
-}
-int32_t CloseHandle(void *h) { if (h == (void *)0x77) g_tokens_closed++; else bad("CloseHandle: not the logon token"); return 1; }
-void CoTaskMemFree(void *p) {
-  if (!p) return;
-  const unsigned char *b = p;
-  for (int i = 0; i < 64; i++) if (b[i]) { g_unwiped++; break; }
-  g_freed++; free(p);
-}
-
 // ---------- the test's side ----------
 void fake_reset(int hello_result, int polls_before_done, int end_status, int factory_fails, uint64_t hwnd) {
   g_hello_result = hello_result; g_polls_before_done = polls_before_done; g_end_status = end_status; g_factory_fails = factory_fails;
@@ -183,12 +116,6 @@ void fake_reset(int hello_result, int polls_before_done, int end_status, int fac
   g_logon_user[0] = g_logon_domain[0] = 0; g_ro_init_calls = 0; g_ro_init_arg = -1; g_polls = g_cancels = g_closes = 0;
   g_prompts = 0; g_prompt_cancel_at = -1; g_unwiped = g_freed = g_tokens_closed = 0; g_n_passwords = 0;
   memset(g_last_errors, 0, sizeof g_last_errors);
-}
-void fake_passwords(const char *a, const char *b, int cancel_at) {
-  g_n_passwords = 0;
-  if (a) g_passwords[g_n_passwords++] = strdup(a);
-  if (b) g_passwords[g_n_passwords++] = strdup(b);
-  g_prompt_cancel_at = cancel_at;
 }
 const char *fake_text(int which) {
   switch (which) {

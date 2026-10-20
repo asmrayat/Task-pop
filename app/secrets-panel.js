@@ -3,7 +3,7 @@
 //
 // Each secret has a name you always see ("Uni login") and hidden fields (Username, Password).
 // Click New to add one: it's encrypted as soon as you save it. Click Show to see one: TaskPop
-// asks for Touch ID or your Mac password (Windows Hello or your Windows password on Windows)
+// asks for Touch ID or your Mac password (Windows Hello on Windows)
 // first. While it shows, each field has a Copy button, and any part of it can be selected and
 // copied; whatever you copy comes off the clipboard after a minute. It hides itself again after
 // a minute, when you click Hide, close Secrets, or the panel closes. ⋯ (or a right-click) has
@@ -47,7 +47,7 @@ let deleting = null; // the id whose row asks "Delete it?"
 let secretStatusTimer = null;
 let secretHintTicker = null;
 
-const confirmWords = () => (platform === 'win32' ? 'Windows Hello or your Windows password' : 'Touch ID or your Mac password');
+const confirmWords = () => (platform === 'win32' ? 'Windows Hello' : 'Touch ID or your Mac password');
 const thisComputer = () => (platform === 'win32' ? 'this PC' : 'this Mac');
 const copyKeys = () => (platform === 'darwin' ? '⌘C' : 'Ctrl+C');
 const findSecret = (id) => secretItems.find((s) => s.id === id) || null;
@@ -70,8 +70,14 @@ function secButton(className, html, title) {
 
 // ---------- Messages, and the line that says what you can do ----------
 
-function sayInSecrets(message, ms = 5000) {
+function sayInSecrets(message, ms = 5000, action = null) {
   sec.status.textContent = message;
+  if (action) {
+    // (v1.10.1) e.g. "Open Sign-in options" when Windows Hello isn't set up
+    const b = secButton('secrets-status-btn', action.label, action.title);
+    b.addEventListener('click', action.run);
+    sec.status.append(' ', b);
+  }
   clearTimeout(secretStatusTimer);
   secretStatusTimer = setTimeout(() => {
     sec.status.textContent = '';
@@ -209,9 +215,22 @@ async function showSecret(id) {
     shownSecrets.set(id, { fields: result.fields, until: 0, timer: null });
     keepShowing(id);
   } else if (result && result.message) {
-    sayInSecrets(result.message, 7000);
+    sayFailure(result);
   }
   renderSecrets();
+}
+
+/** Why a secret couldn't be shown; on a PC without Windows Hello, with a way to set it up. */
+function sayFailure(result) {
+  if (result.setupHello) {
+    sayInSecrets(result.message, 20000, {
+      label: 'Open Sign-in options',
+      title: 'Windows Settings → Accounts → Sign-in options',
+      run: () => window.taskpop.openHelloSettings(),
+    });
+  } else {
+    sayInSecrets(result.message, 7000);
+  }
 }
 
 /** It shows for another minute from now. */
@@ -323,6 +342,8 @@ function openSecretForm(id = null, fields = null) {
     }
   }
   secretForm = { id: item ? item.id : null, rows };
+  clearTimeout(secretStatusTimer); // (an earlier message would only take the form's room)
+  sec.status.textContent = '';
   sec.formTitle.textContent = item ? `Edit “${item.name}”` : 'New secret';
   sec.name.value = item ? item.name : '';
   sec.fields.replaceChildren(...rows.map((r) => r.wrap));
@@ -353,7 +374,7 @@ async function editSecret(id) {
   checking.delete(id);
   if (result && result.ok) openSecretForm(id, result.fields);
   else {
-    if (result && result.message) sayInSecrets(result.message, 7000);
+    if (result && result.message) sayFailure(result);
     renderSecrets();
   }
 }

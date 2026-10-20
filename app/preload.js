@@ -35,6 +35,7 @@ contextBridge.exposeInMainWorld('taskpop', {
   copySecret: (text) => ipcRenderer.invoke('secrets:copy', text),
   showSecretMenu: (id, shown) => ipcRenderer.send('secrets:menu', { id, shown }),
   onSecretAction: on('secrets:action'),
+  openHelloSettings: () => ipcRenderer.send('secrets:hello-settings'),
   openCalendar: (event) => ipcRenderer.invoke('calendar:open', event),
   // Updates
   onUpdateState: on('update:state'),

@@ -38,11 +38,11 @@ Another app is probably using the same shortcut. Open **Settings → General →
 ## Secrets
 
 - **Where are they?** Click the lock at the end of the "Add a task" bar, or press ⌘J (Ctrl+J on Windows). In TaskPop 1.9 this was the quick note; 1.10 turned each hidden piece of it into a secret, and the rest of the note into one called **Notes**.
-- **A secret won't show:** click **Show** on it. TaskPop asks macOS (Touch ID or your Mac password) or Windows (Windows Hello or your Windows password) first. If you cancel, it stays hidden.
+- **A secret won't show:** click **Show** on it. TaskPop asks macOS (Touch ID or your Mac password) or Windows (Windows Hello) first. If you cancel, it stays hidden.
 - **Copying only the username or only the password:** show it, then click **Copy** next to the one you want. You can also select any part of it and press ⌘C (Ctrl+C on Windows). It comes off the clipboard after a minute.
-- **Windows: TaskPop closed when it asked for your password:** update to TaskPop 1.10 or newer. Before that, the "Windows Security" password dialog crashed TaskPop on PCs without Windows Hello.
+- **Windows: TaskPop closed when it asked for your password:** update to TaskPop 1.10.1 or newer. Before that, on PCs without Windows Hello, TaskPop asked for your Windows password in a dialog of its own, and that dialog crashed it. Now it uses Windows Hello only.
 - **Mac, after an update:** macOS may ask whether TaskPop may use "TaskPop Safe Storage" in your keychain. Enter your Mac password and click **Always Allow**. If you clicked **Deny**, open **Keychain Access**, find **TaskPop Safe Storage**, and under **Access Control** allow TaskPop again.
-- **Windows without a PIN or fingerprint:** TaskPop asks for your Windows password instead. If your account has no password either, set up Windows Hello in **Settings → Accounts → Sign-in options**.
+- **Windows says to set up Windows Hello:** secrets can only be shown after Windows Hello. Set up a PIN (a fingerprint or face works too) in **Settings → Accounts → Sign-in options**; **Open Sign-in options** in TaskPop's message takes you there. Then click **Show** again. If your organization has turned Windows Hello off, secrets can't be shown on that PC.
 - **On another computer:** secrets can only be read on the computer and user account where they were saved. They aren't part of **Export**.
 
 ## Installing on a Mac

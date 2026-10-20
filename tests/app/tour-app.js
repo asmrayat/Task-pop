@@ -242,7 +242,7 @@ async function run() {
   check('step 5 (v1.10): “Keep your passwords at hand”: where Secrets is, and New, Show, Copy', s.step === 'step-secrets' && s.title === 'Keep your passwords at hand'
     && new RegExp(`encrypted on this ${mac ? 'Mac' : 'PC'}`).test(s.lead) && s.howto.length === 4
     && s.howto[0].includes(`Click the lock at the end of “Add a task” to open Secrets (or press ${mac ? '⌘J' : 'Ctrl+J'})`)
-    && /^\+ NewGive it a name/.test(s.howto[1]) && (mac ? /Touch ID or your Mac password/ : /Windows Hello or your Windows password/).test(s.howto[2]) && /^CopyCopy the username or the password/.test(s.howto[3]), s.howto.join(' | '));
+    && /^\+ NewGive it a name/.test(s.howto[1]) && (mac ? /Touch ID or your Mac password/ : /Windows Hello \(a PIN is enough\)/).test(s.howto[2]) && /^CopyCopy the username or the password/.test(s.howto[3]), s.howto.join(' | '));
   await shot(tourWin(), `${tag}-5-secrets.png`);
 
   // Step 6: done

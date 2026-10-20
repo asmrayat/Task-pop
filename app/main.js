@@ -19,7 +19,7 @@ const { createUpdater, Updater, compareVersions } = require('./updater');
 const calendar = require('./calendar');
 const { createSpaces } = require('./spaces');
 const { Secrets, config: secretConfig } = require('./secrets');
-const { createVerifier } = require('./verify');
+const { createVerifier, HELLO_SETTINGS } = require('./verify');
 
 const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
@@ -1920,7 +1920,7 @@ ipcMain.handle('secrets:delete', (event, id) => {
 });
 
 let confirming = false;
-/** Touch ID / your Mac password, or Windows Hello / your Windows password. One at a time. */
+/** Touch ID / your Mac password, or Windows Hello. One at a time. */
 async function confirmItsYou(action, name) {
   if (confirming || !verifier) return { ok: false, canceled: true };
   confirming = true;
@@ -1960,6 +1960,12 @@ ipcMain.handle('secrets:reveal', async (event, id, action) => {
     console.error('TaskPop: could not decrypt a secret', err);
     return { ok: false, message: keyError() };
   }
+});
+
+// Windows without Windows Hello (v1.10.1): open the page where it's set up
+ipcMain.on('secrets:hello-settings', (event) => {
+  if (!fromPanel(event) || !isWin) return;
+  shell.openExternal(HELLO_SETTINGS).catch((err) => console.error('TaskPop: could not open Sign-in options', err));
 });
 
 let clipboardClear = null;

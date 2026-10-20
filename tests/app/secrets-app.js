@@ -11,7 +11,9 @@ const MODE = process.env.TP_MODE || 'new';
 Object.defineProperty(process, 'platform', { value: PLATFORM });
 const electron = require('electron');
 if (PLATFORM === 'darwin') electron.Menu.setApplicationMenu = () => {};
-const { app, Tray, BrowserWindow, Menu, Notification, systemPreferences, globalShortcut, clipboard, safeStorage, nativeTheme } = electron;
+const { app, Tray, BrowserWindow, Menu, Notification, systemPreferences, globalShortcut, clipboard, safeStorage, nativeTheme, shell } = electron;
+const opened = [];
+shell.openExternal = async (url) => { opened.push(url); };
 const fs = require('fs');
 const path = require('path');
 
@@ -63,6 +65,7 @@ if (PLATFORM === 'darwin') {
       auth.asked.push(`${action} ${name}`);
       auth.windows.push(!!win && win === BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith('index.html')));
       const a = await answerFor();
+      if (a === 'nohello') return { ok: false, setupHello: true, message: 'To show secrets, set up Windows Hello first: a PIN is enough. It’s in Windows Settings → Accounts → Sign-in options.' };
       return a === 'yes' ? { ok: true } : { ok: false, canceled: true };
     },
   });
@@ -169,7 +172,7 @@ const dragAcross = async (needle, from, to) => {
   return true;
 };
 const shot = async (name) => fs.writeFileSync(`${P.SHOTS}/${name}-${tag}.png`, (await panel.webContents.capturePage()).toPNG());
-const confirmWords = PLATFORM === 'darwin' ? /Touch ID or your Mac password/ : /Windows Hello or your Windows password/;
+const confirmWords = PLATFORM === 'darwin' ? /Touch ID or your Mac password/ : /Windows Hello/;
 
 async function newSecretFlow() {
   // ---------- Opening it ----------
@@ -228,7 +231,7 @@ async function newSecretFlow() {
   const id = s.items[0].id;
   await clickOn('.secret-item .secret-btn');
   await until(() => auth.asked.length === 1);
-  check(PLATFORM === 'darwin' ? 'Show asks for Touch ID or the Mac password first, naming the secret' : 'Show asks Windows Hello (or the Windows password) first, over the panel, naming the secret',
+  check(PLATFORM === 'darwin' ? 'Show asks for Touch ID or the Mac password first, naming the secret' : 'Show asks Windows Hello first, over the panel, naming the secret',
     auth.asked[0] === askedFor('show', 'Uni login') && (PLATFORM === 'darwin' || auth.windows[0] === true), auth.asked.join());
   panel.emit('blur'); // the system's dialog took the focus
   await wait(300);
@@ -285,9 +288,26 @@ async function newSecretFlow() {
   s = await state();
   check('clicking its name asks too; Cancel in the system\'s dialog: it stays hidden, nothing said', !s.items[0].shown && enc.decrypted === 2 && !/didn/.test(s.status) && s.items[0].button === 'Show', `${enc.decrypted}`);
 
+  // (v1.10.1) Windows without Windows Hello: how to set it up, with a button to the right page
+  if (PLATFORM === 'win32') {
+    await clickOn('.secret-item .secret-btn');
+    await until(() => auth.asked.length === 3);
+    auth.next = 'nohello';
+    auth.release();
+    await until(async () => /set up Windows Hello/.test((await state()).status));
+    s = await state();
+    check('Windows without Windows Hello: it stays hidden and says to set up Windows Hello, with "Open Sign-in options"', !s.items[0].shown && /a PIN is enough/.test(s.status) && !!(await box('.secrets-status-btn')), s.status);
+    await clickOn('.secrets-status-btn');
+    await until(() => opened.length === 1);
+    check('…which opens Windows Settings at Sign-in options', opened[0] === 'ms-settings:signinoptions', opened.join());
+    auth.asked.push('(Windows Hello set-up)'); // (keeps the counts below the same on both systems)
+  } else {
+    auth.asked.push('(Mac)', '(Mac)'); // (keeps the counts below the same on both systems)
+  }
+
   // Shown, then the panel closes
   await clickOn('.secret-item .secret-btn');
-  await until(() => auth.asked.length === 3);
+  await until(() => auth.asked.length === 5);
   auth.next = 'yes';
   auth.release();
   await until(async () => (await state()).items[0].shown);
@@ -308,8 +328,8 @@ async function newSecretFlow() {
   await until(() => lastMenu);
   check('⋯ (or a right-click): Show…, Edit…, Delete…', menuLabels() === 'Show…,Edit…,Delete…', menuLabels());
   menuItem('Edit…').click();
-  await until(() => auth.asked.length === 4);
-  check('Edit… asks first too', auth.asked[3] === askedFor('edit', 'Uni login'), auth.asked[3]);
+  await until(() => auth.asked.length === 6);
+  check('Edit… asks first too', auth.asked[5] === askedFor('edit', 'Uni login'), auth.asked[5]);
   auth.next = 'yes';
   auth.release();
   await until(async () => (await state()).form);
@@ -321,7 +341,7 @@ async function newSecretFlow() {
   await clickOn('#secretSave');
   await until(async () => !(await state()).form);
   await wait(200);
-  check('Save changes it, still encrypted', JSON.stringify(saved()[0].fields.map((f) => f.label)) === '["Username","Password"]' && !secretsFile().includes('new-pass') && enc.encrypted.includes('new-pass!') && /Changed “Uni login”/.test((await state()).status));
+  check('Save changes it, still encrypted', JSON.stringify(saved()[0].fields.map((f) => f.label)) === '["Username","Password"]' && !secretsFile().includes('new-pass') && enc.encrypted.includes('new-pass!') && /Changed “Uni login”/.test((await state()).status), `${(await state()).formNote} | ${(await state()).status} | ${JSON.stringify(saved()[0].fields.map((f) => f.label))}`);
   const tooLate = await js(`window.taskpop.updateSecret(${JSON.stringify(id)}, { name: 'X', fields: [{ label: 'Password', value: 'sneaky' }] })`);
   check('changing it again needs a new confirmation', tooLate && tooLate.ok === false && !enc.encrypted.includes('sneaky'));
 
